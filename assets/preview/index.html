@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grand Colonies — planche de contrôle des assets</title>
+<style>
+  :root {
+    --bg: #14161a; --panel: #1c1f25; --line: #2c313a;
+    --fg: #e8e6e1; --dim: #9aa1ad; --accent: #d98b3f; --bad: #d9534f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--fg); font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 32px; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  h2 { font-size: 16px; margin: 40px 0 6px; padding-top: 20px; border-top: 1px solid var(--line); }
+  p.note { color: var(--dim); font-size: 13px; max-width: 70ch; margin-bottom: 18px; }
+  .sub { color: var(--dim); font-size: 13px; margin-bottom: 24px; }
+  code { background: var(--panel); padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+
+  /* Hexagone pointy-top : hauteur = largeur x 1.1547 */
+  .hex { position: relative; overflow: hidden;
+         clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+         background: #222; }
+  .hex img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .hex.missing::after { content: "manquant"; position: absolute; inset: 0; display: grid; place-items: center;
+                        color: var(--bad); font-size: 11px; background: #2a1d1d; }
+
+  .row { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+  .item { text-align: center; }
+  .item .label { color: var(--dim); font-size: 11px; margin-top: 6px; font-family: ui-monospace, monospace; }
+
+  /* Test décisif : 120 px, la taille réelle en vue d'ensemble */
+  .qc .hex { width: 120px; height: 138.6px; }
+  /* Vue rapprochée */
+  .big .hex { width: 220px; height: 254px; }
+
+  #board { position: relative; margin: 8px 0 0; background: #0f1216; border: 1px solid var(--line); border-radius: 8px; }
+  #board .hex { position: absolute; }
+
+  .cards { display: flex; flex-wrap: wrap; gap: 16px; }
+  .card { width: 150px; }
+  .card img { width: 150px; height: 225px; object-fit: cover; border-radius: 8px; display: block; background: var(--panel); }
+  .card .miss { width: 150px; height: 225px; border-radius: 8px; background: #2a1d1d; color: var(--bad);
+                display: grid; place-items: center; font-size: 11px; }
+  .bgs img { width: 320px; height: 180px; object-fit: cover; border-radius: 6px; background: var(--panel); display: block; }
+
+  .checklist { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; max-width: 70ch; }
+  .checklist li { margin: 4px 0; color: var(--dim); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h1>Grand Colonies — planche de contrôle des assets</h1>
+<p class="sub">
+  Généré depuis <code>assets/generated/</code>. Rafraîchir après chaque passage du script.
+  Les images absentes apparaissent en rouge.
+</p>
+
+<h2>1. Test décisif — les tuiles à leur taille réelle (120 px)</h2>
+<p class="note">
+  C'est la taille d'une tuile en vue d'ensemble sur un plateau de 50 hexagones.
+  Si deux tuiles se confondent ici, ou si l'une attire l'œil beaucoup plus que les autres,
+  il faut la régénérer. Ce test prime sur toute considération esthétique.
+</p>
+<div class="row qc" id="qc"></div>
+
+<h2>2. Tessellation — l'assemblage réel du plateau</h2>
+<p class="note">
+  Les tuiles sont générées <strong>carrées</strong> puis découpées en hexagone par un masque CSS
+  (<code>clip-path</code>), exactement comme le fera le client. Vérifier ici l'absence de coutures
+  visibles, de bords assombris et de motifs qui « accrochent » entre tuiles voisines.
+</p>
+<div id="board"></div>
+
+<h2>3. Vue rapprochée</h2>
+<p class="note">Contrôle du centre (il accueillera un jeton numéroté opaque) et de la cohérence de style entre tuiles.</p>
+<div class="row big" id="big"></div>
+
+<h2>4. Cartes</h2>
+<div class="cards" id="cards"></div>
+
+<h2>5. Fonds d'écran</h2>
+<p class="note">Ils passent derrière du texte blanc : vérifier que le contraste reste faible et qu'aucun point d'accroche ne gêne la lecture.</p>
+<div class="row bgs" id="bgs"></div>
+
+<h2>6. Contrôle qualité</h2>
+<div class="checklist">
+  <ul>
+    <li>☐ Aucun texte, chiffre ou symbole visible</li>
+    <li>☐ Aucune forme hexagonale dans l'image source</li>
+    <li>☐ Motif jusqu'aux quatre bords, sans cadre ni vignettage</li>
+    <li>☐ Centre exempt de détail important (tuiles)</li>
+    <li>☐ Bords calmes, sans contraste fort (tuiles)</li>
+    <li>☐ Couleur dominante conforme à la palette de la spec</li>
+    <li>☐ Style cohérent d'une image à l'autre</li>
+    <li>☐ Tuile identifiable réduite à 120 px</li>
+  </ul>
+</div>
+
+<script>
+const TILES = ['forest','pasture','field','hills','mountain','desert','sea','gold','fish','unexplored'];
+const CARDS = ['card_dev_knight','card_dev_road','card_dev_invention','card_dev_monopoly','card_dev_freebuild',
+               'card_dev_politics','card_obj_trader','card_obj_explorer','card_obj_warlord','card_obj_magnate',
+               'card_obj_architect','card_obj_diplomat','card_back_dev','card_back_objective','card_back_contract'];
+const BGS = ['bg_lobby','bg_host','bg_endgame'];
+
+const tilePath = id => `../generated/tiles/tile_${id}.png`;
+
+function hex(id, wrapClass) {
+  const item = document.createElement('div');
+  item.className = 'item';
+  const box = document.createElement('div');
+  box.className = 'hex';
+  const img = document.createElement('img');
+  img.src = tilePath(id);
+  img.alt = id;
+  img.onerror = () => { box.classList.add('missing'); img.remove(); };
+  box.appendChild(img);
+  item.appendChild(box);
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.textContent = id;
+  item.appendChild(label);
+  return item;
+}
+
+TILES.forEach(id => {
+  document.getElementById('qc').appendChild(hex(id));
+  document.getElementById('big').appendChild(hex(id));
+});
+
+// Plateau de démonstration : rangées 3-4-5-4-3, pointy-top.
+(function board() {
+  const W = 104, H = W * 1.1547, rows = [3, 4, 5, 4, 3];
+  const land = ['forest','pasture','field','hills','mountain','desert','gold'];
+  const el = document.getElementById('board');
+  const maxCols = Math.max(...rows);
+  el.style.width = (maxCols * W + W) + 'px';
+  el.style.height = (rows.length * H * 0.75 + H * 0.25 + 24) + 'px';
+
+  let n = 0;
+  rows.forEach((count, r) => {
+    const offset = (maxCols - count) * W / 2;
+    for (let c = 0; c < count; c++) {
+      const box = document.createElement('div');
+      box.className = 'hex';
+      box.style.width = W + 'px';
+      box.style.height = H + 'px';
+      box.style.left = (offset + c * W + W / 2) + 'px';
+      box.style.top = (r * H * 0.75 + 12) + 'px';
+      const img = document.createElement('img');
+      // Bordure du plateau en mer, intérieur en terrain.
+      const isEdge = r === 0 || r === rows.length - 1 || c === 0 || c === count - 1;
+      img.src = tilePath(isEdge && Math.random() < 0.5 ? 'sea' : land[n++ % land.length]);
+      img.onerror = () => { box.classList.add('missing'); img.remove(); };
+      box.appendChild(img);
+      el.appendChild(box);
+    }
+  });
+})();
+
+function missingBox(w, h) {
+  const div = document.createElement('div');
+  div.className = 'miss';
+  div.style.cssText = `width:${w}px;height:${h}px;border-radius:6px;background:#2a1d1d;color:#d9534f;display:grid;place-items:center;font-size:11px`;
+  div.textContent = 'manquant';
+  return div;
+}
+
+function imageItem(src, id, wrapClass, w, h) {
+  const item = document.createElement('div');
+  item.className = wrapClass;
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = id;
+  img.onerror = () => img.replaceWith(missingBox(w, h));
+  item.appendChild(img);
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.textContent = id;
+  item.appendChild(label);
+  return item;
+}
+
+const cardsEl = document.getElementById('cards');
+CARDS.forEach(id => cardsEl.appendChild(
+  imageItem(`../generated/cards/${id}.png`, id, 'card', 150, 225)));
+
+const bgsEl = document.getElementById('bgs');
+BGS.forEach(id => bgsEl.appendChild(
+  imageItem(`../generated/backgrounds/${id}.png`, id, 'item', 320, 180)));
+</script>
+</body>
+</html>

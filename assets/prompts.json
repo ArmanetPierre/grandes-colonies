@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "_comment": "Source de vérité des prompts de génération. Voir SPEC_ASSETS_IMAGES.md pour la justification de chaque règle. Le script scripts/generate-assets.mjs compose: subject + style[category] + negative.",
+
+  "style": {
+    "tiles": "stylized digital board game illustration, top-down orthographic view, soft even lighting, no cast shadows, muted saturated colors, painterly but clean, low visual noise, calm uniform composition with no focal point in the center, edges visually quiet and continuous, full-bleed square composition filling the entire canvas, no text, no borders, no frame, no vignette",
+    "cards": "stylized digital illustration for a fantasy board game card, medieval trading colony setting, warm painterly rendering, soft lighting, muted saturated palette matching earth tones and deep greens, subject centered in the upper half, lower third calm and uncluttered, no text, no frame, no border",
+    "backs": "ornamental card back pattern for a board game, symmetrical radial design, subtle repeating motif, flat decorative style, fills the entire card, calm and elegant, no text, no central emblem with letters",
+    "backgrounds": "wide atmospheric background illustration for a board game interface, heavily desaturated, low contrast, out of focus in the lower half, no strong focal point, designed to sit behind readable white text, no text, no characters"
+  },
+
+  "negative": "text, letters, numbers, watermark, signature, logo, frame, border, vignette, UI elements, buttons, people, characters, hexagon shape, hexagonal tile, perspective view, tilted camera, isometric, harsh shadows, photorealistic, high contrast details near edges, dark corners",
+
+  "assets": [
+    {
+      "id": "tile_forest", "category": "tiles", "priority": "P0", "aspect": "1:1",
+      "resource": "bois", "color": "#2F6B3C",
+      "subject": "Dense coniferous forest canopy seen from directly above, tightly packed rounded treetops of varying sizes, deep forest green #2F6B3C with subtle darker and lighter green variation, hints of brown forest floor barely visible between trees, uniform density across the whole image"
+    },
+    {
+      "id": "tile_pasture", "category": "tiles", "priority": "P0", "aspect": "1:1",
+      "resource": "laine", "color": "#9CCB5B",
+      "subject": "Gently rolling green pasture seen from directly above, short soft grass with subtle mounds and a few small scattered shrubs, light fresh green #9CCB5B, smooth and calm surface, evenly distributed texture"
+    },
+    {
+      "id": "tile_field", "category": "tiles", "priority": "P0", "aspect": "1:1",
+      "resource": "blé", "color": "#E8B93B",
+      "subject": "Golden wheat field seen from directly above, regular parallel furrows of ripe grain crossing the image diagonally, warm golden yellow #E8B93B with soft amber variation, gentle and even texture"
+    },
+    {
+      "id": "tile_hills", "category": "tiles", "priority": "P0", "aspect": "1:1",
+      "resource": "brique", "color": "#C55A2B",
+      "subject": "Red clay hills seen from directly above, exposed terracotta earth with soft rounded ridges and shallow eroded channels, warm terracotta #C55A2B with ochre and rust variation, sparse dry vegetation"
+    },
+    {
+      "id": "tile_mountain", "category": "tiles", "priority": "P0", "aspect": "1:1",
+      "resource": "minerai", "color": "#6E7B8B",
+      "subject": "Bare rocky mountain terrain seen from directly above, angular grey stone ridges and fractured rock faces, slate grey #6E7B8B with cool blue-grey and pale highlights, patches of scree, no snow"
+    },
+    {
+      "id": "tile_desert", "category": "tiles", "priority": "P0", "aspect": "1:1",
+      "resource": null, "color": "#D9C9A3",
+      "subject": "Pale sand dunes seen from directly above, fine parallel wind ripples in the sand, warm pale sand #D9C9A3, a few scattered small stones, very calm and uniform surface"
+    },
+
+    {
+      "id": "tile_sea", "category": "tiles", "priority": "P1", "aspect": "1:1",
+      "resource": null, "color": "#2E6F9E",
+      "note": "Tuile la plus répétée du plateau: doit être la plus neutre de toutes.",
+      "subject": "Calm deep open sea seen from directly above, gentle regular wave texture with soft foam highlights, deep blue #2E6F9E with teal and navy variation, uniform across the whole image"
+    },
+    {
+      "id": "tile_gold", "category": "tiles", "priority": "P1", "aspect": "1:1",
+      "resource": "or", "color": "#7A5C2E",
+      "note": "Doit rester globalement SOMBRE pour se séparer de tile_field par la luminosité.",
+      "subject": "Dark rocky terrain veined with bright gold ore seen from directly above, deep brown-grey rock #7A5C2E fractured by a network of luminous glittering gold veins #FFD866, the rock clearly dominant and dark, gold veins thin and radiant"
+    },
+    {
+      "id": "tile_fish", "category": "tiles", "priority": "P1", "aspect": "1:1",
+      "resource": "poisson", "color": "#3FA9A0",
+      "subject": "Shallow turquoise coastal water seen from directly above, pale sandy seabed visible through clear water, small schools of tiny fish as soft dark shapes, turquoise #3FA9A0 with pale sand tones, gentle ripples"
+    },
+    {
+      "id": "tile_unexplored", "category": "tiles", "priority": "P1", "aspect": "1:1",
+      "resource": null, "color": "#5B5670",
+      "note": "Volontairement opaque: masque une information que le serveur ne transmet pas. Rien ne doit être devinable dessous.",
+      "subject": "Thick swirling fog concealing unknown terrain seen from directly above, dense opaque grey-violet mist #5B5670 with soft curling volutes, nothing identifiable underneath, mysterious and completely uniform"
+    },
+
+    {
+      "id": "card_dev_knight", "category": "cards", "priority": "P2", "aspect": "2:3",
+      "subject": "A helmeted medieval knight in profile holding a shield, sober heraldic style, warm muted colors"
+    },
+    {
+      "id": "card_dev_road", "category": "cards", "priority": "P2", "aspect": "2:3",
+      "subject": "A stone road winding toward the horizon between two green hills, open landscape, calm sky"
+    },
+    {
+      "id": "card_dev_invention", "category": "cards", "priority": "P2", "aspect": "2:3",
+      "subject": "A craftsman workbench covered with unrolled plans, compasses and hand tools, warm workshop atmosphere"
+    },
+    {
+      "id": "card_dev_monopoly", "category": "cards", "priority": "P2", "aspect": "2:3",
+      "subject": "A harbour warehouse interior stacked with rows of identical crates and barrels, dim warm light"
+    },
+    {
+      "id": "card_dev_freebuild", "category": "cards", "priority": "P2", "aspect": "2:3",
+      "subject": "A construction site with wooden scaffolding around a half-built stone tower, ropes and pulleys"
+    },
+    {
+      "id": "card_dev_politics", "category": "cards", "priority": "P2", "aspect": "2:3",
+      "subject": "A red wax seal and a rolled parchment resting on a dark council table, candlelight"
+    },
+
+    {
+      "id": "card_obj_trader", "category": "cards", "priority": "P2", "aspect": "2:3",
+      "subject": "A busy trading post counter seen from the front, sacks of goods and scales, warm market atmosphere"
+    },
+    {
+      "id": "card_obj_explorer", "category": "cards", "priority": "P2", "aspect": "2:3",
+      "subject": "A small sailing ship beside an unrolled nautical chart with compass rose, sea horizon behind"
+    },
+    {
+      "id": "card_obj_warlord", "category": "cards", "priority": "P2", "aspect": "2:3",
+      "subject": "A military banner on a tall pole planted on a rocky outpost, wind blowing, muted sky"
+    },
+    {
+      "id": "card_obj_magnate", "category": "cards", "priority": "P2", "aspect": "2:3",
+      "subject": "An open treasure chest overflowing with gold coins and ingots, warm reflected light"
+    },
+    {
+      "id": "card_obj_architect", "category": "cards", "priority": "P2", "aspect": "2:3",
+      "subject": "A growing walled city with towers and rooftops under construction, cranes of wood"
+    },
+    {
+      "id": "card_obj_diplomat", "category": "cards", "priority": "P2", "aspect": "2:3",
+      "subject": "Two hands clasping in agreement beneath a draped canopy, parchment on the table below"
+    },
+
+    {
+      "id": "card_back_dev", "category": "cards", "priority": "P2", "aspect": "2:3", "style": "backs",
+      "subject": "Ornamental card back, dominant deep red with gold accents, radial interlace motif"
+    },
+    {
+      "id": "card_back_objective", "category": "cards", "priority": "P2", "aspect": "2:3", "style": "backs",
+      "subject": "Ornamental card back, dominant deep teal with gold accents, radial compass-like motif"
+    },
+    {
+      "id": "card_back_contract", "category": "cards", "priority": "P2", "aspect": "2:3", "style": "backs",
+      "subject": "Ornamental card back, dominant deep purple with silver accents, radial knotwork motif"
+    },
+
+    {
+      "id": "bg_lobby", "category": "backgrounds", "priority": "P3", "aspect": "16:9",
+      "subject": "Wide view of an archipelago at dawn seen from a high vantage point, several islands in soft mist, very desaturated, low contrast"
+    },
+    {
+      "id": "bg_host", "category": "backgrounds", "priority": "P3", "aspect": "16:9",
+      "subject": "An old nautical chart spread on wood with coiled rope and brass instruments, neutral parchment tones, very desaturated"
+    },
+    {
+      "id": "bg_endgame", "category": "backgrounds", "priority": "P3", "aspect": "16:9",
+      "subject": "A colonial harbour at sunset with moored ships and warm lanterns, hazy warm light, low contrast"
+    }
+  ]
+}
