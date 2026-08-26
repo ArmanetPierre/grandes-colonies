@@ -13,3 +13,8 @@ export * from './resources.js';
 export * from './production.js';
 export * from './placement.js';
 export * from './longestRoute.js';
+export * from './largestArmy.js';
+export * from './titles.js';
+export * from './rng.js';
+export * from './devCards.js';
+export * from './victory.js';

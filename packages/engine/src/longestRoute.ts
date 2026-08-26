@@ -27,6 +27,7 @@
 
 import type { Board, PlayerId } from './board/board.js';
 import { type EdgeId, type VertexId, verticesOfEdge } from './board/graph.js';
+import { titleHolder } from './titles.js';
 
 export interface LongestRouteOptions {
   /** Longueur minimale pour revendiquer le titre. Catan : 5. */
@@ -159,40 +160,16 @@ export interface RouteHolder {
   readonly length: number;
 }
 
-/**
- * Qui détient le titre, en tenant compte du détenteur actuel.
- *
- * Règle officielle conservée : à égalité, le titre ne change pas de mains.
- * Il faut faire *strictement* mieux que le détenteur pour le lui prendre —
- * sans quoi le titre s'échangerait à chaque tour entre deux joueurs à
- * égalité, et les points de victoire deviendraient instables.
- */
+/** Qui détient le titre, en tenant compte du détenteur actuel. */
 export function longestRouteHolder(
   board: Board,
   players: readonly PlayerId[],
   currentHolder?: PlayerId,
   options: LongestRouteOptions = {},
 ): RouteHolder | undefined {
-  const minimum = options.minimum ?? DEFAULTS.minimum;
-
   const lengths = new Map<PlayerId, number>();
   for (const player of players) lengths.set(player, longestRouteFor(board, player, options));
 
-  const heldLength = currentHolder !== undefined ? (lengths.get(currentHolder) ?? 0) : 0;
-
-  // Le détenteur garde le titre tant qu'il reste au seuil et que personne
-  // ne fait strictement mieux.
-  let bestPlayer = currentHolder !== undefined && heldLength >= minimum ? currentHolder : undefined;
-  let bestLength = bestPlayer !== undefined ? heldLength : minimum - 1;
-
-  for (const player of players) {
-    const length = lengths.get(player) ?? 0;
-    if (length < minimum) continue;
-    if (length > bestLength) {
-      bestPlayer = player;
-      bestLength = length;
-    }
-  }
-
-  return bestPlayer === undefined ? undefined : { player: bestPlayer, length: bestLength };
+  const winner = titleHolder(lengths, currentHolder, options.minimum ?? DEFAULTS.minimum);
+  return winner === undefined ? undefined : { player: winner.player, length: winner.value };
 }
