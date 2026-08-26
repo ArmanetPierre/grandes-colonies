@@ -1,3 +1,4 @@
+export * from './autoplay.js';
 export * from './buildIntent.js';
 export * from './config.js';
 export * from './state.js';

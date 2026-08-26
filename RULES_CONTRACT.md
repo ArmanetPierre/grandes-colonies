@@ -124,14 +124,37 @@ Si **plusieurs joueurs** atteignent le seuil dans le même cycle :
 
 ---
 
-## 6. Questions encore ouvertes
+## 6. Absences et déconnexions
 
-Elles ne bloquent pas le moteur, mais devront être tranchées avant le premier playtest — ce sont des règles de **serveur**, pas de jeu.
+Une règle unique gouverne ces cas : **le jeu ne s'arrête jamais**, et ce qui est décidé à la place d'un joueur l'est de façon **minimale**. On débloque la partie, on ne joue pas à sa place.
 
-- Que se passe-t-il si le **joueur actif se déconnecte** ? Son tour est-il joué par défaut, passé, ou la partie attend-elle ?
-- Et si le **joueur associé** se déconnecte ? (moins grave : son tour peut simplement être sauté)
-- Un joueur déconnecté pendant une **défausse** : validation automatique de la suggestion, comme à l'expiration du timer ?
-- Combien de temps garde-t-on un **siège** avant de proposer de le remplacer par un bot ?
+### Joueur actif absent
+
+**Son tour est joué par défaut** : les dés sont lancés, un éventuel 7 est traité, la main passe.
+
+Rien d'autre. Aucune construction, aucun achat, aucun échange — ces décisions appartiennent au joueur, et les prendre pour lui fausserait sa partie bien plus que de les lui faire manquer.
+
+C'est le même mécanisme qui sert à l'expiration du chronomètre (§2) : les deux situations posent le même problème et reçoivent la même réponse.
+
+### Joueur associé absent
+
+**Son tour est simplement sauté.** Aucun traitement n'est nécessaire : le tour associé est facultatif par nature, et son absence ne bloque personne.
+
+### Défausse
+
+**La suggestion du jeu est validée automatiquement**, exactement comme à l'expiration du chronomètre.
+
+La suggestion entame toujours la pile la plus fournie de la main. Perdre sa seule brique coûte bien plus cher que perdre un bois sur cinq : préserver la diversité est ce qui se rapproche le plus de ce qu'aurait choisi le joueur.
+
+### Voleur
+
+Le voleur est posé sur un hexagone **ne touchant aucune construction**. Décider à la place d'un absent qui il doit bloquer serait arbitraire, et pourrait changer l'issue de la partie.
+
+### Siège abandonné
+
+Un siège est conservé **deux tours de table** avant que l'hôte ne se voie proposer de le remplacer par un bot.
+
+> Toutes ces décisions sont déterministes : à graine et commandes égales, un tour joué par défaut produit toujours le même résultat. Sans quoi une partie comportant une déconnexion cesserait d'être rejouable.
 
 ---
 
@@ -147,3 +170,7 @@ Elles ne bloquent pas le moteur, mais devront être tranchées avant le premier 
 | 2026-08-27 | Conflit de construction | **Actif, puis ancienneté** |
 | 2026-08-27 | Durée du gel | **Jusqu'à la fin du cycle** |
 | 2026-08-27 | Victoire en phase simultanée | **Contrôlée en fin de cycle** |
+| 2026-08-27 | Joueur actif absent | **Tour joué par défaut**, au strict minimum |
+| 2026-08-27 | Joueur associé absent | **Tour sauté** |
+| 2026-08-27 | Défausse d'un absent | **Suggestion validée d'office** |
+| 2026-08-27 | Siège abandonné | **Deux tours de table** avant de proposer un bot |
