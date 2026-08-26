@@ -12,6 +12,7 @@ import type { EdgeId, HexId, VertexId } from '../board/graph.js';
 import type { DevCardKind } from '../devCards.js';
 import type { Resource, ResourceCounts } from '../resources.js';
 import type { Phase } from './state.js';
+import type { IntentTarget } from './buildIntent.js';
 
 /** Champs communs à toute commande. */
 interface CommandBase {
@@ -38,7 +39,10 @@ export type Command =
   | (CommandBase & { readonly type: 'BUY_DEV_CARD' })
   | (CommandBase & { readonly type: 'PLAY_KNIGHT'; readonly from?: HexId; readonly to: HexId; readonly victim?: PlayerId })
   | (CommandBase & { readonly type: 'TRADE_WITH_BANK'; readonly give: ResourceCounts; readonly receive: ResourceCounts })
-  | (CommandBase & { readonly type: 'END_TURN' });
+  | (CommandBase & { readonly type: 'DECLARE_BUILD'; readonly target: IntentTarget })
+  | (CommandBase & { readonly type: 'CANCEL_BUILD'; readonly intentId: string })
+  | (CommandBase & { readonly type: 'END_TURN' })
+  | (CommandBase & { readonly type: 'END_CYCLE' });
 
 export type CommandType = Command['type'];
 
@@ -66,6 +70,12 @@ export type DomainEvent =
   | { readonly type: 'TitleChanged'; readonly title: 'longestRoute' | 'largestArmy'; readonly from: PlayerId | undefined; readonly to: PlayerId | undefined }
   | { readonly type: 'PhaseChanged'; readonly from: Phase; readonly to: Phase }
   | { readonly type: 'TurnEnded'; readonly player: PlayerId; readonly cycle: number }
+  | { readonly type: 'BuildDeclared'; readonly player: PlayerId; readonly intentId: string; readonly target: IntentTarget }
+  | { readonly type: 'BuildCancelled'; readonly player: PlayerId; readonly intentId: string }
+  | { readonly type: 'BuildResolved'; readonly player: PlayerId; readonly intentId: string; readonly target: IntentTarget }
+  | { readonly type: 'BuildRefunded'; readonly player: PlayerId; readonly intentId: string; readonly reason: 'lost-conflict' | 'no-longer-legal' }
+  | { readonly type: 'LocationFrozen'; readonly location: string }
+  | { readonly type: 'CycleEnded'; readonly cycle: number }
   | { readonly type: 'GameWon'; readonly player: PlayerId; readonly points: number };
 
 /** Pourquoi une commande a été refusée. */
@@ -85,6 +95,9 @@ export type RejectionReason =
   | 'invalid-robber-move'
   | 'invalid-victim'
   | 'card-not-playable'
+  | 'location-frozen'
+  | 'already-declared'
+  | 'unknown-intent'
   | 'game-over';
 
 export type CommandResult =

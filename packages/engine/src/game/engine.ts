@@ -33,9 +33,12 @@ import {
 } from '../resources.js';
 import { victoryPoints } from '../victory.js';
 import type { Command, CommandResult, DomainEvent, RejectionReason } from './commands.js';
+import { type BuildIntent, type IntentTarget, locationOf, resolveIntents } from './buildIntent.js';
 import {
   type GameState,
+  type PlayerState,
   activePlayer,
+  pairedPlayer,
   playerIds,
   playerOf,
 } from './state.js';
@@ -78,7 +81,10 @@ function execute(state: GameState, command: Command): CommandResult {
     case 'BUY_DEV_CARD':           return buyDevCard(state, command.playerId);
     case 'PLAY_KNIGHT':            return playKnight(state, command.playerId, command.to, command.victim);
     case 'TRADE_WITH_BANK':        return tradeWithBank(state, command.playerId, command.give, command.receive);
+    case 'DECLARE_BUILD':          return declareBuild(state, command.playerId, command.target);
+    case 'CANCEL_BUILD':           return cancelBuild(state, command.playerId, command.intentId);
     case 'END_TURN':               return endTurn(state, command.playerId);
+    case 'END_CYCLE':              return endCycle(state, command.playerId);
   }
 }
 
@@ -297,12 +303,25 @@ function someoneMustDiscard(state: GameState): boolean {
 
 // ── constructions ──────────────────────────────────────────────────────────
 
-/** Garde commune à toutes les actions du tour actif. */
+/**
+ * Garde commune aux actions de la phase de tour.
+ *
+ * Le joueur actif et son associé y agissent simultanément (contrat §1).
+ * L'associé construit, achète et commerce avec la banque, mais ne négocie
+ * pas avec les autres joueurs — cette restriction est portée par les
+ * commandes concernées, pas ici.
+ */
 function ensureCanAct(state: GameState, playerId: string): CommandResult | undefined {
   if (state.phase === 'production') return reject('must-roll-first');
   if (state.phase !== 'activeTurn') return reject('wrong-phase');
-  if (activePlayer(state).id !== playerId) return reject('not-your-turn');
-  if (state.pendingRobber) return reject('invalid-robber-move', 'déplace le voleur d abord');
+
+  const isActive = activePlayer(state).id === playerId;
+  const isPaired = pairedPlayer(state)?.id === playerId;
+  if (!isActive && !isPaired) return reject('not-your-turn');
+
+  // Le voleur bloque le joueur actif, pas son associé : ce dernier n'a aucun
+  // moyen de le déplacer et resterait bloqué sans rien pouvoir faire.
+  if (isActive && state.pendingRobber) return reject('invalid-robber-move', 'déplace le voleur d abord');
   if (someoneMustDiscard(state)) return reject('must-discard-first');
   return undefined;
 }
@@ -332,7 +351,6 @@ function buildRoad(state: GameState, playerId: string, edge: string): CommandRes
 
   const events: DomainEvent[] = [{ type: 'RoadPlaced', player: playerId, edge }];
   events.push(...refreshRouteTitle(state));
-  events.push(...checkVictory(state, playerId));
   return { ok: true, events };
 }
 
@@ -356,7 +374,6 @@ function buildSettlement(state: GameState, playerId: string, vertex: VertexId): 
   // Une colonie neuve peut couper le réseau d'un adversaire : le titre se
   // recalcule pour tout le monde, pas seulement pour le bâtisseur.
   events.push(...refreshRouteTitle(state));
-  events.push(...checkVictory(state, playerId));
   return { ok: true, events };
 }
 
@@ -378,7 +395,6 @@ function buildCity(state: GameState, playerId: string, vertex: VertexId): Comman
   player.settlementsLeft++; // la colonie retourne dans la réserve
 
   const events: DomainEvent[] = [{ type: 'CityBuilt', player: playerId, vertex }];
-  events.push(...checkVictory(state, playerId));
   return { ok: true, events };
 }
 
@@ -422,7 +438,6 @@ function playKnight(state: GameState, playerId: string, to: HexId, victim?: stri
     ...moved.events,
   ];
   events.push(...refreshArmyTitle(state));
-  events.push(...checkVictory(state, playerId));
   return { ok: true, events };
 }
 
@@ -467,24 +482,181 @@ function tradeWithBank(
 
 // ── fin de tour ────────────────────────────────────────────────────────────
 
+/** Fin de la phase de tour : on ouvre la fenêtre de commerce. */
 function endTurn(state: GameState, playerId: string): CommandResult {
   if (state.phase !== 'activeTurn') return reject(state.phase === 'production' ? 'must-roll-first' : 'wrong-phase');
   if (activePlayer(state).id !== playerId) return reject('not-your-turn');
   if (state.pendingRobber) return reject('invalid-robber-move', 'déplace le voleur d abord');
   if (someoneMustDiscard(state)) return reject('must-discard-first');
 
-  const events: DomainEvent[] = [{ type: 'TurnEnded', player: playerId, cycle: state.cycle }];
+  state.phase = 'freeTrade';
+  return {
+    ok: true,
+    events: [
+      { type: 'TurnEnded', player: playerId, cycle: state.cycle },
+      { type: 'PhaseChanged', from: 'activeTurn', to: 'freeTrade' },
+    ],
+  };
+}
+
+// ── annonces de construction ───────────────────────────────────────────────
+
+/** Coût d'une cible d'annonce. */
+function costOfTarget(target: IntentTarget): ResourceCounts {
+  switch (target.kind) {
+    case 'road': return COSTS.road;
+    case 'settlement': return COSTS.settlement;
+    case 'city': return COSTS.city;
+  }
+}
+
+function piecesLeftFor(player: PlayerState, target: IntentTarget): number {
+  switch (target.kind) {
+    case 'road': return player.roadsLeft;
+    case 'settlement': return player.settlementsLeft;
+    case 'city': return player.citiesLeft;
+  }
+}
+
+/**
+ * Annonce d'une construction, ouverte à tous et à tout moment (contrat §3).
+ *
+ * La légalité du placement n'est PAS vérifiée ici, seulement à la résolution :
+ * le plateau change entre l'annonce et la fin du cycle, et un emplacement
+ * légal au moment de l'annonce peut cesser de l'être. L'annonce est donc
+ * optimiste, la résolution fait autorité.
+ */
+function declareBuild(state: GameState, playerId: string, target: IntentTarget): CommandResult {
+  if (state.phase !== 'activeTurn' && state.phase !== 'freeTrade') return reject('wrong-phase');
+
+  const location = locationOf(target);
+  if (state.frozenLocations.has(location)) return reject('location-frozen');
+  if (state.intents.some((i) => i.player === playerId && locationOf(i.target) === location)) {
+    return reject('already-declared');
+  }
+
+  const player = playerOf(state, playerId);
+  if (!player) return reject('unknown-player');
+  if (piecesLeftFor(player, target) <= 0) return reject('no-pieces-left');
+
+  const cost = costOfTarget(target);
+  if (!canAfford(player.hand, cost)) return reject('not-enough-resources');
+
+  // Les ressources quittent la main immédiatement : elles ne sont plus
+  // échangeables ni réutilisables tant que l'annonce est en vie.
+  player.hand = subtractCounts(player.hand, cost);
+
+  const intent: BuildIntent = {
+    id: `${playerId}:${state.intentCounter}`,
+    player: playerId,
+    target,
+    reserved: cost,
+    cycle: state.cycle,
+    order: state.intentCounter,
+  };
+  state.intentCounter++;
+  state.intents.push(intent);
+
+  return { ok: true, events: [{ type: 'BuildDeclared', player: playerId, intentId: intent.id, target }] };
+}
+
+function refund(state: GameState, intent: BuildIntent): void {
+  const player = playerOf(state, intent.player);
+  if (player) player.hand = addCounts(player.hand, intent.reserved);
+}
+
+function cancelBuild(state: GameState, playerId: string, intentId: string): CommandResult {
+  const index = state.intents.findIndex((i) => i.id === intentId);
+  if (index === -1) return reject('unknown-intent');
+
+  const intent = state.intents[index];
+  if (!intent) return reject('unknown-intent');
+  if (intent.player !== playerId) return reject('not-your-turn', 'annonce d un autre joueur');
+
+  refund(state, intent);
+  state.intents.splice(index, 1);
+
+  return { ok: true, events: [{ type: 'BuildCancelled', player: playerId, intentId }] };
+}
+
+/** Pose effective d'une annonce retenue, si elle est toujours légale. */
+function applyIntent(state: GameState, intent: BuildIntent): DomainEvent[] {
+  const player = playerOf(state, intent.player);
+  if (!player) return [];
+
+  const target = intent.target;
+  const legal =
+    target.kind === 'road' ? canPlaceRoad(state.board, target.edge, intent.player)
+    : target.kind === 'settlement' ? canPlaceSettlement(state.board, target.vertex, intent.player)
+    : canUpgradeToCity(state.board, target.vertex, intent.player);
+
+  if (!legal.ok || piecesLeftFor(player, target) <= 0) {
+    refund(state, intent);
+    return [{ type: 'BuildRefunded', player: intent.player, intentId: intent.id, reason: 'no-longer-legal' }];
+  }
+
+  // Les ressources ont été prélevées à l'annonce : elles rejoignent la banque.
+  state.bank = addCounts(state.bank, intent.reserved);
+
+  switch (target.kind) {
+    case 'road':
+      state.board.setRoad(target.edge, intent.player);
+      player.roadsLeft--;
+      break;
+    case 'settlement':
+      state.board.setBuilding(target.vertex, { kind: 'settlement', owner: intent.player });
+      player.settlementsLeft--;
+      break;
+    case 'city':
+      state.board.setBuilding(target.vertex, { kind: 'city', owner: intent.player });
+      player.citiesLeft--;
+      player.settlementsLeft++;
+      break;
+  }
+
+  return [{ type: 'BuildResolved', player: intent.player, intentId: intent.id, target }];
+}
+
+/**
+ * Fin de cycle : on résout les annonces, on contrôle la victoire, puis la
+ * main passe au joueur suivant.
+ */
+function endCycle(state: GameState, playerId: string): CommandResult {
+  if (state.phase !== 'freeTrade') return reject('wrong-phase');
+  if (activePlayer(state).id !== playerId) return reject('not-your-turn');
+
+  const events: DomainEvent[] = [];
+
+  const { built, refunded, frozen } = resolveIntents(state.intents, activePlayer(state).id);
+  for (const intent of built) events.push(...applyIntent(state, intent));
+  for (const intent of refunded) {
+    refund(state, intent);
+    events.push({ type: 'BuildRefunded', player: intent.player, intentId: intent.id, reason: 'lost-conflict' });
+  }
+  for (const location of frozen) {
+    state.frozenLocations.add(location);
+    events.push({ type: 'LocationFrozen', location });
+  }
+  state.intents = [];
+
+  events.push(...refreshRouteTitle(state));
+  events.push({ type: 'CycleEnded', cycle: state.cycle });
+
+  const won = checkVictory(state);
+  if (won.length > 0) return { ok: true, events: [...events, ...won] };
+
+  // Le gel ne vaut que pour le cycle où il s'est produit.
+  state.frozenLocations.clear();
 
   state.activeIndex = (state.activeIndex + 1) % state.players.length;
   state.cycle++;
   state.phase = 'production';
   state.lastRoll = undefined;
 
-  // Les cartes achetées par le joueur qui prend la main deviennent jouables.
   const next = activePlayer(state);
   next.devCards = beginTurn(next.devCards);
 
-  events.push({ type: 'PhaseChanged', from: 'activeTurn', to: 'production' });
+  events.push({ type: 'PhaseChanged', from: 'freeTrade', to: 'production' });
   return { ok: true, events };
 }
 
@@ -511,17 +683,40 @@ function refreshArmyTitle(state: GameState): DomainEvent[] {
   return [{ type: 'TitleChanged', title: 'largestArmy', from: before, to: state.largestArmyHolder }];
 }
 
-function checkVictory(state: GameState, playerId: string): DomainEvent[] {
-  const points = victoryPoints(state.board, playerId, {
-    hasLongestRoute: state.longestRouteHolder === playerId,
-    hasLargestArmy: state.largestArmyHolder === playerId,
-  }, state.config.victory);
+/**
+ * Contrôle de victoire, en fin de cycle uniquement (contrat §5).
+ *
+ * Personne n'est coupé en plein geste : toutes les actions engagées se
+ * terminent, y compris celles des autres joueurs pendant la phase simultanée.
+ * Si plusieurs joueurs franchissent le seuil dans le même cycle, le plus haut
+ * total l'emporte ; à égalité parfaite, l'ordre du tour tranche en partant du
+ * joueur actif.
+ */
+function checkVictory(state: GameState): DomainEvent[] {
+  const target = state.config.victory.target;
 
-  if (points < state.config.victory.target) return [];
+  // Ordre du tour à partir de l'actif : c'est lui qui départage une égalité.
+  const order = state.players.map((_, i) => state.players[(state.activeIndex + i) % state.players.length]);
 
-  state.winner = playerId;
+  let best: { player: PlayerState; points: number } | undefined;
+  for (const player of order) {
+    if (!player) continue;
+    const points = victoryPoints(state.board, player.id, {
+      hasLongestRoute: state.longestRouteHolder === player.id,
+      hasLargestArmy: state.largestArmyHolder === player.id,
+    }, state.config.victory);
+
+    if (points < target) continue;
+    // Strictement supérieur : à égalité, le premier rencontré dans l'ordre
+    // du tour conserve l'avantage.
+    if (best === undefined || points > best.points) best = { player, points };
+  }
+
+  if (best === undefined) return [];
+
+  state.winner = best.player.id;
   state.phase = 'ended';
-  return [{ type: 'GameWon', player: playerId, points }];
+  return [{ type: 'GameWon', player: best.player.id, points: best.points }];
 }
 
 /** Rejoue une partie depuis son état initial. Sert au replay et aux tests. */

@@ -172,10 +172,20 @@ describe('déroulement d un tour', () => {
     expect(state.phase).toBe('activeTurn');
   });
 
-  it('fait tourner le joueur actif en fin de tour', () => {
+  it('ouvre la fenêtre de commerce en fin de tour', () => {
     const state = started();
     dispatch(state, cmd('ROLL_DICE', 'p1'));
     dispatch(state, cmd('END_TURN', 'p1'));
+    // Le tour ne termine plus le cycle : le commerce s'intercale.
+    expect(state.phase).toBe('freeTrade');
+    expect(state.activeIndex).toBe(0);
+  });
+
+  it('fait tourner le joueur actif à la fin du cycle', () => {
+    const state = started();
+    dispatch(state, cmd('ROLL_DICE', 'p1'));
+    dispatch(state, cmd('END_TURN', 'p1'));
+    dispatch(state, cmd('END_CYCLE', 'p1'));
     expect(state.activeIndex).toBe(1);
     expect(state.phase).toBe('production');
     expect(state.cycle).toBe(2);

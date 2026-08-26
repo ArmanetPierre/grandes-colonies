@@ -15,17 +15,17 @@ import { type ResourceCounts, EMPTY, counts } from '../resources.js';
 import { SeededRandom } from '../rng.js';
 import type { DevCardKind } from '../devCards.js';
 import type { GameConfig } from './config.js';
+import type { BuildIntent } from './buildIntent.js';
 
 /**
- * Les phases d'un cycle (§7 du game design).
+ * Les phases d'un cycle, telles que fixées par RULES_CONTRACT.md §1.
  *
- * `pairedTurn` et `freeTrade` sont déclarées mais le moteur ne les pilote pas
- * encore : leur règle exacte — séquentielles ou simultanées ? que devient une
- * action entamée avant l'expiration du timer ? — relève du Rules Contract,
- * qui n'est pas écrit. Les coder avant de l'avoir tranché reviendrait à
- * inventer des règles par accident.
+ * Trois temps et non cinq : les phases B et C du game design sont fusionnées,
+ * le joueur actif et son associé jouant simultanément. C'est le seul
+ * découpage compatible avec la durée de partie visée — en séquentiel, un tour
+ * de table à douze passerait de 24 à 42 minutes.
  */
-export type Phase = 'setup' | 'production' | 'activeTurn' | 'pairedTurn' | 'freeTrade' | 'ended';
+export type Phase = 'setup' | 'production' | 'activeTurn' | 'freeTrade' | 'ended';
 
 export interface PlayerState {
   readonly id: PlayerId;
@@ -81,6 +81,16 @@ export interface GameState {
    * Tant qu'il est vrai, le joueur actif ne peut rien faire d'autre.
    */
   pendingRobber: boolean;
+
+  /** Annonces de construction en attente de résolution (contrat §3). */
+  intents: BuildIntent[];
+  /**
+   * Rang d'arrivée de la prochaine annonce. Un compteur et non une horloge :
+   * il départage les annonces sans jamais reculer.
+   */
+  intentCounter: number;
+  /** Emplacements gelés jusqu'à la fin du cycle en cours. */
+  frozenLocations: Set<string>;
 }
 
 export interface NewGameOptions {
@@ -141,6 +151,9 @@ export function createGame(options: NewGameOptions): GameState {
     setupQueue: setupOrder(players.map((p) => p.id)),
     setupPendingVertex: undefined,
     pendingRobber: false,
+    intents: [],
+    intentCounter: 0,
+    frozenLocations: new Set(),
   };
 }
 
