@@ -1,148 +1,233 @@
 {
   "version": 1,
-  "_comment": "Source de vérité des prompts de génération. Voir SPEC_ASSETS_IMAGES.md pour la justification de chaque règle. Le script scripts/generate-assets.mjs compose: subject + style[category] + negative.",
-
+  "_comment": "Source de verite des prompts. Direction artistique: Grece antique, rendu 3D stylise (validee le 26/08/2026 apres essai de 5 directions, voir assets/style-tests.json). Le script scripts/generate-assets.mjs compose: subject + style[category] + negative.",
   "style": {
-    "tiles": "stylized digital board game illustration, top-down orthographic view, soft even lighting, no cast shadows, muted saturated colors, painterly but clean, low visual noise, calm uniform composition with no focal point in the center, edges visually quiet and continuous, full-bleed square composition filling the entire canvas, no text, no borders, no frame, no vignette",
-    "cards": "stylized digital illustration for a fantasy board game card, medieval trading colony setting, warm painterly rendering, soft lighting, muted saturated palette matching earth tones and deep greens, subject centered in the upper half, lower third calm and uncluttered, no text, no frame, no border",
-    "backs": "ornamental card back pattern for a board game, symmetrical radial design, subtle repeating motif, flat decorative style, fills the entire card, calm and elegant, no text, no central emblem with letters",
-    "backgrounds": "wide atmospheric background illustration for a board game interface, heavily desaturated, low contrast, out of focus in the lower half, no strong focal point, designed to sit behind readable white text, no text, no characters"
+    "tiles": "stylised 3D rendered board game asset, smooth clean materials with a soft matte finish, gentle global illumination and subtle ambient occlusion, shallow relief seen from directly above in strict orthographic projection with no perspective distortion, the polished look of a modern digital board game, ancient Greek Aegean setting, refined natural palette, low visual noise, motifs evenly distributed across the whole surface, calm composition with no focal point in the center, edges quiet and continuous, the terrain extends continuously past all four edges of the frame as if cropped from a much larger landscape",
+    "cards": "stylised 3D rendered illustration for a board game card, smooth clean materials with a soft matte finish, gentle global illumination, ancient Greek Aegean setting, warm refined palette of terracotta, olive, marble white and Aegean blue, subject centered in the upper half, lower third calm and uncluttered, no text, no frame, no border",
+    "backs": "ornamental card back for a board game, ancient Greek decorative motif, symmetrical radial design, flat and elegant, single dominant color with restrained gold accents, fills the entire card, no text, no central emblem with letters",
+    "backgrounds": "wide atmospheric background illustration for a board game interface, ancient Greek Aegean setting, heavily desaturated, low contrast, out of focus in the lower half, no strong focal point, designed to sit behind readable white text, no text, no characters"
   },
-
-  "negative": "text, letters, numbers, watermark, signature, logo, frame, border, vignette, UI elements, buttons, people, characters, hexagon shape, hexagonal tile, perspective view, tilted camera, isometric, harsh shadows, photorealistic, high contrast details near edges, dark corners",
-
+  "negative": "slab, plaque, tile base, platform, pedestal, diorama base, isolated object, floating island, single tile on a background, product render, studio backdrop, strong perspective, tilted camera, isometric view, deep dark shadows, paper margin, white margin, white border, canvas edge, framed picture, text, letters, numbers, greek key meander pattern, watermark, signature, logo, frame, border, vignette, UI elements, people, characters, hexagon shape, hexagonal tile, photorealistic, high contrast details near edges, dark corners",
   "assets": [
     {
-      "id": "tile_forest", "category": "tiles", "priority": "P0", "aspect": "1:1",
-      "resource": "bois", "color": "#2F6B3C",
-      "subject": "Dense coniferous forest canopy seen from directly above, tightly packed rounded treetops of varying sizes, deep forest green #2F6B3C with subtle darker and lighter green variation, hints of brown forest floor barely visible between trees, uniform density across the whole image"
+      "id": "tile_forest",
+      "category": "tiles",
+      "priority": "P0",
+      "aspect": "1:1",
+      "resource": "bois",
+      "color": "#2F6B3C",
+      "subject": "Mediterranean woodland seen from directly above, stylised umbrella pines and slim cypresses with soft rounded volumetric canopies, deep olive and pine green clearly dominant, pale dry stone ground barely visible between the trees, even density across the whole surface"
     },
     {
-      "id": "tile_pasture", "category": "tiles", "priority": "P0", "aspect": "1:1",
-      "resource": "laine", "color": "#9CCB5B",
-      "subject": "Gently rolling green pasture seen from directly above, short soft grass with subtle mounds and a few small scattered shrubs, light fresh green #9CCB5B, smooth and calm surface, evenly distributed texture"
+      "id": "tile_pasture",
+      "category": "tiles",
+      "priority": "P0",
+      "aspect": "1:1",
+      "resource": "laine",
+      "color": "#9CCB5B",
+      "subject": "Greek island pasture seen from directly above, gently undulating dry grassland divided by very low stone walls, soft fresh green clearly dominant, a few small round shrubs, calm and open, shallow relief"
     },
     {
-      "id": "tile_field", "category": "tiles", "priority": "P0", "aspect": "1:1",
-      "resource": "blé", "color": "#E8B93B",
-      "note": "v1 rejetée: 'furrows crossing diagonally' a produit des rayures très contrastées qui accrochent entre tuiles. Sillons désormais explicitement faibles et non directionnels.",
-      "subject": "Ripe wheat field seen from directly above, dense soft heads of grain forming an even velvety carpet, barely visible shallow furrows, no strong directional lines, no stripes, warm golden yellow #E8B93B with gentle amber variation, very low contrast and uniform"
+      "id": "tile_field",
+      "category": "tiles",
+      "priority": "P0",
+      "aspect": "1:1",
+      "resource": "blé",
+      "color": "#E8B93B",
+      "subject": "Ancient Greek grain field seen from directly above, soft dense barley and wheat forming an even velvety carpet in small stone-edged plots, warm golden yellow clearly dominant, no strong directional lines, very low contrast"
     },
     {
-      "id": "tile_hills", "category": "tiles", "priority": "P0", "aspect": "1:1",
-      "resource": "brique", "color": "#C55A2B",
-      "subject": "Red clay hills seen from directly above, exposed terracotta earth with soft rounded ridges and shallow eroded channels, warm terracotta #C55A2B with ochre and rust variation, sparse dry vegetation"
+      "id": "tile_hills",
+      "category": "tiles",
+      "priority": "P0",
+      "aspect": "1:1",
+      "resource": "brique",
+      "color": "#C55A2B",
+      "subject": "Terraced Greek hillside seen from directly above, gently rounded earth terraces held by low dry-stone walls, warm terracotta and ochre earth clearly dominant, a few small olive shrubs, soft shallow relief, no long continuous straight line"
     },
     {
-      "id": "tile_mountain", "category": "tiles", "priority": "P0", "aspect": "1:1",
-      "resource": "minerai", "color": "#6E7B8B",
-      "note": "v1 rejetée: crête dominante trop contrastée traversant le centre. Relief désormais réparti et sans ligne dominante.",
-      "subject": "Bare rocky terrain seen from directly above, many small angular grey rocks and shallow fractures evenly spread across the surface, no dominant ridge line, no deep dark crevices, slate grey #6E7B8B with soft cool highlights, low contrast and uniform, no snow"
+      "id": "tile_mountain",
+      "category": "tiles",
+      "priority": "P0",
+      "aspect": "1:1",
+      "resource": "minerai",
+      "color": "#6E7B8B",
+      "subject": "Greek marble quarry and limestone crags seen from directly above, pale grey stone blocks and shallow rocky steps evenly spread, cool slate grey clearly dominant, no dominant ridge line, low contrast, no snow"
     },
     {
-      "id": "tile_desert", "category": "tiles", "priority": "P0", "aspect": "1:1",
-      "resource": null, "color": "#D9C9A3",
-      "subject": "Pale sand dunes seen from directly above, fine parallel wind ripples in the sand, warm pale sand #D9C9A3, a few scattered small stones, very calm and uniform surface"
-    },
-
-    {
-      "id": "tile_sea", "category": "tiles", "priority": "P1", "aspect": "1:1",
-      "resource": null, "color": "#2E6F9E",
-      "note": "Tuile la plus répétée du plateau: doit être la plus neutre de toutes.",
-      "subject": "Calm deep open sea seen from directly above, gentle regular wave texture with soft foam highlights, deep blue #2E6F9E with teal and navy variation, uniform across the whole image"
+      "id": "tile_desert",
+      "category": "tiles",
+      "priority": "P0",
+      "aspect": "1:1",
+      "resource": null,
+      "color": "#D9C9A3",
+      "subject": "Dry Aegean scrubland seen from directly above, pale sandy stone ground with fine ripples and a few scattered rocks, warm pale sand clearly dominant, very calm and uniform, almost flat relief"
     },
     {
-      "id": "tile_gold", "category": "tiles", "priority": "P1", "aspect": "1:1",
-      "resource": "or", "color": "#7A5C2E",
-      "note": "Doit rester globalement SOMBRE pour se séparer de tile_field par la luminosité.",
-      "subject": "Dark rocky terrain veined with bright gold ore seen from directly above, deep brown-grey rock #7A5C2E fractured by a network of luminous glittering gold veins #FFD866, the rock clearly dominant and dark, gold veins thin and radiant"
+      "id": "tile_sea",
+      "category": "tiles",
+      "priority": "P1",
+      "aspect": "1:1",
+      "resource": null,
+      "color": "#2E6F9E",
+      "subject": "Calm Aegean sea seen from directly above, a very quiet surface with barely perceptible fine ripples, deep blue clearly dominant, extremely uniform and restful, the least eye-catching surface possible, no swirls, no strong wave pattern, no foam, no coastline, no land",
+      "note": "Tuile la plus repetee du plateau: doit etre la plus discrete de toutes."
     },
     {
-      "id": "tile_fish", "category": "tiles", "priority": "P1", "aspect": "1:1",
-      "resource": "poisson", "color": "#3FA9A0",
-      "subject": "Shallow turquoise coastal water seen from directly above, pale sandy seabed visible through clear water, small schools of tiny fish as soft dark shapes, turquoise #3FA9A0 with pale sand tones, gentle ripples"
+      "id": "tile_gold",
+      "category": "tiles",
+      "priority": "P1",
+      "aspect": "1:1",
+      "resource": "or",
+      "color": "#7A5C2E",
+      "subject": "Ancient Greek gold mine seen from directly above, dark rocky ground cut by shallow galleries, deep brown-grey rock clearly dominant and dark overall, thin radiant gold veins and a few gold nuggets catching the light"
     },
     {
-      "id": "tile_unexplored", "category": "tiles", "priority": "P1", "aspect": "1:1",
-      "resource": null, "color": "#5B5670",
-      "note": "Volontairement opaque: masque une information que le serveur ne transmet pas. Rien ne doit être devinable dessous.",
-      "subject": "Thick swirling fog concealing unknown terrain seen from directly above, dense opaque grey-violet mist #5B5670 with soft curling volutes, nothing identifiable underneath, mysterious and completely uniform"
-    },
-
-    {
-      "id": "card_dev_knight", "category": "cards", "priority": "P2", "aspect": "2:3",
-      "subject": "A helmeted medieval knight in profile holding a shield, sober heraldic style, warm muted colors"
+      "id": "tile_fish",
+      "category": "tiles",
+      "priority": "P1",
+      "aspect": "1:1",
+      "resource": "poisson",
+      "color": "#3FA9A0",
+      "subject": "Shallow turquoise Aegean shallows seen from directly above, pale sandy seabed visible through clear water, small schools of tiny fish as soft dark shapes, turquoise clearly dominant, gentle ripples, no coastline"
     },
     {
-      "id": "card_dev_road", "category": "cards", "priority": "P2", "aspect": "2:3",
-      "subject": "A stone road winding toward the horizon between two green hills, open landscape, calm sky"
+      "id": "tile_unexplored",
+      "category": "tiles",
+      "priority": "P1",
+      "aspect": "1:1",
+      "resource": null,
+      "color": "#5B5670",
+      "subject": "Thick swirling fog seen from directly above, dense opaque grey-violet mist with soft curling volutes, nothing identifiable underneath, completely uniform and mysterious"
     },
     {
-      "id": "card_dev_invention", "category": "cards", "priority": "P2", "aspect": "2:3",
-      "subject": "A craftsman workbench covered with unrolled plans, compasses and hand tools, warm workshop atmosphere"
+      "id": "card_dev_knight",
+      "category": "cards",
+      "priority": "P2",
+      "aspect": "2:3",
+      "subject": "A Greek hoplite in profile wearing a Corinthian helmet and holding a round hoplon shield, sober heroic pose"
     },
     {
-      "id": "card_dev_monopoly", "category": "cards", "priority": "P2", "aspect": "2:3",
-      "subject": "A harbour warehouse interior stacked with rows of identical crates and barrels, dim warm light"
+      "id": "card_dev_road",
+      "category": "cards",
+      "priority": "P2",
+      "aspect": "2:3",
+      "subject": "An ancient paved Greek road winding between two olive-covered hills toward the sea, open landscape"
     },
     {
-      "id": "card_dev_freebuild", "category": "cards", "priority": "P2", "aspect": "2:3",
-      "subject": "A construction site with wooden scaffolding around a half-built stone tower, ropes and pulleys"
+      "id": "card_dev_invention",
+      "category": "cards",
+      "priority": "P2",
+      "aspect": "2:3",
+      "subject": "A Greek craftsman workbench with unrolled plans, bronze compasses and chisels, amphorae in the background"
     },
     {
-      "id": "card_dev_politics", "category": "cards", "priority": "P2", "aspect": "2:3",
-      "subject": "A red wax seal and a rolled parchment resting on a dark council table, candlelight"
-    },
-
-    {
-      "id": "card_obj_trader", "category": "cards", "priority": "P2", "aspect": "2:3",
-      "subject": "A busy trading post counter seen from the front, sacks of goods and scales, warm market atmosphere"
+      "id": "card_dev_monopoly",
+      "category": "cards",
+      "priority": "P2",
+      "aspect": "2:3",
+      "subject": "The interior of a Greek harbour storehouse stacked with rows of identical terracotta amphorae, warm light"
     },
     {
-      "id": "card_obj_explorer", "category": "cards", "priority": "P2", "aspect": "2:3",
-      "subject": "A small sailing ship beside an unrolled nautical chart with compass rose, sea horizon behind"
+      "id": "card_dev_freebuild",
+      "category": "cards",
+      "priority": "P2",
+      "aspect": "2:3",
+      "subject": "A marble temple under construction, wooden scaffolding, ropes and pulleys, column drums on the ground"
     },
     {
-      "id": "card_obj_warlord", "category": "cards", "priority": "P2", "aspect": "2:3",
-      "subject": "A military banner on a tall pole planted on a rocky outpost, wind blowing, muted sky"
+      "id": "card_dev_politics",
+      "category": "cards",
+      "priority": "P2",
+      "aspect": "2:3",
+      "subject": "A wax seal and a rolled papyrus on a stone council table in an agora, olive branch beside them"
     },
     {
-      "id": "card_obj_magnate", "category": "cards", "priority": "P2", "aspect": "2:3",
-      "subject": "An open treasure chest overflowing with gold coins and ingots, warm reflected light"
+      "id": "card_obj_trader",
+      "category": "cards",
+      "priority": "P2",
+      "aspect": "2:3",
+      "subject": "A busy Greek agora trading stall with sacks of grain, bronze scales and amphorae, warm market atmosphere"
     },
     {
-      "id": "card_obj_architect", "category": "cards", "priority": "P2", "aspect": "2:3",
-      "subject": "A growing walled city with towers and rooftops under construction, cranes of wood"
+      "id": "card_obj_explorer",
+      "category": "cards",
+      "priority": "P2",
+      "aspect": "2:3",
+      "subject": "A Greek trireme beside an unrolled nautical chart with a bronze compass, Aegean horizon behind"
     },
     {
-      "id": "card_obj_diplomat", "category": "cards", "priority": "P2", "aspect": "2:3",
-      "subject": "Two hands clasping in agreement beneath a draped canopy, parchment on the table below"
-    },
-
-    {
-      "id": "card_back_dev", "category": "cards", "priority": "P2", "aspect": "2:3", "style": "backs",
-      "subject": "Ornamental card back, dominant deep red with gold accents, radial interlace motif"
+      "id": "card_obj_warlord",
+      "category": "cards",
+      "priority": "P2",
+      "aspect": "2:3",
+      "subject": "A Greek military standard planted on a rocky outpost above the sea, spears and shields at its base"
     },
     {
-      "id": "card_back_objective", "category": "cards", "priority": "P2", "aspect": "2:3", "style": "backs",
-      "subject": "Ornamental card back, dominant deep teal with gold accents, radial compass-like motif"
+      "id": "card_obj_magnate",
+      "category": "cards",
+      "priority": "P2",
+      "aspect": "2:3",
+      "subject": "An open chest overflowing with gold coins and ingots beside a marble column base, warm reflected light"
     },
     {
-      "id": "card_back_contract", "category": "cards", "priority": "P2", "aspect": "2:3", "style": "backs",
-      "subject": "Ornamental card back, dominant deep purple with silver accents, radial knotwork motif"
-    },
-
-    {
-      "id": "bg_lobby", "category": "backgrounds", "priority": "P3", "aspect": "16:9",
-      "subject": "Wide view of an archipelago at dawn seen from a high vantage point, several islands in soft mist, very desaturated, low contrast"
+      "id": "card_obj_architect",
+      "category": "cards",
+      "priority": "P2",
+      "aspect": "2:3",
+      "subject": "A growing Greek city with marble temples and tiled rooftops under construction, wooden cranes"
     },
     {
-      "id": "bg_host", "category": "backgrounds", "priority": "P3", "aspect": "16:9",
-      "subject": "An old nautical chart spread on wood with coiled rope and brass instruments, neutral parchment tones, very desaturated"
+      "id": "card_obj_diplomat",
+      "category": "cards",
+      "priority": "P2",
+      "aspect": "2:3",
+      "subject": "Two hands clasping in agreement over a stone table, an olive branch and a papyrus scroll beside them"
     },
     {
-      "id": "bg_endgame", "category": "backgrounds", "priority": "P3", "aspect": "16:9",
-      "subject": "A colonial harbour at sunset with moored ships and warm lanterns, hazy warm light, low contrast"
+      "id": "card_back_dev",
+      "category": "cards",
+      "priority": "P2",
+      "aspect": "2:3",
+      "style": "backs",
+      "subject": "Ornamental card back, dominant deep terracotta red with restrained gold accents, radial laurel motif"
+    },
+    {
+      "id": "card_back_objective",
+      "category": "cards",
+      "priority": "P2",
+      "aspect": "2:3",
+      "style": "backs",
+      "subject": "Ornamental card back, dominant deep Aegean blue with restrained gold accents, radial wave motif"
+    },
+    {
+      "id": "card_back_contract",
+      "category": "cards",
+      "priority": "P2",
+      "aspect": "2:3",
+      "style": "backs",
+      "subject": "Ornamental card back, dominant deep olive green with restrained silver accents, radial laurel wreath motif"
+    },
+    {
+      "id": "bg_lobby",
+      "category": "backgrounds",
+      "priority": "P3",
+      "aspect": "16:9",
+      "subject": "Wide view of a Greek archipelago at dawn seen from a high vantage point, several islands in soft mist"
+    },
+    {
+      "id": "bg_host",
+      "category": "backgrounds",
+      "priority": "P3",
+      "aspect": "16:9",
+      "subject": "An ancient nautical chart of the Aegean spread on stone with coiled rope and bronze instruments"
+    },
+    {
+      "id": "bg_endgame",
+      "category": "backgrounds",
+      "priority": "P3",
+      "aspect": "16:9",
+      "subject": "A Greek harbour at sunset with moored triremes and warm lantern light, marble quay"
     }
   ]
 }
