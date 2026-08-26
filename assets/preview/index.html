@@ -97,6 +97,7 @@
   </ul>
 </div>
 
+<script src="../generated/index.js"></script>
 <script>
 const TILES = ['forest','pasture','field','hills','mountain','desert','sea','gold','fish','unexplored'];
 const CARDS = ['card_dev_knight','card_dev_road','card_dev_invention','card_dev_monopoly','card_dev_freebuild',
@@ -104,7 +105,20 @@ const CARDS = ['card_dev_knight','card_dev_road','card_dev_invention','card_dev_
                'card_obj_architect','card_obj_diplomat','card_back_dev','card_back_objective','card_back_contract'];
 const BGS = ['bg_lobby','bg_host','bg_endgame'];
 
-const tilePath = id => `../generated/tiles/tile_${id}.png`;
+// Une régénération réécrit le même nom de fichier : sans cela le navigateur
+// afficherait l'ancienne image depuis son cache.
+const BUST = `?v=${Date.now()}`;
+
+// index.json (écrit par le script de génération) donne le chemin réel de chaque
+// asset, extension comprise. On évite ainsi d'enchaîner des requêtes en échec.
+const INDEX = window.ASSET_INDEX || {};
+
+function loadAsset(img, id, onFail) {
+  const path = INDEX[id];
+  if (!path) { onFail(); return; }
+  img.onerror = onFail;
+  img.src = `../generated/${path}${BUST}`;
+}
 
 function hex(id, wrapClass) {
   const item = document.createElement('div');
@@ -112,10 +126,9 @@ function hex(id, wrapClass) {
   const box = document.createElement('div');
   box.className = 'hex';
   const img = document.createElement('img');
-  img.src = tilePath(id);
   img.alt = id;
-  img.onerror = () => { box.classList.add('missing'); img.remove(); };
-  box.appendChild(img);
+  box.appendChild(img); // insérer avant de charger : onFail manipule le DOM
+  loadAsset(img, `tile_${id}`, () => { box.classList.add('missing'); img.remove(); });
   item.appendChild(box);
   const label = document.createElement('div');
   label.className = 'label';
@@ -151,9 +164,9 @@ TILES.forEach(id => {
       const img = document.createElement('img');
       // Bordure du plateau en mer, intérieur en terrain.
       const isEdge = r === 0 || r === rows.length - 1 || c === 0 || c === count - 1;
-      img.src = tilePath(isEdge && Math.random() < 0.5 ? 'sea' : land[n++ % land.length]);
-      img.onerror = () => { box.classList.add('missing'); img.remove(); };
-      box.appendChild(img);
+      const tile = isEdge && Math.random() < 0.5 ? 'sea' : land[n++ % land.length];
+      box.appendChild(img); // insérer avant de charger
+      loadAsset(img, `tile_${tile}`, () => { box.classList.add('missing'); img.remove(); });
       el.appendChild(box);
     }
   });
@@ -167,14 +180,13 @@ function missingBox(w, h) {
   return div;
 }
 
-function imageItem(src, id, wrapClass, w, h) {
+function imageItem(id, wrapClass, w, h) {
   const item = document.createElement('div');
   item.className = wrapClass;
   const img = document.createElement('img');
-  img.src = src;
   img.alt = id;
-  img.onerror = () => img.replaceWith(missingBox(w, h));
-  item.appendChild(img);
+  item.appendChild(img); // insérer avant de charger : onFail remplace le nœud
+  loadAsset(img, id, () => img.replaceWith(missingBox(w, h)));
   const label = document.createElement('div');
   label.className = 'label';
   label.textContent = id;
@@ -184,11 +196,11 @@ function imageItem(src, id, wrapClass, w, h) {
 
 const cardsEl = document.getElementById('cards');
 CARDS.forEach(id => cardsEl.appendChild(
-  imageItem(`../generated/cards/${id}.png`, id, 'card', 150, 225)));
+  imageItem(id, 'card', 150, 225)));
 
 const bgsEl = document.getElementById('bgs');
 BGS.forEach(id => bgsEl.appendChild(
-  imageItem(`../generated/backgrounds/${id}.png`, id, 'item', 320, 180)));
+  imageItem(id, 'item', 320, 180)));
 </script>
 </body>
 </html>

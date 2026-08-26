@@ -12,9 +12,11 @@ Spécification de référence : [../SPEC_ASSETS_IMAGES.md](../SPEC_ASSETS_IMAGES
 assets/
 ├── prompts.json              source de vérité : 28 images, leurs prompts et priorités
 ├── generated/                sorties brutes de l'IA, jamais retouchées à la main
-│   ├── tiles/                tile_forest.png … 1024×1024, carrées
-│   ├── cards/                card_dev_*.png, card_obj_*.png, card_back_*.png … 2:3
-│   └── backgrounds/          bg_*.png … 16:9
+│   ├── index.json            identifiant -> chemin réel du fichier
+│   ├── index.js              même contenu, chargeable en file:// par la planche
+│   ├── tiles/                tile_forest.jpg … 1024×1024, carrées
+│   ├── cards/                card_dev_*, card_obj_*, card_back_* … 2:3
+│   └── backgrounds/          bg_* … 16:9
 ├── processed/                versions retouchées / converties pour l'application
 │   ├── tiles/
 │   ├── cards/
@@ -26,6 +28,8 @@ assets/
 **Pourquoi `generated/` et `processed/` sont séparés** : une image générée peut être régénérée à l'identique depuis `prompts.json`, alors qu'une image retouchée ne le peut pas. Garder les deux permet de tout refaire sans perdre le travail manuel. `generated/` ne se modifie jamais à la main.
 
 **Les tuiles sont carrées, pas hexagonales.** Le découpage en hexagone est fait à l'affichage par un masque CSS/SVG, côté client. Une IA ne produit pas une géométrie assez précise pour que des hexagones se juxtaposent sans couture. C'est la règle la plus importante du pipeline.
+
+**L'extension des fichiers n'est pas fixe.** Le modèle renvoie du JPEG ou du PNG selon les cas ; le script nomme le fichier d'après son contenu réel et tient à jour `index.json` / `index.js`. Tout consommateur (planche de contrôle, futur client) doit passer par cet index plutôt que deviner l'extension.
 
 ---
 

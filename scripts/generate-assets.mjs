@@ -12,7 +12,7 @@
  * Voir assets/README.md.
  */
 
-import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, access, rm } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -96,10 +96,13 @@ async function discoverImageModel(key, override, tier) {
     if (/API_KEY_INVALID/.test(body)) {
       throw new Error(
         "La clé API est refusée par Google.\n\n" +
-        `  Clé lue : ${key.length} caractères, commençant par « ${key.slice(0, 4)} »\n` +
-        '  Attendu : une clé Google AI Studio, ~39 caractères, commençant par « AIza »\n\n' +
-        "  Une clé Vertex AI, un jeton OAuth ou un identifiant de projet ne fonctionnent pas ici.\n" +
-        '  Recopier la clé avec le bouton de copie sur https://aistudio.google.com/apikey'
+        `  Clé lue : ${key.length} caractères, commençant par « ${key.slice(0, 3)} »\n\n` +
+        '  Formats attendus :\n' +
+        '    « AQ. »  clé d\'autorisation — format actuel, ~53 caractères\n' +
+        '    « AIza » ancienne clé standard — rejetée depuis septembre 2026\n\n' +
+        "  Cause la plus fréquente : un caractère parasite ajouté au collage.\n" +
+        '  Vérifier le début et la fin de la valeur dans .env, ou recopier la clé\n' +
+        '  avec le bouton de copie sur https://aistudio.google.com/apikey'
       );
     }
     if (res.status === 403) {
@@ -187,7 +190,10 @@ async function generateImage(key, model, prompt, aspect) {
     const data = await res.json();
     const parts = data.candidates?.[0]?.content?.parts || [];
     const image = parts.find(p => p.inlineData?.data);
-    if (image) return Buffer.from(image.inlineData.data, 'base64');
+    if (image) return {
+      buffer: Buffer.from(image.inlineData.data, 'base64'),
+      mimeType: image.inlineData.mimeType || 'image/png',
+    };
 
     const blocked = data.candidates?.[0]?.finishReason;
     lastError = new Error(`Réponse sans image${blocked ? ` (finishReason: ${blocked})` : ''}`);
@@ -198,6 +204,42 @@ async function generateImage(key, model, prompt, aspect) {
 // ------------------------------------------------------------------- exécution
 
 const exists = (p) => access(p).then(() => true, () => false);
+
+/** Le modèle renvoie du JPEG ou du PNG selon les cas : on nomme le fichier d'après le contenu réel. */
+const extFor = (mimeType) => (/jpe?g/i.test(mimeType) ? 'jpg' : /webp/i.test(mimeType) ? 'webp' : 'png');
+
+/** Un asset est considéré comme déjà généré quelle que soit son extension. */
+async function findExisting(category, id) {
+  for (const ext of ['png', 'jpg', 'webp']) {
+    const p = join(ROOT, 'assets/generated', category, `${id}.${ext}`);
+    if (await exists(p)) return p;
+  }
+  return null;
+}
+
+/**
+ * Écrit assets/generated/index.json : identifiant -> chemin réel du fichier.
+ * Le modèle renvoie tantôt du JPEG tantôt du PNG ; sans cet index, tout
+ * consommateur devrait deviner l'extension en enchaînant des requêtes en échec.
+ */
+async function writeIndex(manifest) {
+  const index = {};
+  for (const asset of manifest.assets) {
+    const found = await findExisting(asset.category, asset.id);
+    if (found) index[asset.id] = `${asset.category}/${found.split('/').pop()}`;
+  }
+  await writeFile(
+    join(ROOT, 'assets/generated/index.json'),
+    JSON.stringify({ generatedAt: new Date().toISOString(), files: index }, null, 2) + '\n'
+  );
+  // Variante JS : la planche de contrôle s'ouvre en file://, où fetch() est
+  // bloqué par la politique d'origine. Une balise <script>, elle, fonctionne.
+  await writeFile(
+    join(ROOT, 'assets/generated/index.js'),
+    `window.ASSET_INDEX = ${JSON.stringify(index, null, 2)};\n`
+  );
+  return Object.keys(index).length;
+}
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
@@ -242,7 +284,7 @@ async function main() {
   // Ne compter que ce qui sera réellement généré.
   const todo = [];
   for (const a of assets) {
-    if (!args.force && await exists(join(ROOT, 'assets/generated', a.category, `${a.id}.png`))) continue;
+    if (!args.force && await findExisting(a.category, a.id)) continue;
     todo.push(a);
   }
 
@@ -264,13 +306,21 @@ async function main() {
   let done = 0, skipped = assets.length - todo.length, failed = 0;
 
   for (const asset of todo) {
-    const out = join(ROOT, 'assets/generated', asset.category, `${asset.id}.png`);
     process.stdout.write(`  … ${asset.id.padEnd(22)} `);
     try {
-      const png = await generateImage(key, model, buildPrompt(asset, manifest), asset.aspect);
+      const { buffer, mimeType } = await generateImage(key, model, buildPrompt(asset, manifest), asset.aspect);
+      const ext = extFor(mimeType);
+      const out = join(ROOT, 'assets/generated', asset.category, `${asset.id}.${ext}`);
+
+      // Éviter de laisser deux fichiers du même asset avec des extensions différentes.
+      if (args.force) {
+        const stale = await findExisting(asset.category, asset.id);
+        if (stale && stale !== out) await rm(stale);
+      }
+
       await mkdir(dirname(out), { recursive: true });
-      await writeFile(out, png);
-      console.log(`✓ ${(png.length / 1024).toFixed(0)} Ko`);
+      await writeFile(out, buffer);
+      console.log(`✓ ${(buffer.length / 1024).toFixed(0)} Ko  .${ext}`);
       done++;
     } catch (err) {
       console.log(`✗ ${err.message}`);
@@ -278,7 +328,9 @@ async function main() {
     }
   }
 
+  const indexed = await writeIndex(manifest);
   console.log(`\n${done} générée(s), ${skipped} ignorée(s), ${failed} en échec.`);
+  console.log(`Index mis à jour : ${indexed} fichier(s) référencé(s).`);
   if (done && price.usd !== null) console.log(`Coût approximatif de ce passage : ~${(done * price.usd).toFixed(2)} USD`);
   if (done) console.log('Contrôle qualité : ouvrir assets/preview/index.html');
   if (failed) process.exitCode = 1;

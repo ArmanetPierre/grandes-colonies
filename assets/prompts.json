@@ -25,7 +25,8 @@
     {
       "id": "tile_field", "category": "tiles", "priority": "P0", "aspect": "1:1",
       "resource": "blé", "color": "#E8B93B",
-      "subject": "Golden wheat field seen from directly above, regular parallel furrows of ripe grain crossing the image diagonally, warm golden yellow #E8B93B with soft amber variation, gentle and even texture"
+      "note": "v1 rejetée: 'furrows crossing diagonally' a produit des rayures très contrastées qui accrochent entre tuiles. Sillons désormais explicitement faibles et non directionnels.",
+      "subject": "Ripe wheat field seen from directly above, dense soft heads of grain forming an even velvety carpet, barely visible shallow furrows, no strong directional lines, no stripes, warm golden yellow #E8B93B with gentle amber variation, very low contrast and uniform"
     },
     {
       "id": "tile_hills", "category": "tiles", "priority": "P0", "aspect": "1:1",
@@ -35,7 +36,8 @@
     {
       "id": "tile_mountain", "category": "tiles", "priority": "P0", "aspect": "1:1",
       "resource": "minerai", "color": "#6E7B8B",
-      "subject": "Bare rocky mountain terrain seen from directly above, angular grey stone ridges and fractured rock faces, slate grey #6E7B8B with cool blue-grey and pale highlights, patches of scree, no snow"
+      "note": "v1 rejetée: crête dominante trop contrastée traversant le centre. Relief désormais réparti et sans ligne dominante.",
+      "subject": "Bare rocky terrain seen from directly above, many small angular grey rocks and shallow fractures evenly spread across the surface, no dominant ridge line, no deep dark crevices, slate grey #6E7B8B with soft cool highlights, low contrast and uniform, no snow"
     },
     {
       "id": "tile_desert", "category": "tiles", "priority": "P0", "aspect": "1:1",
