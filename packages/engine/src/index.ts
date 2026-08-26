@@ -18,3 +18,4 @@ export * from './titles.js';
 export * from './rng.js';
 export * from './devCards.js';
 export * from './victory.js';
+export * from './game/index.js';
