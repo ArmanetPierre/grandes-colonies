@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grand Colonies — essai de direction artistique</title>
+<style>
+  :root { --bg:#14161a; --panel:#1c1f25; --line:#2c313a; --fg:#e8e6e1; --dim:#9aa1ad; --bad:#d9534f; --ok:#5aa469; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--fg); font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 32px; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .sub { color: var(--dim); font-size: 13px; margin-bottom: 8px; max-width: 80ch; }
+  h2 { font-size: 17px; margin: 34px 0 4px; padding-top: 22px; border-top: 1px solid var(--line); }
+  .verdict { font-size: 13px; margin-bottom: 14px; max-width: 80ch; color: var(--dim); }
+  .verdict b { color: var(--fg); }
+  .tag { display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; margin-left:8px; vertical-align:middle; }
+  .tag.ok { background:#1e3524; color:var(--ok); }
+  .tag.no { background:#3a1f1f; color:var(--bad); }
+
+  .hex { position: relative; overflow: hidden; background:#222;
+         clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); }
+  .hex img { width:100%; height:100%; object-fit:cover; display:block; }
+
+  .row { display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap; }
+  .item { text-align:center; }
+  .item .label { color:var(--dim); font-size:11px; margin-top:6px; font-family:ui-monospace,monospace; }
+  .qc .hex { width:120px; height:138.6px; }
+  .big .hex { width:250px; height:289px; }
+  .colhead { font-size:12px; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; margin:16px 0 8px; }
+
+  .tess { position:relative; height:236px; background:#0f1216; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .tess .hex { position:absolute; width:104px; height:120px; }
+
+  details { margin-top: 36px; border-top:1px solid var(--line); padding-top:18px; }
+  summary { cursor:pointer; font-size:14px; color:var(--dim); }
+</style>
+</head>
+<body>
+
+<h1>Direction artistique — Grèce antique, style net</h1>
+<p class="sub">
+  Deux directions « propres », testées sur les deux tuiles les plus différentes de la série.
+  Le test qui décide n'est pas « laquelle est la plus belle en grand », mais
+  <b>laquelle tient à 120 px sur toute la série</b> : terrain reconnaissable à la couleur,
+  motifs qui n'accrochent pas entre tuiles voisines, centre disponible pour le jeton.
+</p>
+
+<h2>E — Rendu 3D stylisé <span class="tag ok">direction retenue</span></h2>
+<p class="verdict">
+  Volumes doux, matière mate, lumière ambiante — le rendu des jeux de plateau numériques,
+  transposé en décor grec : oliviers et cyprès, terrasses en pierre sèche, terre cuite.
+  <b>Les deux tuiles sont pleines cadre, chacune avec sa couleur dominante franche</b>, et le
+  traitement est cohérent de l'une à l'autre. Reste à vérifier ici que le relief ne concurrence
+  pas les pièces qu'on posera dessus.
+</p>
+<div class="colhead">120 px — taille réelle en vue d'ensemble</div>
+<div class="row qc" id="qcE"></div>
+<div class="colhead">Vue rapprochée</div>
+<div class="row big" id="bigE"></div>
+<div class="colhead">Tessellation</div>
+<div class="tess" id="tessE"></div>
+
+<h2>C — Aplats vectoriels <span class="tag no">écartée</span></h2>
+<p class="verdict">
+  Formes nettes, teintes plates, aucune texture. <b>Le plus lisible en petit et le plus sûr</b> :
+  chaque tuile garde une famille de couleur franche, donc le terrain reste codé par la couleur.
+  Réserve : la forêt est figurative (arbres reconnaissables) alors que les collines sont
+  presque abstraites — <b>deux niveaux d'abstraction différents</b>, à réaligner.
+</p>
+<div class="colhead">120 px — taille réelle en vue d'ensemble</div>
+<div class="row qc" id="qcC"></div>
+<div class="colhead">Vue rapprochée</div>
+<div class="row big" id="bigC"></div>
+<div class="colhead">Tessellation</div>
+<div class="tess" id="tessC"></div>
+
+<h2>D — Mosaïque antique <span class="tag no">écartée</span></h2>
+<p class="verdict">
+  Tesselles de pierre. <b>De loin la plus « grecque » et la plus travaillée</b>, et étonnamment
+  sobre sur les collines. Deux réserves : les tesselles risquent de devenir du bruit à 120 px,
+  et surtout <b>les deux tuiles n'emploient pas la même technique</b> — tesselles courbes épousant
+  les arbres pour la forêt, grille carrée stricte pour les collines. Il faut en imposer une seule.
+  La forêt porte aussi un quadrillage de panneaux parasite.
+</p>
+<div class="colhead">120 px — taille réelle en vue d'ensemble</div>
+<div class="row qc" id="qcD"></div>
+<div class="colhead">Vue rapprochée</div>
+<div class="row big" id="bigD"></div>
+<div class="colhead">Tessellation</div>
+<div class="tess" id="tessD"></div>
+
+<details>
+  <summary>Directions écartées — aquarelle (A) et fresque minoenne (B)</summary>
+  <p class="verdict" style="margin-top:14px">
+    <b>A — aquarelle :</b> jugée trop « lâchée ». Le modèle avait en plus peint une marge de papier
+    blanche sur les collines, incompatible avec la tessellation.<br>
+    <b>B — fresque minoenne :</b> très signée, mais la palette de fresque étant commune à toutes les
+    tuiles, le terrain cessait d'être codé par la couleur — et le bleu y désignait la mer partout ailleurs.
+  </p>
+  <div class="row qc" id="qcAB"></div>
+</details>
+
+<script src="../style-tests/index.js"></script>
+<script>
+const INDEX = window.ASSET_INDEX || {};
+const BUST = `?v=${Date.now()}`;
+const LABEL = { forest: 'forêt', hills: 'collines' };
+
+function hex(id, cls) {
+  const item = document.createElement('div');
+  item.className = 'item';
+  const box = document.createElement('div');
+  box.className = 'hex';
+  const img = document.createElement('img');
+  box.appendChild(img);
+  if (INDEX[id]) img.src = `../style-tests/${INDEX[id]}${BUST}`;
+  item.appendChild(box);
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.textContent = `${id[0]} · ${LABEL[id.split('_')[1]]}`;
+  item.appendChild(label);
+  return item;
+}
+
+for (const style of ['E', 'C', 'D']) {
+  for (const kind of ['forest', 'hills']) {
+    document.getElementById('qc' + style).appendChild(hex(`${style}_${kind}`));
+    document.getElementById('big' + style).appendChild(hex(`${style}_${kind}`));
+  }
+}
+for (const id of ['A_forest', 'A_hills', 'B_forest', 'B_hills']) {
+  document.getElementById('qcAB').appendChild(hex(id));
+}
+
+// Deux rangées alternant les deux tuiles : fait apparaître les coutures claires
+// et les motifs qui « accrochent » d'une tuile à sa voisine.
+function tessellate(elId, style) {
+  const el = document.getElementById(elId);
+  const W = 104, H = 120;
+  [5, 6].forEach((count, r) => {
+    for (let c = 0; c < count; c++) {
+      const box = document.createElement('div');
+      box.className = 'hex';
+      box.style.left = (c * W + (r === 0 ? W / 2 : 0) + 12) + 'px';
+      box.style.top = (r * H * 0.75 + 8) + 'px';
+      const img = document.createElement('img');
+      box.appendChild(img);
+      const id = `${style}_${(r + c) % 2 ? 'hills' : 'forest'}`;
+      if (INDEX[id]) img.src = `../style-tests/${INDEX[id]}${BUST}`;
+      el.appendChild(box);
+    }
+  });
+}
+tessellate('tessE', 'E');
+tessellate('tessC', 'C');
+tessellate('tessD', 'D');
+</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "_comment": "Manifeste d'ESSAI de direction artistique — Grèce antique + aquarelle. Sorties isolées dans assets/style-tests/, sans toucher aux tuiles de production. Usage: node scripts/generate-assets.mjs --manifest assets/style-tests.json --yes",
+  "outDir": "assets/style-tests",
+  "style": {
+    "greek_watercolor": "hand-painted watercolor illustration on cold-pressed paper, visible paper grain and soft pigment blooms, translucent layered washes with gentle uneven edges, ancient Greek Mediterranean setting, warm Aegean daylight, natural earthy palette of olive green, terracotta, pale limestone and sun-bleached ochre, top-down orthographic view, no cast shadows, calm uniform composition with no focal point in the center, edges visually quiet and continuous, full-bleed square composition filling the entire canvas, no text, no borders, no frame, no vignette",
+    "minoan_fresco": "hand-painted watercolor in the spirit of an ancient Minoan fresco, matte pigment washes on lime plaster, subtly aged and patinated surface with very fine crackle, flat decorative rendering with simplified organic shapes, Aegean palette of saffron yellow, terracotta red, deep sea blue, olive green and ivory, top-down orthographic view, no cast shadows, calm uniform composition with no focal point in the center, edges visually quiet and continuous, full-bleed square composition filling the entire canvas, no text, no borders, no frame, no vignette",
+    "flat_greek": "clean flat vector illustration, crisp geometric shapes, flat solid tints with no texture and no painterly brushwork, elegant minimal stylisation, ancient Greek Mediterranean subject, refined antique palette, top-down orthographic view, no cast shadows, motifs evenly distributed across the whole surface, calm composition with no focal point in the center, edges quiet and continuous, the artwork bleeds fully beyond all four edges of the square",
+    "greek_mosaic": "ancient Greek stone mosaic made of large regular square tesserae laid in an orderly grid, thin pale grout lines between tesserae, subtle tone variation from one tessera to the next, motif simplified enough to read clearly at small size, refined antique palette, top-down orthographic view, no cast shadows, evenly distributed across the whole surface, calm composition with no focal point in the center, the mosaic bleeds fully beyond all four edges of the square",
+    "greek_3d": "stylised 3D rendered board game asset, smooth clean materials with a soft matte finish, gentle global illumination and subtle ambient occlusion, shallow relief seen from directly above in strict orthographic projection with no perspective distortion, the polished look of a modern digital board game, ancient Greek Aegean setting, refined natural palette, low visual noise, motifs evenly distributed across the whole surface, calm composition with no focal point in the center, edges quiet and continuous, the render fills and bleeds fully beyond all four edges of the square"
+  },
+  "negative": "slab, plaque, tile base, platform, pedestal, diorama base, isolated object, floating island, single tile on a background, product render, studio backdrop, drop shadow under the whole image, strong perspective, tilted camera, isometric view, deep dark shadows, paper margin, white margin, white border, canvas edge, framed picture, text, letters, numbers, watermark, signature, logo, frame, border, vignette, UI elements, people, characters, hexagon shape, hexagonal tile, photorealistic, high contrast details near edges, dark corners",
+  "assets": [
+    {
+      "id": "A_forest",
+      "category": "tiles",
+      "priority": "TEST",
+      "aspect": "1:1",
+      "style": "greek_watercolor",
+      "subject": "Mediterranean woodland of an ancient Greek island seen from directly above, dense umbrella pines and dark cypresses forming an even canopy, deep olive and pine green, glimpses of dry pale earth between the trees, uniform density"
+    },
+    {
+      "id": "A_hills",
+      "category": "tiles",
+      "priority": "TEST",
+      "aspect": "1:1",
+      "style": "greek_watercolor",
+      "subject": "Terraced hillside of an ancient Greek island seen from directly above, low dry-stone retaining walls following soft contours, warm terracotta and ochre earth, sparse silver-green scrub, gentle and low contrast"
+    },
+    {
+      "id": "B_forest",
+      "category": "tiles",
+      "priority": "TEST",
+      "aspect": "1:1",
+      "style": "minoan_fresco",
+      "subject": "Mediterranean woodland of an ancient Greek island seen from directly above, stylised umbrella pines and cypresses as simplified rounded shapes forming an even canopy, olive and pine green, uniform density"
+    },
+    {
+      "id": "B_hills",
+      "category": "tiles",
+      "priority": "TEST",
+      "aspect": "1:1",
+      "style": "minoan_fresco",
+      "subject": "Terraced hillside of an ancient Greek island seen from directly above, simplified curved terrace bands following soft contours, warm terracotta and saffron earth, sparse stylised scrub, gentle and low contrast"
+    },
+    {
+      "id": "C_forest",
+      "category": "tiles",
+      "priority": "TEST",
+      "aspect": "1:1",
+      "style": "flat_greek",
+      "subject": "Mediterranean woodland seen from directly above, stylised umbrella pines and slim cypresses as clean simplified silhouettes, three flat tones of olive and pine green clearly dominant, small glimpses of pale stone ground, even density"
+    },
+    {
+      "id": "C_hills",
+      "category": "tiles",
+      "priority": "TEST",
+      "aspect": "1:1",
+      "style": "flat_greek",
+      "subject": "Terraced Greek hillside seen from directly above, soft rounded terrace shapes in three flat tones of terracotta and ochre clearly dominant, thin pale stone edging, a few tiny olive-green shrubs, no long continuous lines"
+    },
+    {
+      "id": "D_forest",
+      "category": "tiles",
+      "priority": "TEST",
+      "aspect": "1:1",
+      "style": "greek_mosaic",
+      "subject": "Mediterranean woodland rendered as a stone mosaic seen from directly above, rounded tree canopies formed of green tesserae, deep olive and pine green clearly dominant, pale stone tesserae only between the trees, even density"
+    },
+    {
+      "id": "D_hills",
+      "category": "tiles",
+      "priority": "TEST",
+      "aspect": "1:1",
+      "style": "greek_mosaic",
+      "subject": "Terraced Greek hillside rendered as a stone mosaic seen from directly above, terracotta and ochre tesserae clearly dominant forming soft terrace bands, a few olive-green tesserae as scrub, no strong continuous line"
+    },
+    {
+      "id": "E_forest",
+      "category": "tiles",
+      "priority": "TEST",
+      "aspect": "1:1",
+      "style": "greek_3d",
+      "subject": "Mediterranean woodland seen from directly above, stylised umbrella pines and slim cypresses with soft rounded volumetric canopies, deep olive and pine green clearly dominant, pale dry stone ground barely visible between the trees, even density, the woodland extends continuously past all four edges of the frame as if cropped from a much larger forest"
+    },
+    {
+      "id": "E_hills",
+      "category": "tiles",
+      "priority": "TEST",
+      "aspect": "1:1",
+      "style": "greek_3d",
+      "subject": "Terraced Greek hillside seen from directly above, gently rounded earth terraces held by low dry-stone walls, warm terracotta and ochre earth clearly dominant, a few small olive shrubs, soft shallow relief, no long continuous straight line"
+    }
+  ]
+}

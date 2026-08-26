@@ -1,0 +1,12 @@
+window.ASSET_INDEX = {
+  "A_forest": "tiles/A_forest.jpg",
+  "A_hills": "tiles/A_hills.jpg",
+  "B_forest": "tiles/B_forest.jpg",
+  "B_hills": "tiles/B_hills.jpg",
+  "C_forest": "tiles/C_forest.jpg",
+  "C_hills": "tiles/C_hills.jpg",
+  "D_forest": "tiles/D_forest.jpg",
+  "D_hills": "tiles/D_hills.jpg",
+  "E_forest": "tiles/E_forest.jpg",
+  "E_hills": "tiles/E_hills.jpg"
+};

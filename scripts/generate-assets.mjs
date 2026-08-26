@@ -22,7 +22,7 @@ const API = 'https://generativelanguage.googleapis.com/v1beta';
 // ---------------------------------------------------------------- arguments
 
 function parseArgs(argv) {
-  const args = { priority: null, id: null, force: false, list: false, model: null, dryRun: false, tier: 'balanced', yes: false };
+  const args = { priority: null, id: null, force: false, list: false, model: null, dryRun: false, tier: 'balanced', yes: false, manifest: 'assets/prompts.json' };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--force') args.force = true;
@@ -34,6 +34,7 @@ function parseArgs(argv) {
     else if (a === '--priority') args.priority = argv[++i]?.toUpperCase();
     else if (a === '--id') args.id = argv[++i];
     else if (a === '--model') args.model = argv[++i];
+    else if (a === '--manifest') args.manifest = argv[++i];
     else if (a === '--help' || a === '-h') args.list = true;
   }
   return args;
@@ -209,9 +210,9 @@ const exists = (p) => access(p).then(() => true, () => false);
 const extFor = (mimeType) => (/jpe?g/i.test(mimeType) ? 'jpg' : /webp/i.test(mimeType) ? 'webp' : 'png');
 
 /** Un asset est considéré comme déjà généré quelle que soit son extension. */
-async function findExisting(category, id) {
+async function findExisting(outDir, category, id) {
   for (const ext of ['png', 'jpg', 'webp']) {
-    const p = join(ROOT, 'assets/generated', category, `${id}.${ext}`);
+    const p = join(ROOT, outDir, category, `${id}.${ext}`);
     if (await exists(p)) return p;
   }
   return null;
@@ -222,20 +223,20 @@ async function findExisting(category, id) {
  * Le modèle renvoie tantôt du JPEG tantôt du PNG ; sans cet index, tout
  * consommateur devrait deviner l'extension en enchaînant des requêtes en échec.
  */
-async function writeIndex(manifest) {
+async function writeIndex(manifest, outDir) {
   const index = {};
   for (const asset of manifest.assets) {
-    const found = await findExisting(asset.category, asset.id);
+    const found = await findExisting(outDir, asset.category, asset.id);
     if (found) index[asset.id] = `${asset.category}/${found.split('/').pop()}`;
   }
   await writeFile(
-    join(ROOT, 'assets/generated/index.json'),
+    join(ROOT, outDir, 'index.json'),
     JSON.stringify({ generatedAt: new Date().toISOString(), files: index }, null, 2) + '\n'
   );
   // Variante JS : la planche de contrôle s'ouvre en file://, où fetch() est
   // bloqué par la politique d'origine. Une balise <script>, elle, fonctionne.
   await writeFile(
-    join(ROOT, 'assets/generated/index.js'),
+    join(ROOT, outDir, 'index.js'),
     `window.ASSET_INDEX = ${JSON.stringify(index, null, 2)};\n`
   );
   return Object.keys(index).length;
@@ -243,7 +244,8 @@ async function writeIndex(manifest) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const manifest = JSON.parse(await readFile(join(ROOT, 'assets/prompts.json'), 'utf8'));
+  const manifest = JSON.parse(await readFile(join(ROOT, args.manifest), 'utf8'));
+  const outDir = manifest.outDir || 'assets/generated';
 
   let assets = manifest.assets;
   if (args.priority) assets = assets.filter(a => a.priority === args.priority);
@@ -284,7 +286,7 @@ async function main() {
   // Ne compter que ce qui sera réellement généré.
   const todo = [];
   for (const a of assets) {
-    if (!args.force && await findExisting(a.category, a.id)) continue;
+    if (!args.force && await findExisting(outDir, a.category, a.id)) continue;
     todo.push(a);
   }
 
@@ -310,11 +312,11 @@ async function main() {
     try {
       const { buffer, mimeType } = await generateImage(key, model, buildPrompt(asset, manifest), asset.aspect);
       const ext = extFor(mimeType);
-      const out = join(ROOT, 'assets/generated', asset.category, `${asset.id}.${ext}`);
+      const out = join(ROOT, outDir, asset.category, `${asset.id}.${ext}`);
 
       // Éviter de laisser deux fichiers du même asset avec des extensions différentes.
       if (args.force) {
-        const stale = await findExisting(asset.category, asset.id);
+        const stale = await findExisting(outDir, asset.category, asset.id);
         if (stale && stale !== out) await rm(stale);
       }
 
@@ -328,7 +330,8 @@ async function main() {
     }
   }
 
-  const indexed = await writeIndex(manifest);
+  await mkdir(join(ROOT, outDir), { recursive: true });
+  const indexed = await writeIndex(manifest, outDir);
   console.log(`\n${done} générée(s), ${skipped} ignorée(s), ${failed} en échec.`);
   console.log(`Index mis à jour : ${indexed} fichier(s) référencé(s).`);
   if (done && price.usd !== null) console.log(`Coût approximatif de ce passage : ~${(done * price.usd).toFixed(2)} USD`);
