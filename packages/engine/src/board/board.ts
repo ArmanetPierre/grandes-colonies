@@ -26,6 +26,18 @@ export interface HexData {
 
 export type BuildingKind = 'settlement' | 'city';
 
+/**
+ * Grand Colonies distingue routes terrestres et routes maritimes (§12), mais
+ * les deux forment un seul « réseau commercial » pour le décompte du plus
+ * long réseau — comme les navires de Seafarers.
+ */
+export type RouteKind = 'land' | 'maritime';
+
+export interface Route {
+  readonly owner: PlayerId;
+  readonly kind: RouteKind;
+}
+
 export interface Building {
   readonly kind: BuildingKind;
   readonly owner: PlayerId;
@@ -54,14 +66,14 @@ export class Board {
   private readonly data: Map<HexId, HexData>;
   private readonly robbers: Set<HexId>;
   private readonly buildings: Map<VertexId, Building>;
-  private readonly roads: Map<EdgeId, PlayerId>;
+  private readonly routes: Map<EdgeId, Route>;
 
   constructor(init: BoardInit) {
     this.graph = new BoardGraph(init.positions);
     this.data = new Map(init.hexes);
     this.robbers = new Set();
     this.buildings = new Map();
-    this.roads = new Map();
+    this.routes = new Map();
   }
 
   // ── terrain ──────────────────────────────────────────────────────────
@@ -116,20 +128,25 @@ export class Board {
     this.buildings.set(v, building);
   }
 
+  /** Le propriétaire d'une route, quelle qu'en soit la nature. */
   roadAt(e: EdgeId): PlayerId | undefined {
-    return this.roads.get(e);
+    return this.routes.get(e)?.owner;
   }
 
-  setRoad(e: EdgeId, owner: PlayerId): void {
-    this.roads.set(e, owner);
+  routeAt(e: EdgeId): Route | undefined {
+    return this.routes.get(e);
+  }
+
+  setRoad(e: EdgeId, owner: PlayerId, kind: RouteKind = 'land'): void {
+    this.routes.set(e, { owner, kind });
   }
 
   allBuildings(): ReadonlyMap<VertexId, Building> {
     return this.buildings;
   }
 
-  allRoads(): ReadonlyMap<EdgeId, PlayerId> {
-    return this.roads;
+  allRoutes(): ReadonlyMap<EdgeId, Route> {
+    return this.routes;
   }
 
   /** Les constructions posées sur les sommets d'un hexagone. */

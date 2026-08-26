@@ -2,13 +2,16 @@
   "name": "grand-colonies",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --build --force"
   },
   "devDependencies": {
+    "@types/node": "^26.3.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   }
