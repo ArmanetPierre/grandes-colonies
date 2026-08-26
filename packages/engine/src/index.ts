@@ -8,3 +8,7 @@
 
 export * from './board/axial.js';
 export * from './board/graph.js';
+export * from './board/board.js';
+export * from './resources.js';
+export * from './production.js';
+export * from './placement.js';
