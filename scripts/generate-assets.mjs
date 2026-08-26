@@ -22,12 +22,15 @@ const API = 'https://generativelanguage.googleapis.com/v1beta';
 // ---------------------------------------------------------------- arguments
 
 function parseArgs(argv) {
-  const args = { priority: null, id: null, force: false, list: false, model: null, dryRun: false };
+  const args = { priority: null, id: null, force: false, list: false, model: null, dryRun: false, tier: 'balanced', yes: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--force') args.force = true;
     else if (a === '--list') args.list = true;
     else if (a === '--dry-run') args.dryRun = true;
+    else if (a === '--best') args.tier = 'best';
+    else if (a === '--cheap') args.tier = 'cheap';
+    else if (a === '--yes' || a === '-y') args.yes = true;
     else if (a === '--priority') args.priority = argv[++i]?.toUpperCase();
     else if (a === '--id') args.id = argv[++i];
     else if (a === '--model') args.model = argv[++i];
@@ -61,23 +64,42 @@ async function loadApiKey() {
 // ------------------------------------------------------- découverte du modèle
 
 /**
+ * Tarifs indicatifs par image générée, en USD (relevés le 26/08/2026).
+ * Servent uniquement à estimer et à afficher le coût avant de dépenser :
+ * la facturation réelle fait foi. Voir https://ai.google.dev/gemini-api/docs/pricing
+ */
+const PRICING = [
+  { match: /gemini-3-pro-image/,          usd: 0.134, label: 'Nano Banana Pro' },
+  { match: /gemini-3\.1-flash-lite-image/, usd: 0.0336, label: 'Nano Banana 2 Lite' },
+  { match: /gemini-3\.1-flash-image/,     usd: 0.067, label: 'Nano Banana 2' },
+  { match: /gemini-2\.5-flash-image/,     usd: 0.039, label: 'Nano Banana (retiré le 02/10/2026)' },
+];
+
+const priceOf = (model) => PRICING.find(p => p.match.test(model)) ?? { usd: null, label: 'tarif inconnu' };
+
+/**
  * Les noms de modèles d'image de Google changent souvent (Imagen a été arrêté
  * le 17/08/2026 au profit de Nano Banana). Plutôt que de coder un nom en dur,
- * on interroge l'API pour prendre le meilleur modèle d'image réellement
- * disponible sur cette clé.
+ * on interroge l'API pour prendre le modèle d'image réellement disponible.
+ *
+ * Par défaut on privilégie un modèle "flash" : sur ce projet, la contrainte est
+ * la cohérence d'une série de tuiles, pas le rendu d'une image isolée, et un
+ * modèle "pro" coûte environ le double sans mieux y répondre. --best et --cheap
+ * permettent de choisir explicitement.
  */
-async function discoverImageModel(key, override) {
+async function discoverImageModel(key, override, tier) {
   if (override) return override;
 
   const res = await fetch(`${API}/models?pageSize=200`, { headers: { 'x-goog-api-key': key } });
   if (!res.ok) throw new Error(`Impossible de lister les modèles (HTTP ${res.status}) : ${await res.text()}`);
 
   const { models = [] } = await res.json();
-  const candidates = models.filter(m =>
-    (m.supportedGenerationMethods || []).includes('generateContent') &&
-    /image/i.test(m.name) &&
-    !/vision|understand|embed/i.test(m.name)
-  );
+  const candidates = models
+    .filter(m =>
+      (m.supportedGenerationMethods || []).includes('generateContent') &&
+      /image/i.test(m.name) &&
+      !/vision|understand|embed/i.test(m.name))
+    .map(m => m.name.replace('models/', ''));
 
   if (!candidates.length) {
     throw new Error(
@@ -86,13 +108,19 @@ async function discoverImageModel(key, override) {
     );
   }
 
-  // Préférence : version numérique la plus élevée, puis "pro" avant "flash".
-  const score = (m) => {
-    const v = parseFloat((m.name.match(/gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1]) || 0;
-    return v * 10 + (/pro/i.test(m.name) ? 2 : /flash/i.test(m.name) ? 1 : 0);
-  };
-  candidates.sort((a, b) => score(b) - score(a));
-  return candidates[0].name.replace('models/', '');
+  const version = (n) => parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1]) || 0;
+  const family = (n) => /lite/i.test(n) ? 'lite' : /pro/i.test(n) ? 'pro' : /flash/i.test(n) ? 'flash' : 'other';
+
+  // Ordre de préférence des familles selon le palier demandé.
+  const order = { best: ['pro', 'flash', 'lite'], cheap: ['lite', 'flash', 'pro'], balanced: ['flash', 'lite', 'pro'] }[tier];
+
+  candidates.sort((a, b) => {
+    const fa = order.indexOf(family(a)), fb = order.indexOf(family(b));
+    if (fa !== fb) return (fa < 0 ? 99 : fa) - (fb < 0 ? 99 : fb);
+    return version(b) - version(a); // à famille égale, version la plus récente
+  });
+
+  return candidates[0];
 }
 
 // ------------------------------------------------------------------ génération
@@ -189,21 +217,35 @@ async function main() {
   }
 
   const key = await loadApiKey();
-  const model = await discoverImageModel(key, args.model);
-  console.log(`Modèle : ${model}`);
-  console.log(`À générer : ${assets.length} image(s)\n`);
+  const model = await discoverImageModel(key, args.model, args.tier);
+  const price = priceOf(model);
 
-  let done = 0, skipped = 0, failed = 0;
+  // Ne compter que ce qui sera réellement généré.
+  const todo = [];
+  for (const a of assets) {
+    if (!args.force && await exists(join(ROOT, 'assets/generated', a.category, `${a.id}.png`))) continue;
+    todo.push(a);
+  }
 
-  for (const asset of assets) {
+  console.log(`Modèle    : ${model}  (${price.label})`);
+  console.log(`À générer : ${todo.length} image(s) sur ${assets.length} sélectionnée(s)`);
+  if (price.usd !== null) {
+    console.log(`Coût estimé : ~${(todo.length * price.usd).toFixed(2)} USD  (${price.usd} / image)`);
+  } else {
+    console.log('Coût estimé : inconnu pour ce modèle');
+  }
+  console.log('');
+
+  if (todo.length && !args.yes) {
+    process.stdout.write('Démarrage dans 4 s — Ctrl+C pour annuler…');
+    await new Promise(r => setTimeout(r, 4000));
+    console.log('\n');
+  }
+
+  let done = 0, skipped = assets.length - todo.length, failed = 0;
+
+  for (const asset of todo) {
     const out = join(ROOT, 'assets/generated', asset.category, `${asset.id}.png`);
-
-    if (!args.force && await exists(out)) {
-      console.log(`  ⊘ ${asset.id.padEnd(22)} déjà généré (--force pour refaire)`);
-      skipped++;
-      continue;
-    }
-
     process.stdout.write(`  … ${asset.id.padEnd(22)} `);
     try {
       const png = await generateImage(key, model, buildPrompt(asset, manifest), asset.aspect);
@@ -218,6 +260,7 @@ async function main() {
   }
 
   console.log(`\n${done} générée(s), ${skipped} ignorée(s), ${failed} en échec.`);
+  if (done && price.usd !== null) console.log(`Coût approximatif de ce passage : ~${(done * price.usd).toFixed(2)} USD`);
   if (done) console.log('Contrôle qualité : ouvrir assets/preview/index.html');
   if (failed) process.exitCode = 1;
 }

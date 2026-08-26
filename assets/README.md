@@ -90,15 +90,47 @@ Générer P0 d'abord, contrôler, ajuster les prompts si besoin, puis continuer.
 
 ---
 
+## Coût
+
+Tarifs relevés le 26/08/2026 sur [ai.google.dev/gemini-api/docs/pricing](https://ai.google.dev/gemini-api/docs/pricing). **Aucun palier gratuit n'existe pour la génération d'images** : la facturation doit être activée sur le projet Google.
+
+| Modèle | Prix / image (1K) | Notes |
+|---|---:|---|
+| Nano Banana 2 Lite (`gemini-3.1-flash-lite-image`) | 0,034 $ | `--cheap` |
+| Nano Banana 2 (`gemini-3.1-flash-image`) | 0,067 $ | **défaut** — 0,101 $ en 2K |
+| Nano Banana Pro (`gemini-3-pro-image`) | 0,134 $ | `--best` |
+| Nano Banana (`gemini-2.5-flash-image`) | 0,039 $ | retiré le 02/10/2026, à éviter |
+
+L'API Batch applique **-50 %** sur tous ces tarifs, au prix d'un traitement asynchrone : intéressant pour le passage final une fois les prompts figés, inadapté au travail itératif.
+
+### Estimation pour les 28 images
+
+| Scénario | Générations | Lite | Défaut | Pro |
+|---|---:|---:|---:|---:|
+| Passage unique, sans reprise | 28 | 0,94 $ | ~2,20 $ | 3,75 $ |
+| **Réaliste** (tuiles ×4, cartes ×2,5, fonds ×2) | ~84 | 2,80 $ | ~6,70 $ | 11,30 $ |
+| P0 seul, réaliste (6 tuiles ×4) | 24 | 0,81 $ | 1,61 $ | 3,22 $ |
+
+Le facteur d'itération domine le coût. Il est élevé sur les tuiles parce que la contrainte n'est pas la beauté d'une image isolée mais la **cohérence de la série** : une tuile qui sort du style oblige à la régénérer, parfois plusieurs fois.
+
+Le coût des tokens d'entrée (les prompts, ~200 tokens chacun) est négligeable : moins de 0,05 $ sur l'ensemble.
+
+Le script affiche le modèle retenu et le coût estimé avant de générer, puis laisse 4 secondes pour annuler (`--yes` pour passer outre).
+
+---
+
 ## Modèle utilisé
 
-Le script **ne code aucun nom de modèle en dur**. Il interroge l'API pour trouver le meilleur modèle de génération d'image disponible sur la clé, et prend la version la plus récente.
+Le script **ne code aucun nom de modèle en dur**. Il interroge l'API pour trouver les modèles de génération d'image disponibles sur la clé et choisit selon le palier demandé.
 
-C'est délibéré : les modèles d'image de Google changent souvent — la famille Imagen a été arrêtée le 17 août 2026 au profit de Nano Banana. Un nom codé en dur casserait le script à la prochaine rotation.
+C'est délibéré : les modèles d'image de Google changent souvent — la famille Imagen a été arrêtée le 17 août 2026 au profit de Nano Banana, et Nano Banana lui-même s'arrête le 2 octobre 2026. Un nom codé en dur casserait le script à la prochaine rotation.
 
-Pour forcer un modèle précis :
+Par défaut, le script privilégie un modèle **flash** plutôt que **pro**. Sur ce projet la difficulté est la cohérence d'une série de tuiles, pas le rendu d'une image isolée — un modèle pro coûte le double sans mieux y répondre.
 
 ```bash
+node scripts/generate-assets.mjs --priority P0            # flash (défaut)
+node scripts/generate-assets.mjs --priority P0 --cheap    # lite
+node scripts/generate-assets.mjs --priority P0 --best     # pro
 node scripts/generate-assets.mjs --model gemini-3-pro-image --priority P0
 ```
 
