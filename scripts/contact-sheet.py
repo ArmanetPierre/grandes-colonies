@@ -112,12 +112,51 @@ def board(index, out_path, width=150):
     return canvas.size
 
 
+CARDS = ['card_dev_knight', 'card_dev_road', 'card_dev_invention', 'card_dev_monopoly',
+         'card_dev_freebuild', 'card_dev_politics', 'card_obj_trader', 'card_obj_explorer',
+         'card_obj_warlord', 'card_obj_magnate', 'card_obj_architect', 'card_obj_diplomat',
+         'card_back_dev', 'card_back_objective', 'card_back_contract']
+
+BACKGROUNDS = ['bg_lobby', 'bg_host', 'bg_endgame']
+
+
+def grid_sheet(index, ids, out_path, title, cell_w, ratio, cols):
+    """Planche rectangulaire générique : cartes (2:3) ou fonds (16:9)."""
+    cell_h = int(cell_w * ratio)
+    pad, label_h, header = 14, 20, 30
+    rows = (len(ids) + cols - 1) // cols
+    sheet = Image.new('RGB', (cols * (cell_w + pad) + pad,
+                              rows * (cell_h + pad + label_h) + pad + header), BG)
+    draw = ImageDraw.Draw(sheet)
+    draw.text((pad, 8), title, fill=(200, 200, 200), font=font())
+
+    for i, asset_id in enumerate(ids):
+        if asset_id not in index:
+            continue
+        row, col = divmod(i, cols)
+        x = pad + col * (cell_w + pad)
+        y = header + pad + row * (cell_h + pad + label_h)
+        img = Image.open(os.path.join(GENERATED, index[asset_id])).convert('RGB')
+        scale = max(cell_w / img.width, cell_h / img.height)
+        img = img.resize((max(1, int(img.width * scale)), max(1, int(img.height * scale))), Image.LANCZOS)
+        left, top = (img.width - cell_w) // 2, (img.height - cell_h) // 2
+        sheet.paste(img.crop((left, top, left + cell_w, top + cell_h)), (x, y))
+        draw.text((x, y + cell_h + 4), asset_id, fill=DIM, font=font(11))
+
+    sheet.save(out_path)
+    return sheet.size
+
+
 def main():
     out_dir = sys.argv[1] if len(sys.argv) > 1 else '.'
     os.makedirs(out_dir, exist_ok=True)
     index = load_index()
     print('planche 120px  ', contact_sheet(index, os.path.join(out_dir, 'planche_120px.png')))
     print('plateau assemble', board(index, os.path.join(out_dir, 'planche_plateau.png')))
+    print('cartes         ', grid_sheet(index, CARDS, os.path.join(out_dir, 'planche_cartes.png'),
+                                        'Cartes — 2:3', 150, 1.5, 5))
+    print('fonds          ', grid_sheet(index, BACKGROUNDS, os.path.join(out_dir, 'planche_fonds.png'),
+                                        'Fonds d ecran — 16:9', 300, 9 / 16, 3))
 
 
 if __name__ == '__main__':

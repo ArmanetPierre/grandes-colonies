@@ -4,10 +4,10 @@
   "style": {
     "tiles": "stylised 3D rendered board game asset, smooth clean materials with a soft matte finish, gentle global illumination and subtle ambient occlusion, shallow relief seen from directly above in strict orthographic projection with no perspective distortion, the polished look of a modern digital board game, ancient Greek Aegean setting, refined natural palette, low visual noise, motifs evenly distributed across the whole surface, calm composition with no focal point in the center, edges quiet and continuous, the terrain extends continuously past all four edges of the frame as if cropped from a much larger landscape",
     "cards": "stylised 3D rendered illustration for a board game card, smooth clean materials with a soft matte finish, gentle global illumination, ancient Greek Aegean setting, warm refined palette of terracotta, olive, marble white and Aegean blue, subject centered in the upper half, lower third calm and uncluttered, no text, no frame, no border",
-    "backs": "ornamental card back for a board game, ancient Greek decorative motif, symmetrical radial design, flat and elegant, single dominant color with restrained gold accents, fills the entire card, no text, no central emblem with letters",
+    "backs": "ornamental repeating pattern in the ancient Greek decorative tradition, symmetrical radial composition, flat and elegant, single dominant color with restrained metallic accents, dense and clearly contrasted, the pattern covers the entire image from edge to edge with nothing around it, no text",
     "backgrounds": "wide atmospheric background illustration for a board game interface, ancient Greek Aegean setting, heavily desaturated, low contrast, out of focus in the lower half, no strong focal point, designed to sit behind readable white text, no text, no characters"
   },
-  "negative": "slab, plaque, tile base, platform, pedestal, diorama base, isolated object, floating island, single tile on a background, product render, studio backdrop, strong perspective, tilted camera, isometric view, deep dark shadows, paper margin, white margin, white border, canvas edge, framed picture, text, letters, numbers, greek key meander pattern, watermark, signature, logo, frame, border, vignette, UI elements, people, characters, hexagon shape, hexagonal tile, photorealistic, high contrast details near edges, dark corners",
+  "negative": "playing card object, rounded corners, card lying on a surface, photograph of a card, slab, plaque, tile base, platform, pedestal, diorama base, isolated object, floating island, single tile on a background, product render, studio backdrop, strong perspective, tilted camera, isometric view, deep dark shadows, paper margin, white margin, white border, canvas edge, framed picture, text, letters, numbers, greek key meander pattern, watermark, signature, logo, frame, border, vignette, UI elements, people, characters, hexagon shape, hexagonal tile, photorealistic, high contrast details near edges, dark corners",
   "assets": [
     {
       "id": "tile_forest",
@@ -206,7 +206,8 @@
       "priority": "P2",
       "aspect": "2:3",
       "style": "backs",
-      "subject": "Ornamental card back, dominant deep olive green with restrained silver accents, radial laurel wreath motif"
+      "subject": "Ornamental pattern, dominant deep olive green with clear bright silver accents, dense symmetrical radial laurel wreath motif",
+      "note": "Doit faire famille avec les deux autres dos: motif dense et contraste, pas de trait tenu."
     },
     {
       "id": "bg_lobby",
