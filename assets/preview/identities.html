@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grand Colonies — les 12 identités de joueur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:wght@600&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../theme/tokens.css">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--gc-bg); color:var(--gc-ink);
+         font-family:var(--gc-font-ui); font-size:14px; line-height:1.6; padding:30px; }
+  h1 { font-family:var(--gc-font-display); font-size:26px; letter-spacing:.04em; margin-bottom:4px; }
+  .lead { font-family:var(--gc-font-body); font-size:17px; color:var(--gc-ink-soft);
+          max-width:80ch; margin-bottom:26px; }
+  h2 { font-family:var(--gc-font-display); font-size:14px; letter-spacing:.12em;
+       text-transform:uppercase; color:var(--gc-ink-soft);
+       margin:26px 0 10px; padding-top:16px; border-top:1px solid var(--gc-line); }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:10px; }
+  .id { background:var(--gc-surface); border:1px solid var(--gc-line);
+        padding:10px; display:flex; flex-direction:column; align-items:center; gap:7px; }
+  .mark { width:34px; height:34px; border:1px solid rgba(27,19,16,.4); }
+  .nm { font-size:12px; font-weight:600; }
+  .meta { font-size:10px; color:var(--gc-ink-soft); text-align:center; line-height:1.35; }
+
+  /* Pièces réelles : une route de 3 px est le vrai test de lisibilité. */
+  .pieces { display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end; }
+  .pc { text-align:center; }
+  .road { width:52px; height:5px; border:1px solid rgba(27,19,16,.45); }
+  .settle { width:16px; height:16px; border:1px solid rgba(27,19,16,.45);
+            clip-path:polygon(50% 0,100% 38%,100% 100%,0 100%,0 38%); }
+  .city { width:22px; height:18px; border:1px solid rgba(27,19,16,.45);
+          clip-path:polygon(0 40%,32% 40%,32% 0,100% 0,100% 100%,0 100%); }
+  .pc .lbl { font-size:9px; color:var(--gc-ink-soft); margin-top:4px; }
+
+  .sim { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px; }
+  .simbox { background:var(--gc-surface); border:1px solid var(--gc-line); padding:12px; }
+  .simttl { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+            color:var(--gc-ink-soft); margin-bottom:9px; }
+  .strip { display:flex; gap:4px; flex-wrap:wrap; }
+  .strip .mark { width:26px; height:26px; }
+  .f-prot { filter:url(#protanopia); }
+  .f-deut { filter:url(#deuteranopia); }
+  .f-trit { filter:url(#tritanopia); }
+  .f-gray { filter:grayscale(1); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <filter id="protanopia"><feColorMatrix type="matrix" values="
+    0.567 0.433 0 0 0   0.558 0.442 0 0 0   0 0.242 0.758 0 0   0 0 0 1 0"/></filter>
+  <filter id="deuteranopia"><feColorMatrix type="matrix" values="
+    0.625 0.375 0 0 0   0.7 0.3 0 0 0   0 0.3 0.7 0 0   0 0 0 1 0"/></filter>
+  <filter id="tritanopia"><feColorMatrix type="matrix" values="
+    0.95 0.05 0 0 0   0 0.433 0.567 0 0   0 0.475 0.525 0 0   0 0 0 1 0"/></filter>
+</svg>
+
+<h1>Les douze identités</h1>
+<p class="lead">
+  Douze couleurs réellement distinctes n'existent pas. L'identité est donc triple —
+  couleur, forme et motif — de sorte qu'en retirant mentalement la couleur, il reste
+  encore douze identités reconnaissables. Les simulations ci-dessous le vérifient.
+</p>
+
+<h2>1 · Les douze marques</h2>
+<div class="grid" id="grid"></div>
+
+<h2>2 · Sur les pièces réelles</h2>
+<p class="lead" style="font-size:15px; margin-bottom:14px">
+  Le vrai test n'est pas la pastille de la liste des joueurs, c'est la route de cinq pixels
+  posée sur le plateau. C'est là que la couleur seule échoue et que la forme prend le relais.
+</p>
+<div class="pieces" id="pieces"></div>
+
+<h2>3 · Vision des couleurs</h2>
+<div class="sim">
+  <div class="simbox"><div class="simttl">Vision typique</div><div class="strip" id="s0"></div></div>
+  <div class="simbox"><div class="simttl">Protanopie</div><div class="strip f-prot" id="s1"></div></div>
+  <div class="simbox"><div class="simttl">Deutéranopie</div><div class="strip f-deut" id="s2"></div></div>
+  <div class="simbox"><div class="simttl">Tritanopie</div><div class="strip f-trit" id="s3"></div></div>
+  <div class="simbox"><div class="simttl">Sans couleur — le test décisif</div><div class="strip f-gray" id="s4"></div></div>
+</div>
+
+<script>
+// Chaque forme sert deux fois, jamais avec le même motif : la paire
+// (forme × motif) est donc unique pour chacun des douze joueurs.
+const IDS = [
+  { n:'Léa',  c:1,  shape:'hex',      pat:'solid'  },
+  { n:'Marc', c:2,  shape:'square',   pat:'stripe' },
+  { n:'Inès', c:3,  shape:'diamond',  pat:'solid'  },
+  { n:'Théo', c:4,  shape:'triangle', pat:'dot'    },
+  { n:'Sam',  c:5,  shape:'pentagon', pat:'solid'  },
+  { n:'Nour', c:6,  shape:'circle',   pat:'check'  },
+  { n:'Hugo', c:7,  shape:'hex',      pat:'stripe' },
+  { n:'Zoé',  c:8,  shape:'square',   pat:'check'  },
+  { n:'Ali',  c:9,  shape:'diamond',  pat:'dot'    },
+  { n:'Emma', c:10, shape:'triangle', pat:'solid'  },
+  { n:'Rémi', c:11, shape:'pentagon', pat:'stripe' },
+  { n:'Lise', c:12, shape:'circle',   pat:'dot'    },
+];
+const FR = { solid:'plein', stripe:'rayé', dot:'pointillé', check:'damier' };
+const SH = { hex:'hexagone', square:'carré', diamond:'losange',
+             triangle:'triangle', pentagon:'pentagone', circle:'cercle' };
+
+function mark(id, cls) {
+  const d = document.createElement('div');
+  d.className = `mark gc-shape-${id.shape} gc-pattern-${id.pat} ${cls || ''}`;
+  d.style.backgroundColor = `var(--gc-p${id.c})`;
+  return d;
+}
+
+const grid = document.getElementById('grid');
+IDS.forEach(id => {
+  const cell = document.createElement('div');
+  cell.className = 'id';
+  cell.appendChild(mark(id));
+  const nm = document.createElement('div');
+  nm.className = 'nm'; nm.textContent = id.n;
+  const meta = document.createElement('div');
+  meta.className = 'meta'; meta.textContent = `${SH[id.shape]} · ${FR[id.pat]}`;
+  cell.append(nm, meta);
+  grid.appendChild(cell);
+});
+
+// Routes, colonies et villes aux couleurs des joueurs.
+const pieces = document.getElementById('pieces');
+IDS.forEach(id => {
+  const wrap = document.createElement('div');
+  wrap.className = 'pc';
+  ['road', 'settle', 'city'].forEach(kind => {
+    const el = document.createElement('div');
+    el.className = kind + ' gc-pattern-' + id.pat;
+    el.style.backgroundColor = `var(--gc-p${id.c})`;
+    el.style.marginBottom = '3px';
+    wrap.appendChild(el);
+  });
+  const lbl = document.createElement('div');
+  lbl.className = 'lbl'; lbl.textContent = id.n;
+  wrap.appendChild(lbl);
+  pieces.appendChild(wrap);
+});
+
+['s0', 's1', 's2', 's3', 's4'].forEach(id => {
+  const box = document.getElementById(id);
+  IDS.forEach(x => box.appendChild(mark(x)));
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grand Colonies — thèmes visuels</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:wght@500;600;700&family=Marcellus&family=Spectral:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   Chaque thème n'est qu'un jeu de variables. C'est exactement ainsi
+   que le client React les consommera : un seul attribut à changer.
+   ══════════════════════════════════════════════════════════════════ */
+
+.theme-agora {
+  --bg:#EFE9DA; --surface:#FBF7EC; --raised:#FFFFFF;
+  --ink:#2B2621; --ink-soft:#6B6154; --line:#DCD2BC;
+  --accent:#B8452A;        /* terre cuite */
+  --accent-ink:#FFF6EC;
+  --second:#5F7048;        /* olivier */
+  --gold:#A9803B;
+  --danger:#9E3520;
+  --display:'Cinzel', Georgia, serif;
+  --body:'Spectral', Georgia, serif;
+  --ui:'Inter', system-ui, sans-serif;
+  --radius:3px; --shadow:0 1px 2px rgba(60,45,25,.14);
+}
+.theme-nuit {
+  --bg:#0F141B; --surface:#18202A; --raised:#212B37;
+  --ink:#EBE4D5; --ink-soft:#94A0AE; --line:#2A3745;
+  --accent:#D2A24C;        /* or */
+  --accent-ink:#16202B;
+  --second:#3E7CA6;        /* bleu égéen */
+  --gold:#D2A24C;
+  --danger:#C4573A;
+  --display:'Cinzel', Georgia, serif;
+  --body:'Spectral', Georgia, serif;
+  --ui:'Inter', system-ui, sans-serif;
+  --radius:4px; --shadow:0 2px 10px rgba(0,0,0,.45);
+}
+.theme-ceramique {
+  --bg:#DFCFAC; --surface:#E9DCBE; --raised:#F2E9D4;
+  --ink:#1B1310; --ink-soft:#5E4A38; --line:#C3AC80;
+  --accent:#A63A17;        /* rouge à figures */
+  --accent-ink:#F4E7CE;
+  --second:#2E2621;
+  --gold:#8A6420;
+  --danger:#7E2410;
+  --display:'Marcellus', Georgia, serif;
+  --body:'Cormorant Garamond', Georgia, serif;
+  --ui:'Inter', system-ui, sans-serif;
+  --radius:0px; --shadow:0 1px 0 rgba(40,25,10,.22);
+}
+.theme-bronze {
+  --bg:#221E18; --surface:#2C271F; --raised:#37312728;
+  --raised:#37312A; --ink:#EDE3CE; --ink-soft:#A2957C; --line:#453D32;
+  --accent:#A8763C;        /* bronze */
+  --accent-ink:#1B1710;
+  --second:#7A8B4F;        /* olivier clair */
+  --gold:#C79A54;
+  --danger:#B4553A;
+  --display:'Cormorant Garamond', Georgia, serif;
+  --body:'Spectral', Georgia, serif;
+  --ui:'Inter', system-ui, sans-serif;
+  --radius:6px; --shadow:0 2px 8px rgba(0,0,0,.4);
+}
+
+/* ─────────────────────────────  page  ───────────────────────────── */
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:#0B0D10; color:#DDD8CF; font:15px/1.6 'Inter',system-ui,sans-serif; padding:30px; }
+h1 { font-size:23px; margin-bottom:6px; }
+.lead { color:#8D95A1; font-size:13.5px; max-width:84ch; margin-bottom:26px; }
+.lead b { color:#DDD8CF; }
+.themes { display:grid; gap:26px; grid-template-columns:repeat(auto-fit,minmax(430px,1fr)); }
+
+/* ────────────────────────────  démo  ────────────────────────────── */
+.demo { background:var(--bg); color:var(--ink); border:1px solid var(--line);
+        border-radius:calc(var(--radius) + 3px); overflow:hidden; font-family:var(--body); }
+.demo-head { padding:11px 16px; border-bottom:1px solid var(--line); background:var(--surface);
+             display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+.demo-name { font-family:var(--display); font-size:17px; letter-spacing:.06em; text-transform:uppercase; }
+.demo-note { font-family:var(--ui); font-size:11px; color:var(--ink-soft); text-align:right; }
+.demo-body { padding:16px; display:grid; gap:14px; }
+
+/* bandeau de statut : lisible à deux mètres */
+.status { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+          padding:12px 14px; display:flex; align-items:center; gap:14px; }
+.timer { font-family:var(--display); font-size:30px; font-weight:700; line-height:1;
+         color:var(--accent); font-variant-numeric:tabular-nums; }
+.status-txt { flex:1; }
+.phase { font-family:var(--display); font-size:14px; letter-spacing:.1em; text-transform:uppercase; }
+.order { font-size:15px; margin-top:1px; }
+.who { font-family:var(--ui); font-size:11px; color:var(--ink-soft); margin-top:3px; }
+
+/* joueurs */
+.players { display:grid; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:var(--radius); }
+.player { background:var(--surface); padding:7px 11px; display:flex; align-items:center; gap:9px; font-size:13px; }
+.player.is-active { background:color-mix(in srgb, var(--accent) 13%, var(--surface)); }
+.player.is-paired { background:color-mix(in srgb, var(--second) 15%, var(--surface)); }
+.chip { width:19px; height:19px; flex:none; border:1px solid rgba(0,0,0,.3); }
+.chip.hx { clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%); }
+.chip.di { clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%); }
+.chip.sq { border-radius:2px; }
+.pname { flex:1; font-weight:600; }
+.role { font-family:var(--ui); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+        padding:1.5px 6px; border-radius:99px; background:var(--accent); color:var(--accent-ink); }
+.role.b { background:var(--second); color:var(--accent-ink); }
+.stat { font-family:var(--ui); font-size:11px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+
+/* ressources */
+.hand { display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
+.res { background:var(--raised); border:1px solid var(--line); border-radius:var(--radius);
+       padding:4px 9px; font-family:var(--ui); font-size:12.5px; font-weight:600;
+       display:flex; align-items:center; gap:5px; box-shadow:var(--shadow); }
+.res small { color:var(--ink-soft); font-weight:500; }
+.limit { margin-left:auto; font-family:var(--ui); font-size:11px; color:var(--danger); font-weight:600; }
+
+/* boutons */
+.actions { display:flex; gap:8px; flex-wrap:wrap; }
+button { font-family:var(--ui); font-size:13px; font-weight:600; border-radius:var(--radius);
+         padding:9px 15px; cursor:pointer; border:1px solid transparent; box-shadow:var(--shadow); }
+.btn-primary { background:var(--accent); color:var(--accent-ink); }
+.btn-second  { background:var(--raised); color:var(--ink); border-color:var(--line); }
+.btn-ghost   { background:transparent; color:var(--ink-soft); border-color:var(--line); box-shadow:none; }
+.btn-off     { background:var(--raised); color:var(--ink-soft); border-color:var(--line);
+               opacity:.55; cursor:not-allowed; box-shadow:none; }
+.btn-off span { display:block; font-size:9.5px; font-weight:500; }
+
+/* commerce */
+.trade { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:12px; }
+.trade-h { font-family:var(--display); font-size:11.5px; letter-spacing:.11em; text-transform:uppercase;
+           color:var(--ink-soft); margin-bottom:9px; }
+.offer { display:flex; align-items:center; gap:9px; font-family:var(--ui); font-size:13px; font-weight:600; }
+.offer .arrow { color:var(--accent); font-size:15px; }
+.offer .mini { margin-left:auto; display:flex; gap:6px; }
+.mini button { padding:5px 12px; font-size:12px; }
+
+/* échantillon typographique */
+.type { border-top:1px solid var(--line); padding-top:11px; }
+.type .t1 { font-family:var(--display); font-size:24px; letter-spacing:.05em; }
+.type .t2 { font-family:var(--body); font-size:14.5px; margin-top:3px; }
+.type .t3 { font-family:var(--ui); font-size:11.5px; color:var(--ink-soft); margin-top:3px; }
+.swatches { display:flex; gap:5px; margin-top:11px; }
+.sw { width:26px; height:26px; border-radius:var(--radius); border:1px solid rgba(0,0,0,.25); }
+</style>
+</head>
+<body>
+
+<h1>Grand Colonies — quatre thèmes, composants réels</h1>
+<p class="lead">
+  Ce ne sont pas des images de maquette mais du <b>CSS réel avec de vraies polices</b> :
+  ce que tu vois est directement transposable dans le client. Chaque thème n'est qu'un jeu de
+  variables — en changer coûtera une ligne. Les composants montrés sont ceux qui portent le jeu :
+  bandeau de statut avec timer, liste des joueurs, main et limite, boutons dans leurs quatre états,
+  et exécution d'un échange.
+</p>
+<p class="lead">
+  <b>Thème retenu : Céramique.</b> Ses valeurs sont figées dans
+  <code>assets/theme/tokens.css</code>, qui devient la source de vérité des couleurs,
+  polices et espacements — aucune valeur ne doit être codée en dur ailleurs.
+  Les identités des 12 joueurs sont validées dans <code>identities.html</code>.
+</p>
+
+<div class="themes" id="out"></div>
+
+<script>
+const THEMES = [
+  { cls:'theme-agora', name:'Agora', note:'Clair · marbre & terre cuite<br>Cinzel + Spectral' },
+  { cls:'theme-nuit', name:'Nuit égéenne', note:'Sombre · or & bleu égéen<br>Cinzel + Spectral' },
+  { cls:'theme-ceramique', name:'Céramique ✓ retenu', note:'Clair contrasté · figures rouges<br>Marcellus + Cormorant' },
+  { cls:'theme-bronze', name:'Bronze & olivier', note:'Sombre chaud<br>Cormorant + Spectral' },
+];
+
+const DEMO = `
+  <div class="demo-body">
+    <div class="status">
+      <div class="timer">00:23</div>
+      <div class="status-txt">
+        <div class="phase">Commerce libre · Cycle 12</div>
+        <div class="order">Échange avec qui tu veux</div>
+        <div class="who">Actif : Léa · Associé : Marc · tu construis après</div>
+      </div>
+    </div>
+
+    <div class="players">
+      <div class="player is-active">
+        <div class="chip hx" style="background:#C0563A"></div>
+        <div class="pname">Léa</div><div class="role">Actif</div>
+        <div class="stat">6 PV · 9 c.</div>
+      </div>
+      <div class="player is-paired">
+        <div class="chip sq" style="background:#3E7CA6"></div>
+        <div class="pname">Marc</div><div class="role b">Associé</div>
+        <div class="stat">5 PV · 7 c.</div>
+      </div>
+      <div class="player">
+        <div class="chip di" style="background:#6E8B4F"></div>
+        <div class="pname">Inès</div>
+        <div class="stat">5 PV · 4 c.</div>
+      </div>
+    </div>
+
+    <div class="hand">
+      <div class="res">🌲 3</div><div class="res">🧱 2</div><div class="res">🌾 1</div>
+      <div class="res">🐑 4</div><div class="res">⛏️ <small>0</small></div>
+      <div class="limit">9 / 13 — un 7 te ferait défausser 4</div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary">Construire</button>
+      <button class="btn-second">Banque 4:1</button>
+      <button class="btn-ghost">Annoncer</button>
+      <button class="btn-off">Carte dév<span>pas assez de blé</span></button>
+    </div>
+
+    <div class="trade">
+      <div class="trade-h">Offre reçue — Marc</div>
+      <div class="offer">
+        <span>2 🌲</span><span class="arrow">↔</span><span>1 ⛏️</span>
+        <span class="mini"><button class="btn-primary">Accepter</button><button class="btn-ghost">Refuser</button></span>
+      </div>
+    </div>
+
+    <div class="type">
+      <div class="t1">Grand Colonies</div>
+      <div class="t2">Le premier joueur à 15 points de victoire l'emporte.</div>
+      <div class="t3">Interface · 12 joueurs · 00:23 · 9/13</div>
+      <div class="swatches">
+        <div class="sw" style="background:var(--accent)"></div>
+        <div class="sw" style="background:var(--second)"></div>
+        <div class="sw" style="background:var(--gold)"></div>
+        <div class="sw" style="background:var(--surface)"></div>
+        <div class="sw" style="background:var(--ink)"></div>
+      </div>
+    </div>
+  </div>`;
+
+document.getElementById('out').innerHTML = THEMES.map(t => `
+  <div class="demo ${t.cls}">
+    <div class="demo-head">
+      <div class="demo-name">${t.name}</div>
+      <div class="demo-note">${t.note}</div>
+    </div>
+    ${DEMO}
+  </div>`).join('');
+</script>
+</body>
+</html>

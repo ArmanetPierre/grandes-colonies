@@ -1,0 +1,123 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Grand Colonies — thème « Céramique »
+   Grèce antique, céramique à figures rouges. Retenu le 26/08/2026.
+
+   Ce fichier est la source de vérité des couleurs, polices et espacements.
+   Le client React le consomme tel quel : aucune valeur codée en dur ailleurs.
+
+   Comparaison des thèmes écartés : assets/preview/themes.html
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ─── Surfaces ────────────────────────────────────────────────────────
+     Fond argile plutôt que blanc : moins agressif qu'un thème clair
+     classique, et cohérent avec les tuiles du plateau. */
+  --gc-bg:        #DFCFAC;  /* fond général, terre cuite claire */
+  --gc-surface:   #E9DCBE;  /* panneaux */
+  --gc-raised:    #F2E9D4;  /* éléments posés : jetons, puces de ressource */
+  --gc-line:      #C3AC80;  /* filets et séparateurs */
+
+  /* ─── Texte ─────────────────────────────────────────────────────────── */
+  --gc-ink:       #1B1310;  /* texte principal — contraste 13:1 sur --gc-bg */
+  --gc-ink-soft:  #5E4A38;  /* texte secondaire, libellés */
+
+  /* ─── Couleurs de marque ────────────────────────────────────────────── */
+  --gc-accent:    #A63A17;  /* rouge à figures : action principale, timer */
+  --gc-accent-ink:#F4E7CE;  /* texte posé sur --gc-accent */
+  --gc-second:    #2E2621;  /* noir de vernis : rôle associé, éléments sobres */
+  --gc-gold:      #8A6420;  /* or patiné : distinctions, majorités */
+  --gc-danger:    #7E2410;  /* alerte : limite de main, timer sous 10 s */
+
+  /* ─── Typographie ───────────────────────────────────────────────────────
+     Trois familles, trois rôles. Le partage compte autant que le choix :
+     un serif classique partout rendrait les données illisibles à 12 joueurs.
+
+       display : titres, phases, timer — porte l'identité
+       body    : phrases de jeu, textes de carte — se lit en continu
+       ui      : chiffres, statistiques, boutons — doit rester net à 11 px */
+  --gc-font-display: 'Marcellus', Georgia, 'Times New Roman', serif;
+  --gc-font-body:    'Cormorant Garamond', Georgia, serif;
+  --gc-font-ui:      'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Les chiffres doivent s'aligner en colonne : PV, cartes, timer. */
+  --gc-num: tabular-nums;
+
+  /* ─── Formes ──────────────────────────────────────────────────────────
+     Angles vifs : la céramique n'a pas de coins arrondis. */
+  --gc-radius:    0px;
+  --gc-radius-lg: 2px;
+  --gc-shadow:    0 1px 0 rgba(40, 25, 10, .22);
+  --gc-shadow-lg: 0 2px 6px rgba(40, 25, 10, .28);
+
+  /* ─── Espacements ─────────────────────────────────────────────────────── */
+  --gc-gap-xs: 4px;
+  --gc-gap-sm: 8px;
+  --gc-gap:    14px;
+  --gc-gap-lg: 22px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Identités des 12 joueurs
+
+   Douze couleurs réellement distinctes n'existent pas — surtout appliquées
+   à une route de trois pixels sur un plateau dézoomé, et surtout pour un
+   joueur daltonien. L'identité est donc TRIPLE : couleur + forme + motif.
+   Retirer mentalement la couleur doit encore laisser douze identités.
+
+   Les teintes sont choisies pour tenir sur le fond argile --gc-bg, pas sur
+   du blanc : plusieurs couleurs vives standard y disparaîtraient.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --gc-p1:  #A63A17;  /* terre cuite   */
+  --gc-p2:  #2D6E8E;  /* bleu égéen    */
+  --gc-p3:  #5F7038;  /* olivier       */
+  --gc-p4:  #B8862B;  /* or            */
+  --gc-p5:  #7B3457;  /* pourpre       */
+  --gc-p6:  #2E8B7A;  /* turquoise     */
+  --gc-p7:  #3B4F91;  /* bleu profond  */
+  --gc-p8:  #C4692A;  /* ambre         */
+  --gc-p9:  #6B3F8F;  /* violet        */
+  --gc-p10: #2F7A4A;  /* vert égéen    */
+  --gc-p11: #7A4A2E;  /* brun          */
+  --gc-p12: #3A3A3A;  /* anthracite    */
+}
+
+/* Formes — six silhouettes, chacune utilisée deux fois, jamais avec le
+   même motif. Un joueur est donc unique par (forme × motif) seul. */
+.gc-shape-hex     { clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.gc-shape-diamond { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.gc-shape-square  { clip-path: none; }
+.gc-shape-triangle{ clip-path: polygon(50% 4%, 100% 100%, 0 100%); }
+.gc-shape-pentagon{ clip-path: polygon(50% 0, 100% 38%, 82% 100%, 18% 100%, 0 38%); }
+.gc-shape-circle  { border-radius: 50%; }
+
+/* Motifs — appliqués par-dessus la couleur, en noir de vernis translucide. */
+.gc-pattern-solid  { background-image: none; }
+.gc-pattern-stripe { background-image: repeating-linear-gradient(45deg,
+                       rgba(27,19,16,.34) 0 2px, transparent 2px 5px); }
+.gc-pattern-dot    { background-image: radial-gradient(rgba(27,19,16,.38) 1.2px, transparent 1.3px);
+                     background-size: 5px 5px; }
+.gc-pattern-check  { background-image: repeating-conic-gradient(rgba(27,19,16,.3) 0 25%, transparent 0 50%);
+                     background-size: 6px 6px; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Polices — à héberger localement
+
+   Le jeu tourne en réseau local, éventuellement sans accès internet : un
+   lien vers Google Fonts échouerait et l'interface retomberait sur Georgia,
+   perdant toute son identité. Les trois familles sont sous licence SIL OFL
+   et doivent être copiées dans assets/theme/fonts/.
+
+   Tant que ce n'est pas fait, les @font-face ci-dessous restent commentés
+   et les piles de secours des variables --gc-font-* prennent le relais.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/*
+@font-face { font-family:'Marcellus';          src:url('fonts/marcellus-regular.woff2') format('woff2');
+             font-weight:400; font-display:swap; }
+@font-face { font-family:'Cormorant Garamond'; src:url('fonts/cormorant-garamond-600.woff2') format('woff2');
+             font-weight:600; font-display:swap; }
+@font-face { font-family:'Inter';              src:url('fonts/inter-variable.woff2') format('woff2-variations');
+             font-weight:100 900; font-display:swap; }
+*/
