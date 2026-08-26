@@ -91,7 +91,26 @@ async function discoverImageModel(key, override, tier) {
   if (override) return override;
 
   const res = await fetch(`${API}/models?pageSize=200`, { headers: { 'x-goog-api-key': key } });
-  if (!res.ok) throw new Error(`Impossible de lister les modèles (HTTP ${res.status}) : ${await res.text()}`);
+  if (!res.ok) {
+    const body = await res.text();
+    if (/API_KEY_INVALID/.test(body)) {
+      throw new Error(
+        "La clé API est refusée par Google.\n\n" +
+        `  Clé lue : ${key.length} caractères, commençant par « ${key.slice(0, 4)} »\n` +
+        '  Attendu : une clé Google AI Studio, ~39 caractères, commençant par « AIza »\n\n' +
+        "  Une clé Vertex AI, un jeton OAuth ou un identifiant de projet ne fonctionnent pas ici.\n" +
+        '  Recopier la clé avec le bouton de copie sur https://aistudio.google.com/apikey'
+      );
+    }
+    if (res.status === 403) {
+      throw new Error(
+        "Clé valide mais accès refusé (HTTP 403).\n" +
+        "  Vérifier que l'API Generative Language est activée et que la facturation\n" +
+        '  est bien liée au projet Google auquel appartient cette clé.'
+      );
+    }
+    throw new Error(`Impossible de lister les modèles (HTTP ${res.status}) : ${body}`);
+  }
 
   const { models = [] } = await res.json();
   const candidates = models
