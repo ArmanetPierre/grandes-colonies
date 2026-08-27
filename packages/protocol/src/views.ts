@@ -312,14 +312,25 @@ function buildableSpots(
         };
   }
 
-  if (has('CAN_MOVE_ROBBER')) {
-    return {
-      ...empty,
-      robber: [...state.board.allHexData().keys()].filter((id) => !state.board.isBlocked(id)),
-    };
-  }
+  // Cibles du voleur : pour le déplacement dû comme pour un chevalier en
+  // main, qui a besoin des mêmes hexagones avant même le lancer de dés.
+  const robber = has('CAN_MOVE_ROBBER') || has('CAN_PLAY_KNIGHT')
+    ? [...state.board.allHexData().keys()].filter((id) => !state.board.isBlocked(id))
+    : [];
 
-  if (!has('CAN_BUILD') && !has('CAN_DECLARE_BUILD')) return empty;
+  // Un déplacement dû bloque tout le reste : inutile de proposer autre chose.
+  if (has('CAN_MOVE_ROBBER')) return { ...empty, robber };
+
+  /**
+   * Les cartes Construction de routes et Bâtisseur sont gratuites.
+   *
+   * Sans ce troisième cas, un joueur à la main vide n'aurait ni `CAN_BUILD`
+   * ni `CAN_DECLARE_BUILD` — les deux exigent de pouvoir payer — et recevrait
+   * des listes vides : sa carte serait jouable sans aucun endroit où cliquer.
+   */
+  if (!has('CAN_BUILD') && !has('CAN_DECLARE_BUILD') && !has('CAN_PLAY_DEV_CARD')) {
+    return { ...empty, robber };
+  }
 
   return {
     settlements: settlementSpots(state.board, playerId),
@@ -327,7 +338,7 @@ function buildableSpots(
       .filter(([vertex, b]) => b.owner === playerId && canUpgradeToCity(state.board, vertex, playerId).ok)
       .map(([vertex]) => vertex),
     roads: roadSpots(state.board, playerId),
-    robber: [],
+    robber,
   };
 }
 

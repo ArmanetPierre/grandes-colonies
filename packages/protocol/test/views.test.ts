@@ -4,6 +4,7 @@ import {
   type GameState,
   type HexData,
   type VertexId,
+  beginTurn,
   buyCard,
   counts,
   createGame,
@@ -234,5 +235,37 @@ describe('révélation en fin de partie', () => {
     const revealed = revealedObjectives(state);
     expect(revealed).toHaveLength(6);
     expect(revealed.every((r) => r.objective !== undefined)).toBe(true);
+  });
+});
+
+describe('emplacements et cartes gratuites', () => {
+  /**
+   * Le piège : `CAN_BUILD` exige de pouvoir payer, alors que Construction de
+   * routes et Bâtisseur sont gratuites. Sans traitement propre, un joueur à
+   * la main vide aurait une carte jouable et nulle part où cliquer.
+   */
+  it('propose des emplacements à un joueur ruiné qui tient une carte gratuite', () => {
+    const state = startedGame();
+    const p1 = playerOf(state, 'p1');
+    if (!p1) throw new Error('joueur absent');
+    p1.hand = counts({});
+    p1.devCards = beginTurn(buyCard(p1.devCards, 'roadBuilding'));
+    state.phase = 'activeTurn';
+
+    const view = privateView(state, 'p1');
+    expect(view?.capabilities).toContain('CAN_PLAY_DEV_CARD');
+    expect(view?.capabilities).not.toContain('CAN_BUILD');
+    expect(view?.spots.roads.length).toBeGreaterThan(0);
+  });
+
+  it('donne les cibles du voleur à qui tient un chevalier', () => {
+    const state = startedGame();
+    const p1 = playerOf(state, 'p1');
+    if (!p1) throw new Error('joueur absent');
+    p1.devCards = beginTurn(buyCard(p1.devCards, 'knight'));
+
+    const view = privateView(state, 'p1');
+    expect(view?.capabilities).toContain('CAN_PLAY_KNIGHT');
+    expect(view?.spots.robber.length).toBeGreaterThan(0);
   });
 });

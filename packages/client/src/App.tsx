@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { BoardGraph, parseHexKey } from '@grand-colonies/engine';
 import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
 
 import {
@@ -20,6 +21,7 @@ import {
   newActionId,
 } from './net/connection.js';
 import { Board, colorOf } from './ui/Board.jsx';
+import { type CardRequest, DevCards } from './ui/DevCards.jsx';
 import { Discard } from './ui/Discard.jsx';
 import { GameOver } from './ui/GameOver.jsx';
 import { Trade } from './ui/Trade.jsx';
@@ -87,6 +89,15 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
    * interrupteur explicite évite qu'on annonce en croyant construire.
    */
   const [declaring, setDeclaring] = useState(false);
+  /**
+   * La carte développement armée, et ce qu'elle a déjà collecté.
+   *
+   * Trois des cinq cartes se jouent sur le plateau, avec le même geste que la
+   * construction. Les tenir dans un état à part évite de confondre « je pose
+   * une route » et « je joue Construction de routes », qui ne coûtent pas la
+   * même chose.
+   */
+  const [card, setCard] = useState<{ kind: CardRequest['kind']; edges: string[] } | null>(null);
   const connection = useRef<GameConnection | undefined>(undefined);
 
   useEffect(() => {
@@ -116,26 +127,78 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
   const caps = useMemo(() => new Set(priv?.capabilities ?? []), [priv]);
   const order = useMemo(() => pub?.players.map((p) => p.id) ?? [], [pub]);
 
+  /**
+   * Le graphe du plateau, reconstruit depuis les identifiants d'hexagones.
+   *
+   * Il ne sert qu'à une chose : proposer la seconde route de la carte
+   * Construction de routes, qui s'appuie souvent sur la première et
+   * n'apparaît donc pas dans les emplacements calculés par le serveur — ce
+   * dernier ignore la pose provisoire. Ce n'est pas une duplication des
+   * règles de placement : le moteur reste seul juge, et refuse ce qui doit
+   * l'être. On mémorise sur la liste des hexagones, qui ne change jamais.
+   */
+  const hexKeys = pub?.hexes.map((h) => h.id).join(';') ?? '';
+  const graph = useMemo(
+    () => (hexKeys === '' ? undefined : new BoardGraph(hexKeys.split(';').map(parseHexKey))),
+    [hexKeys],
+  );
+
   // Pendant la mise en place, le jeu impose la suite : colonie puis route.
   // Inutile de demander au joueur de choisir ce qu'il sait déjà.
-  const canPick = caps.has('CAN_BUILD') || (declaring && caps.has('CAN_DECLARE_BUILD'));
+  const freeBuilding = card?.kind === 'freeBuild';
+  const canPick = caps.has('CAN_BUILD') || freeBuilding
+    || (declaring && caps.has('CAN_DECLARE_BUILD'));
   const setupIntent: typeof intent = caps.has('CAN_PLACE_SETUP')
     ? ((priv?.spots.roads.length ?? 0) > 0 ? 'road' : 'settlement')
     : null;
   const active = setupIntent ?? intent;
 
   const picking = setupIntent !== null || canPick;
-  const shownVertices = !picking ? []
+
+  /**
+   * Les arêtes ouvertes à la seconde route.
+   *
+   * Volontairement un peu large : une arête voisine de la première n'est pas
+   * forcément légale — une colonie adverse peut couper le passage — mais le
+   * moteur tranche, et un refus motivé vaut mieux qu'une arête invisible.
+   */
+  const secondRoadSpots = (first: string): string[] => {
+    const taken = new Set([...(pub?.roads.map((r) => r.edge) ?? []), first]);
+    const out = new Set<string>((priv?.spots.roads ?? []).filter((e) => !taken.has(e)));
+    for (const vertex of graph?.verticesOfEdgeOnBoard(first) ?? []) {
+      for (const edge of graph?.edgesOfVertexOnBoard(vertex) ?? []) {
+        if (!taken.has(edge)) out.add(edge);
+      }
+    }
+    return [...out];
+  };
+
+  const roadCard = card?.kind === 'roadBuilding' ? card : undefined;
+  const knightArmed = card?.kind === 'knight';
+
+  const shownVertices = knightArmed || roadCard ? []
+    : !picking ? []
     : active === 'settlement' ? priv?.spots.settlements
     : active === 'city' ? priv?.spots.cities
     : [];
-  const shownEdges = picking && active === 'road' ? priv?.spots.roads : [];
+  const shownEdges = roadCard
+    ? (roadCard.edges[0] === undefined ? priv?.spots.roads : secondRoadSpots(roadCard.edges[0]))
+    : knightArmed ? []
+    : picking && active === 'road' ? priv?.spots.roads
+    : [];
 
   const place = useCallback((kind: typeof intent, target: string) => {
     if (!kind || !pub) return;
     const setup = pub.phase === 'setup';
 
-    if (declaring && !setup) {
+    if (card?.kind === 'freeBuild' && !setup) {
+      // La carte offre la combinaison de ressources : mêmes règles de
+      // placement, aucun paiement.
+      send('PLAY_FREE_BUILD', {
+        target: kind === 'road' ? { kind: 'road', edge: target } : { kind, vertex: target },
+      });
+      setCard(null);
+    } else if (declaring && !setup) {
       // L'annonce vise un emplacement sans le prendre : les ressources sont
       // réservées, la résolution aura lieu en fin de cycle.
       send('DECLARE_BUILD', {
@@ -149,7 +212,25 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
       send('BUILD_CITY', { vertex: target });
     }
     setIntent(null);
-  }, [pub, send, declaring]);
+  }, [pub, send, declaring, card]);
+
+  /** Construction de routes : deux clics, ou un seul si le joueur s'arrête. */
+  const pickRoad = (edge: string): void => {
+    if (card?.kind !== 'roadBuilding') return;
+    const edges = [...card.edges, edge];
+    if (edges.length < 2) { setCard({ ...card, edges }); return; }
+    send('PLAY_ROAD_BUILDING', { edges });
+    setCard(null);
+  };
+
+  const clickHex = (hex: string): void => {
+    if (card?.kind === 'knight') {
+      send('PLAY_KNIGHT', { to: hex });
+      setCard(null);
+      return;
+    }
+    send('MOVE_ROBBER', { to: hex });
+  };
 
   if (name === null) return <NameEntry onChoose={(chosen) => {
     localStorage.setItem(NAME_KEY, chosen);
@@ -233,9 +314,11 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
             highlightVertices={shownVertices ?? []}
             highlightEdges={shownEdges ?? []}
             onVertexClick={(vertex) => place(active, vertex)}
-            onEdgeClick={(edge) => place(active, edge)}
-            onHexClick={(hex) => send('MOVE_ROBBER', { to: hex })}
-            robberTargets={caps.has('CAN_MOVE_ROBBER') ? priv.spots.robber : []}
+            onEdgeClick={(edge) => (roadCard ? pickRoad(edge) : place(active, edge))}
+            onHexClick={clickHex}
+            robberTargets={
+              caps.has('CAN_MOVE_ROBBER') || knightArmed ? priv.spots.robber : []
+            }
           />
         </main>
       </div>
@@ -269,16 +352,55 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
           </div>
         )}
 
+        <DevCards
+          priv={priv}
+          armed={card?.kind}
+          onCancel={() => setCard(null)}
+          onBoardCard={(request) => { setCard({ kind: request.kind, edges: [] }); setIntent(null); }}
+          onInvention={(resources) => send('PLAY_INVENTION', { resources })}
+          onMonopoly={(resource) => send('PLAY_MONOPOLY', { resource })}
+        />
+
+        {roadCard && (
+          <div className="gc-card-progress">
+            <span>
+              {roadCard.edges.length === 0
+                ? 'Construction de routes : choisis ta première route.'
+                : 'Choisis la seconde, ou pose-en une seule.'}
+            </span>
+            {roadCard.edges[0] !== undefined && (
+              <button
+                className="gc-action gc-action-mini"
+                onClick={() => { send('PLAY_ROAD_BUILDING', { edges: roadCard.edges }); setCard(null); }}
+              >
+                Une seule suffit
+              </button>
+            )}
+            <button className="gc-action gc-action-mini gc-action-quiet" onClick={() => setCard(null)}>
+              Annuler
+            </button>
+          </div>
+        )}
+
+        {freeBuilding && (
+          <div className="gc-card-progress">
+            <span>Bâtisseur : choisis ce que tu construis, puis l'emplacement.</span>
+            <button className="gc-action gc-action-mini gc-action-quiet" onClick={() => setCard(null)}>
+              Annuler
+            </button>
+          </div>
+        )}
+
         <div className="gc-actions">
           <Build label="Route" kind="road" count={priv.spots.roads.length}
                  active={intent} setActive={setIntent}
-                 enabled={caps.has('CAN_BUILD') || (declaring && caps.has('CAN_DECLARE_BUILD'))} />
+                 enabled={caps.has('CAN_BUILD') || freeBuilding || (declaring && caps.has('CAN_DECLARE_BUILD'))} />
           <Build label="Colonie" kind="settlement" count={priv.spots.settlements.length}
                  active={intent} setActive={setIntent}
-                 enabled={caps.has('CAN_BUILD') || (declaring && caps.has('CAN_DECLARE_BUILD'))} />
+                 enabled={caps.has('CAN_BUILD') || freeBuilding || (declaring && caps.has('CAN_DECLARE_BUILD'))} />
           <Build label="Ville" kind="city" count={priv.spots.cities.length}
                  active={intent} setActive={setIntent}
-                 enabled={caps.has('CAN_BUILD') || (declaring && caps.has('CAN_DECLARE_BUILD'))} />
+                 enabled={caps.has('CAN_BUILD') || freeBuilding || (declaring && caps.has('CAN_DECLARE_BUILD'))} />
           {caps.has('CAN_DECLARE_BUILD') && !caps.has('CAN_BUILD') && (
             <button
               className={`gc-action gc-action-quiet${declaring ? ' is-armed' : ''}`}

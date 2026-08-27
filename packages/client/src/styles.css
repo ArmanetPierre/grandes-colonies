@@ -309,3 +309,43 @@ body {
 }
 .gc-done { color: var(--gc-accent); font-weight: 600; }
 .gc-missed { opacity: .6; }
+
+/* ── cartes développement ──────────────────────────────────────────────
+   Elles vivent dans le pied de page, à côté de la main : ce sont des
+   ressources comme les autres, et les séparer les ferait oublier. */
+.gc-devcards { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.gc-devcards-label {
+  font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--gc-ink-soft);
+}
+.gc-devcard {
+  background: var(--gc-raised); color: var(--gc-ink);
+  border: 1px solid var(--gc-line); padding: 5px 10px;
+  font-family: var(--gc-font-ui); font-size: 12px; cursor: pointer;
+  text-align: left;
+}
+.gc-devcard small { display: block; font-size: 9px; color: var(--gc-ink-soft); }
+.gc-devcard:disabled { opacity: .45; cursor: default; }
+/* Armée : la carte attend un clic sur le plateau, il faut que ça se voie. */
+.gc-devcard.is-armed {
+  background: var(--gc-second); color: var(--gc-accent-ink);
+  border-color: transparent; outline: 2px solid var(--gc-accent); outline-offset: 1px;
+}
+.gc-devcard.is-armed small { color: var(--gc-accent-ink); opacity: .85; }
+.gc-devcard.is-pending { font-style: italic; }
+
+/* Bandeau d'accompagnement d'une carte en cours : dit l'étape suivante. */
+.gc-card-progress {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 12px; color: var(--gc-ink);
+  background: var(--gc-raised); border: 1px solid var(--gc-line);
+  padding: 6px 10px;
+}
+
+/* Choix de ressources — Invention et Monopole. */
+.gc-pick-grid { display: grid; gap: 4px; margin-bottom: 12px; }
+.gc-pick-row { display: grid; grid-template-columns: 1fr auto 28px auto; align-items: center; gap: 6px; }
+.gc-pick-name { font-size: 13px; }
+.gc-pick-count { text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
+.gc-modal-count { font-size: 12px; color: var(--gc-ink-soft); font-variant-numeric: tabular-nums; }
+.gc-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
