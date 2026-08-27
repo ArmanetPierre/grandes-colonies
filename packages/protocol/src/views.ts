@@ -26,6 +26,7 @@ import {
   getCapabilities,
   heldCount,
   knightsPlayed,
+  RESOURCES,
   canPlaceRoad,
   canUpgradeToCity,
   playerPoints,
@@ -33,6 +34,7 @@ import {
   roleOf,
   settlementSpots,
   total,
+  tradeRate,
 } from '@grand-colonies/engine';
 
 export interface PublicPlayer {
@@ -125,6 +127,18 @@ export interface PrivatePlayerView {
     readonly roads: readonly EdgeId[];
     readonly robber: readonly HexId[];
   };
+
+  /**
+   * Combien de cartes donner pour en recevoir une, ressource par ressource.
+   *
+   * Le taux dépend des ports que ce joueur occupe : il lui est donc propre et
+   * n'a rien à faire dans la vue publique. Le client en a besoin pour
+   * proposer un échange au bon prix plutôt que de supposer 4:1.
+   */
+  readonly bankRates: Readonly<Record<string, number>>;
+
+  /** Nombre de cartes à défausser, zéro le reste du temps. */
+  readonly mustDiscard: number;
 }
 
 export interface Connectivity {
@@ -220,9 +234,14 @@ export function privateView(state: GameState, playerId: PlayerId): PrivatePlayer
   const breakdown = playerPoints(state, playerId);
   const capabilities = [...getCapabilities(state, playerId)];
 
+  const bankRates: Record<string, number> = {};
+  for (const resource of RESOURCES) bankRates[resource] = tradeRate(state.board, playerId, resource);
+
   return {
     id: playerId,
     spots: buildableSpots(state, playerId, capabilities),
+    bankRates,
+    mustDiscard: player.mustDiscard,
     hand: player.hand,
     playableDevCards: [...player.devCards.playable],
     pendingDevCards: [...player.devCards.pending],

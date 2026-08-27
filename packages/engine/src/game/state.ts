@@ -31,7 +31,8 @@ export type Phase = 'setup' | 'production' | 'activeTurn' | 'freeTrade' | 'ended
 
 export interface PlayerState {
   readonly id: PlayerId;
-  readonly name: string;
+  /** Modifiable : le joueur choisit son nom en rejoignant sa place. */
+  name: string;
   hand: ResourceCounts;
   devCards: DevCardHolding;
   roadsLeft: number;

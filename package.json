@@ -11,10 +11,12 @@
     "test:watch": "vitest",
     "typecheck": "tsc --build --force",
     "dev:server": "tsx packages/server/src/dev.ts",
-    "dev:client": "vite --config packages/client/vite.config.ts packages/client"
+    "dev:client": "vite --config packages/client/vite.config.ts packages/client",
+    "host": "tsx apps/host/src/main.ts"
   },
   "devDependencies": {
     "@types/node": "^26.3.0",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
     "@types/ws": "^8.18.1",

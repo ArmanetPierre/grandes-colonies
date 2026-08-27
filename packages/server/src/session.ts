@@ -37,7 +37,7 @@ import {
 
 export interface Seat {
   readonly playerId: PlayerId;
-  readonly name: string;
+  name: string;
   /**
    * Jeton de reconnexion, remis au client et conservé par lui.
    *
@@ -49,6 +49,15 @@ export interface Seat {
   connected: boolean;
   /** Cycle de la dernière déconnexion, pour compter les tours d'absence. */
   disconnectedAtCycle: number | undefined;
+  /**
+   * Ce siège a-t-il déjà joué ?
+   *
+   * Un siège qui n'a jamais rien fait n'appartient à personne : le libérer
+   * évite qu'un joueur qui recharge sa page avant d'avoir agi n'en consomme
+   * un définitivement. À huit joueurs, deux rechargements suffiraient à
+   * rendre la partie injouable.
+   */
+  hasPlayed: boolean;
 }
 
 export interface SessionOptions {
@@ -101,6 +110,7 @@ export class GameSession {
         token,
         connected: false,
         disconnectedAtCycle: undefined,
+        hasPlayed: false,
       });
       this.byToken.set(token, player.id);
     }
@@ -132,16 +142,37 @@ export class GameSession {
     return seat;
   }
 
-  /** Attribue le premier siège libre — l'entrée d'un joueur qui arrive. */
+  /**
+   * Attribue le premier siège libre — l'entrée d'un joueur qui arrive.
+   *
+   * Un siège quitté sans avoir jamais joué redevient libre : sinon un simple
+   * rechargement de page en consommerait un pour de bon.
+   */
   claimFreeSeat(name?: string): Seat | undefined {
     for (const seat of this.seats.values()) {
-      if (seat.connected || seat.disconnectedAtCycle !== undefined) continue;
+      if (seat.connected) continue;
+      if (seat.disconnectedAtCycle !== undefined && seat.hasPlayed) continue;
+
       seat.connected = true;
-      if (name) this.seats.set(seat.playerId, { ...seat, name, connected: true });
+      seat.disconnectedAtCycle = undefined;
+      if (name) this.rename(seat, name);
       this.armTimer();
-      return this.seats.get(seat.playerId);
+      return seat;
     }
     return undefined;
+  }
+
+  /**
+   * Renomme un siège, et le joueur correspondant dans la partie.
+   *
+   * Les deux doivent rester synchronisés : la vue publique lit le nom du
+   * joueur, pas celui du siège. Ne changer que l'un laisserait la liste des
+   * joueurs afficher « Joueur 3 » alors que l'intéressé s'est présenté.
+   */
+  private rename(seat: Seat, name: string): void {
+    seat.name = name;
+    const player = this.state.players.find((p) => p.id === seat.playerId);
+    if (player) player.name = name;
   }
 
   disconnect(playerId: PlayerId): void {
@@ -181,6 +212,8 @@ export class GameSession {
     const result = dispatch(this.state, command);
     if (result.ok && !result.duplicate) {
       this.log.push(command);
+      const seat = this.seats.get(command.playerId);
+      if (seat) seat.hasPlayed = true;
       this.armTimer();
     }
     return { result, events: result.ok ? result.events : [] };

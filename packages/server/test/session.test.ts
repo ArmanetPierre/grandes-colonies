@@ -303,3 +303,51 @@ describe('vues servies par la session', () => {
     expect(session.privateView('inconnu')).toBeUndefined();
   });
 });
+
+describe('sièges jamais joués', () => {
+  /**
+   * Le cas réel : un joueur ouvre la page, la recharge avant d'avoir agi.
+   * Sans cette règle, chaque rechargement consommerait un siège pour de bon
+   * — à huit joueurs, deux suffiraient à rendre la partie injouable.
+   */
+  it('libère un siège quitté sans avoir jamais joué', () => {
+    const session = newSession(3);
+    const first = session.claimFreeSeat('Pierre');
+    expect(first).toBeDefined();
+    if (!first) return;
+
+    session.disconnect(first.playerId);
+    const second = session.claimFreeSeat('Pierre');
+
+    // Le même siège est rendu, aucun n'est gaspillé.
+    expect(second?.playerId).toBe(first.playerId);
+  });
+
+  it('conserve en revanche un siège qui a joué', () => {
+    const session = newSession(3);
+    const seat = session.claimFreeSeat('Pierre');
+    if (!seat) return;
+
+    const state = session.state;
+    const spot = settlementSpots(state.board, seat.playerId, { setupPhase: true })[0] as VertexId;
+    session.submit(cmd('PLACE_SETUP_SETTLEMENT', seat.playerId, { vertex: spot }));
+
+    session.disconnect(seat.playerId);
+    const other = session.claimFreeSeat('Marc');
+
+    // Le siège de Pierre lui reste : seul son jeton le rendra.
+    expect(other?.playerId).not.toBe(seat.playerId);
+    expect(session.reconnect(seat.token)?.playerId).toBe(seat.playerId);
+  });
+
+  it('propage le nom choisi jusqu à la vue publique', () => {
+    const session = newSession(4);
+    const seat = session.claimFreeSeat('Pierre');
+    if (!seat) return;
+
+    // Les deux doivent rester synchronisés : la vue publique lit le nom du
+    // joueur, pas celui du siège.
+    expect(seat.name).toBe('Pierre');
+    expect(session.publicView().players.find((p) => p.id === seat.playerId)?.name).toBe('Pierre');
+  });
+});

@@ -16,7 +16,12 @@
  * `GameSession`, qui se teste sans réseau.
  */
 
-import { createServer, type Server as HttpServer } from 'node:http';
+import {
+  createServer,
+  type IncomingMessage,
+  type Server as HttpServer,
+  type ServerResponse,
+} from 'node:http';
 
 import { WebSocketServer, type WebSocket } from 'ws';
 
@@ -44,6 +49,14 @@ export interface GameServerOptions {
   readonly config?: GameConfig;
   /** Cadence du battement de cœur, en millisecondes. */
   readonly tickMs?: number;
+  /**
+   * Requêtes HTTP à traiter avant le WebSocket — l'écran de l'hôte s'en sert
+   * pour servir sa page sur le même port, afin que les invités n'aient
+   * qu'une seule adresse à retenir.
+   *
+   * Renvoyer `true` signifie « je m'en suis chargé ».
+   */
+  readonly onRequest?: (req: IncomingMessage, res: ServerResponse) => boolean;
 }
 
 const DEFAULT_TICK_MS = 250;
@@ -67,7 +80,12 @@ export class GameServer {
       ...(options.config ? { config: options.config } : {}),
     });
 
-    this.http = createServer();
+    const handle = options.onRequest;
+    this.http = createServer((req, res) => {
+      if (handle?.(req, res)) return;
+      res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+      res.end('introuvable');
+    });
     this.wss = new WebSocketServer({ server: this.http });
     this.wss.on('connection', (socket) => this.onConnection(socket));
   }

@@ -1,14 +1,19 @@
 /**
- * Point d'entrée de l'hôte — le programme que tu lances sur ton PC.
+ * Point d'entrée de l'hôte — le programme lancé sur le PC qui héberge.
  *
- * Il démarre le serveur de jeu et affiche l'adresse à laquelle les autres se
- * connectent. Cette adresse est le premier obstacle d'une soirée : personne
- * ne doit avoir à chercher une adresse IP dans les réglages système.
+ * Il démarre le serveur de jeu et sert l'écran de l'hôte sur le même port.
+ * Un seul port, une seule adresse à retenir : le premier obstacle d'une
+ * soirée n'est pas le jeu mais la connexion, et personne ne devrait avoir à
+ * chercher une adresse IP dans les réglages système.
  */
 
 import { networkInterfaces } from 'node:os';
 
+import QRCode from 'qrcode';
+
 import { GameServer } from '@grand-colonies/server';
+
+import { renderHostPage } from './hostPage.js';
 
 const PORT = Number(process.env['PORT'] ?? 2567);
 
@@ -37,33 +42,61 @@ export function readableCode(seed: string): string {
   return `${word}-${(hash % 90) + 10}`;
 }
 
-export function startHost(playerCount = 8): { port: number; code: string; url: string } {
+export interface HostHandle {
+  readonly port: number;
+  readonly code: string;
+  readonly url: string;
+  close(): Promise<void>;
+}
+
+export async function startHost(playerCount = 8, port = PORT): Promise<HostHandle> {
   const seed = `partie-${Date.now()}`;
   const code = readableCode(seed);
+  const host = lanAddress() ?? 'localhost';
 
-  const server = new GameServer({
+  // En développement le client a son propre serveur ; en production il sera
+  // servi par celui-ci. C'est l'adresse que les invités doivent ouvrir.
+  const clientPort = Number(process.env['CLIENT_PORT'] ?? 5173);
+  const url = `http://${host}:${clientPort}`;
+  const qrDataUrl = await QRCode.toDataURL(url, { width: 420, margin: 1 });
+  const page = renderHostPage({ url, code, qrDataUrl, playerCount });
+
+  const server: GameServer = new GameServer({
     seed,
     playerNames: Array.from({ length: playerCount }, (_, i) => `Joueur ${i + 1}`),
+    onRequest: (req, res) => {
+      if (req.url === '/' || req.url === '/hote') {
+        res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+        res.end(page);
+        return true;
+      }
+      if (req.url === '/api/seats') {
+        const seats = server.session.allSeats().map((seat) => ({
+          name: seat.name,
+          connected: seat.connected,
+        }));
+        res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify(seats));
+        return true;
+      }
+      return false;
+    },
   });
-  void server.listen(PORT);
 
-  const host = lanAddress() ?? 'localhost';
-  const url = `http://${host}:${PORT}`;
+  await server.listen(port);
 
   console.log('');
   console.log('  GRAND COLONIES');
   console.log('');
-  console.log(`  Adresse    ${url}`);
-  console.log(`  Code       ${code}`);
-  console.log(`  Joueurs    ${playerCount}`);
-  console.log('');
-  console.log('  Les autres joueurs ouvrent cette adresse dans leur navigateur.');
+  console.log(`  Écran hôte   http://${host}:${port}`);
+  console.log(`  Joueurs      ${url}`);
+  console.log(`  Code         ${code}`);
   console.log('');
 
-  return { port: PORT, code, url };
+  return { port, code, url, close: () => server.close() };
 }
 
-// Lancement direct : `node apps/host/src/main.ts`.
-if (process.argv[1]?.endsWith('main.ts') || process.argv[1]?.endsWith('main.js')) {
-  startHost(Number(process.env['PLAYERS'] ?? 8));
+// Lancement direct : `npm run host`.
+if (process.argv[1]?.includes('main.')) {
+  void startHost(Number(process.env['PLAYERS'] ?? 8));
 }

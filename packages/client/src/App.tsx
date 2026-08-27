@@ -20,6 +20,8 @@ import {
   newActionId,
 } from './net/connection.js';
 import { Board, colorOf } from './ui/Board.jsx';
+import { Discard } from './ui/Discard.jsx';
+import { Trade } from './ui/Trade.jsx';
 
 const RESOURCE_LABELS: Record<string, string> = {
   wood: 'Bois', brick: 'Brique', wool: 'Laine',
@@ -53,7 +55,17 @@ function formatTimer(ms: number | undefined): string {
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
+const NAME_KEY = 'grand-colonies:name';
+
 export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }) {
+  /**
+   * Le nom est demandé avant toute connexion, et mémorisé.
+   *
+   * Sans lui, la liste des joueurs affiche « Joueur 3 » et plus personne ne
+   * sait qui est qui — or c'est cette liste que chacun consulte pour décider
+   * à qui proposer un échange.
+   */
+  const [name, setName] = useState<string | null>(() => localStorage.getItem(NAME_KEY));
   const [status, setStatus] = useState<ConnectionStatus>('connecting');
   const [seat, setSeat] = useState<SeatInfo>();
   const [pub, setPub] = useState<PublicGameView>();
@@ -69,7 +81,8 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
   const connection = useRef<GameConnection | undefined>(undefined);
 
   useEffect(() => {
-    const conn = new GameConnection({ url }, {
+    if (name === null) return undefined;
+    const conn = new GameConnection({ url, name }, {
       onStatus: setStatus,
       onSeat: setSeat,
       onPublic: setPub,
@@ -85,7 +98,7 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
     connection.current = conn;
     conn.connect();
     return () => conn.close();
-  }, [url]);
+  }, [url, name]);
 
   const send = useCallback((type: string, extra: Record<string, unknown> = {}) => {
     connection.current?.send({ actionId: newActionId(), type, ...extra });
@@ -119,6 +132,11 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
     }
     setIntent(null);
   }, [pub, send]);
+
+  if (name === null) return <NameEntry onChoose={(chosen) => {
+    localStorage.setItem(NAME_KEY, chosen);
+    setName(chosen);
+  }} />;
 
   if (!pub || !priv || !seat) {
     return (
@@ -176,6 +194,20 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
           ))}
         </aside>
 
+        {(caps.has('CAN_TRADE_PLAYER') || caps.has('CAN_TRADE_BANK')) && (
+          <Trade
+            pub={pub}
+            priv={priv}
+            canOffer={caps.has('CAN_TRADE_PLAYER')}
+            canBank={caps.has('CAN_TRADE_BANK')}
+            onOffer={(giveCounts, receive, to) =>
+              send('CREATE_TRADE', { give: giveCounts, receive, ...(to ? { to } : {}) })}
+            onAccept={(offerId) => send('ACCEPT_TRADE', { offerId })}
+            onCancel={(offerId) => send('CANCEL_TRADE', { offerId })}
+            onBank={(giveCounts, receive) => send('TRADE_WITH_BANK', { give: giveCounts, receive })}
+          />
+        )}
+
         <main className="gc-board-wrap">
           <Board
             view={pub}
@@ -217,7 +249,41 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
         </div>
       </footer>
 
+      {priv.mustDiscard > 0 && (
+        <Discard pub={pub} priv={priv} onDiscard={(resources) => send('DISCARD', { resources })} />
+      )}
+
       {notice && <div className="gc-notice">{notice}</div>}
+    </div>
+  );
+}
+
+/** Saisie du nom, avant la première connexion. */
+function NameEntry({ onChoose }: { onChoose: (name: string) => void }) {
+  const [value, setValue] = useState('');
+  const ready = value.trim().length > 0;
+
+  return (
+    <div className="gc-splash">
+      <h1>Grand Colonies</h1>
+      <form
+        className="gc-join"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (ready) onChoose(value.trim().slice(0, 18));
+        }}
+      >
+        <label htmlFor="gc-name">Ton nom</label>
+        <input
+          id="gc-name"
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          placeholder="Pierre"
+          maxLength={18}
+          autoFocus
+        />
+        <button className="gc-action" type="submit" disabled={!ready}>Rejoindre</button>
+      </form>
     </div>
   );
 }
