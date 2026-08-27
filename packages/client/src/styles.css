@@ -112,6 +112,9 @@ body {
 /* 6 et 8 sont les plus productifs : ils se signalent, comme sur un plateau. */
 .gc-token-hot { color: var(--gc-danger); }
 .gc-robber { position: absolute; inset: 0; background: rgba(20, 12, 8, .55); }
+/* Cible possible pour le voleur : cliquable et signalée. */
+.gc-hex-target { cursor: pointer; }
+.gc-hex-target:hover { filter: brightness(1.25) saturate(1.1); }
 
 .gc-road {
   position: absolute; width: 24px; height: 5px;
@@ -180,6 +183,12 @@ body {
   border-color: var(--gc-line); cursor: not-allowed; opacity: .7;
 }
 .gc-action small { display: block; font-size: 9px; font-weight: 500; }
+/* Un bouton armé attend un clic sur le plateau : il doit se distinguer
+   d'un bouton simplement disponible. */
+.gc-action.is-armed {
+  background: var(--gc-second); color: var(--gc-accent-ink);
+  outline: 2px solid var(--gc-accent); outline-offset: 1px;
+}
 
 .gc-notice {
   position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);

@@ -26,8 +26,12 @@ import {
   getCapabilities,
   heldCount,
   knightsPlayed,
+  canPlaceRoad,
+  canUpgradeToCity,
   playerPoints,
+  roadSpots,
   roleOf,
+  settlementSpots,
   total,
 } from '@grand-colonies/engine';
 
@@ -104,6 +108,23 @@ export interface PrivatePlayerView {
   /** Points réels, objectif secret compris — connus du seul intéressé. */
   readonly points: number;
   readonly capabilities: readonly Capability[];
+
+  /**
+   * Emplacements où ce joueur peut effectivement construire, calculés par le
+   * serveur.
+   *
+   * Les laisser au client obligerait à y dupliquer les règles de placement,
+   * et un client modifié pourrait en proposer d'illégaux. Ils ne sont
+   * calculés que lorsque le joueur a la capacité correspondante : à douze
+   * joueurs, les recalculer pour tout le monde à chaque diffusion serait du
+   * gaspillage.
+   */
+  readonly spots: {
+    readonly settlements: readonly VertexId[];
+    readonly cities: readonly VertexId[];
+    readonly roads: readonly EdgeId[];
+    readonly robber: readonly HexId[];
+  };
 }
 
 export interface Connectivity {
@@ -197,9 +218,11 @@ export function privateView(state: GameState, playerId: PlayerId): PrivatePlayer
   if (!player) return undefined;
 
   const breakdown = playerPoints(state, playerId);
+  const capabilities = [...getCapabilities(state, playerId)];
 
   return {
     id: playerId,
+    spots: buildableSpots(state, playerId, capabilities),
     hand: player.hand,
     playableDevCards: [...player.devCards.playable],
     pendingDevCards: [...player.devCards.pending],
@@ -207,7 +230,54 @@ export function privateView(state: GameState, playerId: PlayerId): PrivatePlayer
     chosenObjective: player.chosenObjective,
     objectiveComplete: (breakdown?.secretObjectives ?? 0) > 0,
     points: breakdown?.total ?? 0,
-    capabilities: [...getCapabilities(state, playerId)],
+    capabilities,
+  };
+}
+
+/**
+ * Où ce joueur peut poser quelque chose, maintenant.
+ *
+ * Chaque liste n'est remplie que si la capacité correspondante est acquise,
+ * ce qui évite de parcourir les cent cinquante sommets d'un plateau XXL pour
+ * douze joueurs à chaque diffusion.
+ */
+function buildableSpots(
+  state: GameState,
+  playerId: PlayerId,
+  capabilities: readonly Capability[],
+): PrivatePlayerView['spots'] {
+  const has = (capability: Capability): boolean => capabilities.includes(capability);
+  const empty = { settlements: [], cities: [], roads: [], robber: [] };
+
+  if (has('CAN_PLACE_SETUP')) {
+    // Pendant la mise en place, la colonie précède sa route.
+    const pending = state.setupPendingVertex;
+    return pending === undefined
+      ? { ...empty, settlements: settlementSpots(state.board, playerId, { setupPhase: true }) }
+      : {
+          ...empty,
+          roads: state.board.graph
+            .edgesOfVertexOnBoard(pending)
+            .filter((edge) => canPlaceRoad(state.board, edge, playerId).ok),
+        };
+  }
+
+  if (has('CAN_MOVE_ROBBER')) {
+    return {
+      ...empty,
+      robber: [...state.board.allHexData().keys()].filter((id) => !state.board.isBlocked(id)),
+    };
+  }
+
+  if (!has('CAN_BUILD') && !has('CAN_DECLARE_BUILD')) return empty;
+
+  return {
+    settlements: settlementSpots(state.board, playerId),
+    cities: [...state.board.allBuildings().entries()]
+      .filter(([vertex, b]) => b.owner === playerId && canUpgradeToCity(state.board, vertex, playerId).ok)
+      .map(([vertex]) => vertex),
+    roads: roadSpots(state.board, playerId),
+    robber: [],
   };
 }
 

@@ -62,11 +62,17 @@ export interface BoardProps {
   readonly view: PublicGameView;
   readonly onVertexClick?: (vertex: string) => void;
   readonly onEdgeClick?: (edge: string) => void;
+  readonly onHexClick?: (hex: string) => void;
   readonly highlightVertices?: readonly string[];
   readonly highlightEdges?: readonly string[];
+  /** Hexagones où le voleur peut être posé. */
+  readonly robberTargets?: readonly string[];
 }
 
-export function Board({ view, onVertexClick, onEdgeClick, highlightVertices = [], highlightEdges = [] }: BoardProps) {
+export function Board({
+  view, onVertexClick, onEdgeClick, onHexClick,
+  highlightVertices = [], highlightEdges = [], robberTargets = [],
+}: BoardProps) {
   const centers = view.hexes.map((h) => hexCenter(h.id));
   const minX = Math.min(...centers.map((c) => c.x)) - SIZE * 1.2;
   const minY = Math.min(...centers.map((c) => c.y)) - SIZE * 1.2;
@@ -77,6 +83,7 @@ export function Board({ view, onVertexClick, onEdgeClick, highlightVertices = []
   const hotVertices = new Set(highlightVertices);
   const hotEdges = new Set(highlightEdges);
   const contested = new Set(view.intents.filter((i) => i.contested).map((i) => i.location));
+  const robberSpots = new Set(robberTargets);
 
   const width = SIZE * Math.sqrt(3);
   const height = SIZE * 2;
@@ -88,7 +95,8 @@ export function Board({ view, onVertexClick, onEdgeClick, highlightVertices = []
         return (
           <div
             key={hex.id}
-            className="gc-hex"
+            className={`gc-hex${robberSpots.has(hex.id) ? ' gc-hex-target' : ''}`}
+            onClick={robberSpots.has(hex.id) ? () => onHexClick?.(hex.id) : undefined}
             style={{
               left: center.x - minX - width / 2,
               top: center.y - minY - height / 2,

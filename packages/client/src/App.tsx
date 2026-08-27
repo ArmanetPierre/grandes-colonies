@@ -60,6 +60,12 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
   const [priv, setPriv] = useState<PrivatePlayerView>();
   const [timer, setTimer] = useState<TimerInfo>();
   const [notice, setNotice] = useState<string>();
+  /**
+   * Ce que le joueur s'apprête à poser. Rien n'est cliquable tant qu'il n'a
+   * pas choisi : sur un plateau de cinquante tuiles, afficher tous les
+   * emplacements de tous les types en même temps serait illisible.
+   */
+  const [intent, setIntent] = useState<'settlement' | 'city' | 'road' | null>(null);
   const connection = useRef<GameConnection | undefined>(undefined);
 
   useEffect(() => {
@@ -87,6 +93,32 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
 
   const caps = useMemo(() => new Set(priv?.capabilities ?? []), [priv]);
   const order = useMemo(() => pub?.players.map((p) => p.id) ?? [], [pub]);
+
+  // Pendant la mise en place, le jeu impose la suite : colonie puis route.
+  // Inutile de demander au joueur de choisir ce qu'il sait déjà.
+  const setupIntent: typeof intent = caps.has('CAN_PLACE_SETUP')
+    ? ((priv?.spots.roads.length ?? 0) > 0 ? 'road' : 'settlement')
+    : null;
+  const active = setupIntent ?? intent;
+
+  const shownVertices = active === 'settlement' ? priv?.spots.settlements
+    : active === 'city' ? priv?.spots.cities
+    : [];
+  const shownEdges = active === 'road' ? priv?.spots.roads : [];
+
+  const place = useCallback((kind: typeof intent, target: string) => {
+    if (!kind || !pub) return;
+    const setup = pub.phase === 'setup';
+
+    if (kind === 'road') {
+      send(setup ? 'PLACE_SETUP_ROAD' : 'BUILD_ROAD', { edge: target });
+    } else if (kind === 'settlement') {
+      send(setup ? 'PLACE_SETUP_SETTLEMENT' : 'BUILD_SETTLEMENT', { vertex: target });
+    } else {
+      send('BUILD_CITY', { vertex: target });
+    }
+    setIntent(null);
+  }, [pub, send]);
 
   if (!pub || !priv || !seat) {
     return (
@@ -145,7 +177,15 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
         </aside>
 
         <main className="gc-board-wrap">
-          <Board view={pub} />
+          <Board
+            view={pub}
+            highlightVertices={shownVertices ?? []}
+            highlightEdges={shownEdges ?? []}
+            onVertexClick={(vertex) => place(active, vertex)}
+            onEdgeClick={(edge) => place(active, edge)}
+            onHexClick={(hex) => send('MOVE_ROBBER', { to: hex })}
+            robberTargets={caps.has('CAN_MOVE_ROBBER') ? priv.spots.robber : []}
+          />
         </main>
       </div>
 
@@ -163,6 +203,12 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
         </div>
 
         <div className="gc-actions">
+          <Build label="Route" kind="road" count={priv.spots.roads.length}
+                 active={intent} setActive={setIntent} enabled={caps.has('CAN_BUILD')} />
+          <Build label="Colonie" kind="settlement" count={priv.spots.settlements.length}
+                 active={intent} setActive={setIntent} enabled={caps.has('CAN_BUILD')} />
+          <Build label="Ville" kind="city" count={priv.spots.cities.length}
+                 active={intent} setActive={setIntent} enabled={caps.has('CAN_BUILD')} />
           <Action label="Lancer les dés" enabled={caps.has('CAN_ROLL_DICE')} onClick={() => send('ROLL_DICE')} />
           <Action label="Carte dév." enabled={caps.has('CAN_BUY_DEV_CARD')} onClick={() => send('BUY_DEV_CARD')}
                   reason="pas assez de ressources" />
@@ -173,6 +219,35 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
 
       {notice && <div className="gc-notice">{notice}</div>}
     </div>
+  );
+}
+
+/**
+ * Bouton de construction : il bascule le plateau en mode « choisis un
+ * emplacement » plutôt que d'agir aussitôt.
+ *
+ * Le nombre d'emplacements disponibles est affiché : un joueur qui a les
+ * ressources mais aucun endroit où bâtir doit le comprendre sans essayer.
+ */
+function Build({ label, kind, count, active, setActive, enabled }: {
+  label: string;
+  kind: 'settlement' | 'city' | 'road';
+  count: number;
+  active: 'settlement' | 'city' | 'road' | null;
+  setActive: (kind: 'settlement' | 'city' | 'road' | null) => void;
+  enabled: boolean;
+}) {
+  const usable = enabled && count > 0;
+  return (
+    <button
+      className={`gc-action${active === kind ? ' is-armed' : ''}`}
+      disabled={!usable}
+      onClick={() => setActive(active === kind ? null : kind)}
+    >
+      {label}
+      {enabled && count === 0 && <small>aucun emplacement</small>}
+      {usable && <small>{count} emplacement{count > 1 ? 's' : ''}</small>}
+    </button>
   );
 }
 
