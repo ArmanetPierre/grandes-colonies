@@ -16,7 +16,10 @@ import {
   canAfford,
   canPlaceRoad,
   canPlaceSettlement,
+  canRaiseMonument,
   canUpgradeToCity,
+  canUpgradeToMetropolis,
+  metropolisesBuilt,
   playerOf,
 } from '@grand-colonies/engine';
 
@@ -51,6 +54,25 @@ export function upgradableSettlements(state: GameState, playerId: PlayerId): Ver
     .sort();
 }
 
+/** Cités améliorables en métropole, s'il en reste une à prendre. */
+export function upgradableCities(state: GameState, playerId: PlayerId): VertexId[] {
+  if (state.config.metropolisesTotal - metropolisesBuilt(state) <= 0) return [];
+  return [...state.board.allBuildings().entries()]
+    .filter(([vertex, b]) => b.owner === playerId && canUpgradeToMetropolis(state.board, vertex, playerId).ok)
+    .map(([vertex]) => vertex)
+    .sort();
+}
+
+/** Cités et métropoles où élever un monument. */
+export function monumentSites(state: GameState, playerId: PlayerId): VertexId[] {
+  const player = playerOf(state, playerId);
+  if (!player || player.hasMonument) return [];
+  return [...state.board.allBuildings().entries()]
+    .filter(([vertex, b]) => b.owner === playerId && canRaiseMonument(state.board, vertex, playerId).ok)
+    .map(([vertex]) => vertex)
+    .sort();
+}
+
 /**
  * Les constructions que le joueur peut réellement payer et poser.
  *
@@ -63,6 +85,11 @@ export function affordableBuilds(state: GameState, playerId: PlayerId): Command[
 
   const options: Command['type'][] = [];
 
+  // Le monument vient en tête : deux points pour cinq ressources, et sans
+  // emplacement à trouver — le meilleur rapport du jeu, une seule fois.
+  if (canAfford(player.hand, COSTS.monument) && monumentSites(state, playerId).length > 0) {
+    options.push('BUILD_MONUMENT');
+  }
   if (player.citiesLeft > 0
       && canAfford(player.hand, COSTS.city)
       && upgradableSettlements(state, playerId).length > 0) {
@@ -72,6 +99,11 @@ export function affordableBuilds(state: GameState, playerId: PlayerId): Command[
       && canAfford(player.hand, COSTS.settlement)
       && openSettlements(state, playerId, false).length > 0) {
     options.push('BUILD_SETTLEMENT');
+  }
+  // La métropole a le plus mauvais rapport points/ressources, mais elles ne
+  // sont que trois : un bot qui attend ne l'aura jamais.
+  if (canAfford(player.hand, COSTS.metropolis) && upgradableCities(state, playerId).length > 0) {
+    options.push('BUILD_METROPOLIS');
   }
   if (player.roadsLeft > 0
       && canAfford(player.hand, COSTS.road)

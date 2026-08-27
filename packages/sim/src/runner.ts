@@ -21,6 +21,7 @@ import {
   classicBoard,
   playerPoints,
   total,
+  type VictoryBreakdown,
   usesXxlBoard,
   xxlBoard,
   xxlOptionsFor,
@@ -35,6 +36,14 @@ export interface GameOutcome {
   readonly winner: PlayerId | undefined;
   /** Points finaux, dans l'ordre des joueurs. */
   readonly points: readonly number[];
+  /**
+   * D'où viennent les points de chaque joueur.
+   *
+   * Un total seul ne dit pas si une source est morte. C'est ainsi qu'on a
+   * longtemps mesuré un jeu où la plus grande puissance militaire n'était
+   * jamais attribuée, faute de bots jouant leurs chevaliers.
+   */
+  readonly breakdowns: readonly VictoryBreakdown[];
   /** Tours actifs effectivement joués par chaque joueur. */
   readonly activeTurns: readonly number[];
   /** Constructions posées par chaque joueur. */
@@ -190,7 +199,8 @@ export function playGame(options: SimulationOptions): GameOutcome {
 
   // Décompte complet : titres ET objectif secret. Les compter à la main
   // ici avait fait sous-estimer chaque score de deux points.
-  const points = players.map((p) => playerPoints(state, p.id)?.total ?? 0);
+  const breakdowns = players.map((p) => playerPoints(state, p.id)) as VictoryBreakdown[];
+  const points = breakdowns.map((b) => b?.total ?? 0);
 
   return {
     seed,
@@ -198,6 +208,7 @@ export function playGame(options: SimulationOptions): GameOutcome {
     cycles: state.cycle,
     winner: state.winner,
     points,
+    breakdowns,
     activeTurns,
     builds,
     discards,

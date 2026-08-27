@@ -163,11 +163,81 @@ Le contrat accordait au joueur actif le droit de négocier pendant son tour, mai
 
 ---
 
+## Quatrième tour : cartes jouées, métropoles, monuments
+
+Mesuré le 2026-08-27, après avoir rendu jouables les quatre cartes développement inertes et implémenté métropoles et monuments.
+
+### Une erreur de mesure, d'abord
+
+Les bots **achetaient** des cartes développement sans jamais en **jouer** une seule. La conséquence dépassait les cartes : la plus grande puissance militaire n'était **jamais** attribuée, et deux points de victoire n'existaient dans aucune mesure d'équilibrage. Tous les tours précédents portaient donc sur un jeu amputé.
+
+Les bots jouent maintenant leurs cartes et bâtissent métropoles et monuments. Le simulateur renvoie en outre la **ventilation** des points et plus seulement le total : un total seul ne dit pas qu'une source est morte, et c'est exactement ce qui avait échappé.
+
+### Les sources de points sont-elles vivantes ?
+
+Sur 12 parties par effectif :
+
+| Source | 8 joueurs | 12 joueurs |
+|---|---:|---:|
+| Plus grande puissance militaire attribuée | 10 / 12 parties | 12 / 12 |
+| Plus long réseau attribué | 12 / 12 | 12 / 12 |
+| Objectifs secrets remplis | 22 joueurs | 35 |
+| Monuments élevés | 22 | 53 |
+| Métropoles bâties | 3 | 9 |
+
+**Le monument fonctionne comme prévu** : c'est la sortie du joueur bloqué, et il est massivement utilisé. **La métropole, non** — trois sont disponibles par partie, moins d'une est prise. Son rapport est le plus mauvais du jeu : un point net pour sept ressources dont deux d'or. À décider : la porter à 4 points, ou alléger son coût.
+
+### La victoire est maintenant atteignable
+
+| Effectif | Parties conclues | Cycles médians |
+|---|---:|---:|
+| 8 joueurs | 16 / 16 | 175 |
+| 10 joueurs | 15 / 16 | 189 |
+| 12 joueurs | 15 / 16 | 198 |
+
+Contre environ une partie sur trois auparavant.
+
+---
+
+## La durée : l'erreur était dans la cible
+
+Le tour précédent concluait à « quatre fois trop lent ». Ce calcul reposait sur une confusion qu'il faut corriger.
+
+**Deux minutes par cycle est un plafond, pas une durée.** Ce sont les 90 secondes du tour actif plus les 30 de la fenêtre de commerce — des délais d'expiration. Un joueur qui lance, construit et passe la main termine son cycle en bien moins que cela. Diviser 120 minutes par ce plafond pour obtenir « 60 cycles » revient à supposer que chaque joueur épuise systématiquement son chronomètre.
+
+Ce que donnent les mesures selon la durée moyenne réellement observée à table :
+
+| Cycles | à 40 s | à 60 s | à 90 s | à 120 s (plafond) |
+|---:|---|---|---|---|
+| 120 | 1 h 20 | 2 h 00 | 3 h 00 | 4 h 00 |
+| 160 | 1 h 47 | 2 h 40 | 4 h 00 | 5 h 20 |
+| 190 | 2 h 07 | 3 h 10 | 4 h 45 | 6 h 20 |
+
+### Le seuil de victoire, chiffré
+
+Même partie, même graine, seul le seuil change :
+
+| Seuil | 8 joueurs | 12 joueurs |
+|---:|---:|---:|
+| 10 points | 128 cycles | 126 |
+| 12 points | 147 | 167 |
+| 13 points | 150 | 167 |
+| 15 points | 175 | 198 |
+
+Le rapport n'est pas linéaire : passer de 15 à 10 points ne retire que 35 % des cycles. Le début de partie est lent quel que soit le seuil, parce que la production ne démarre qu'avec les premières colonies.
+
+> **Recommandation.** Le seuil de 15 reste tenable si un cycle dure réellement une minute en moyenne : environ 3 h 20 à douze joueurs, au-dessus de la cible mais dans le domaine d'une soirée. Descendre à 12 points ramènerait à 2 h 47 sans dénaturer la course.
+>
+> **Mais ces chiffres restent ceux de bots.** Ils ne planifient pas, ne marchandent pas, et n'annoncent jamais de construction hors de leur tour — la mécanique la plus différenciante du jeu. Un humain construit plus vite. C'est un **plancher de vitesse**, donc un **plafond de durée** : la vraie partie sera plus courte. Je ne touche pas au seuil avant le playtest.
+
+---
+
 ## Limites de ces mesures
 
 - Les bots sont volontairement simples : ils construisent par ordre de valeur en points et ne planifient rien. Un humain expanderait mieux et atteindrait probablement quelques points de plus.
 - Le commerce entre joueurs est désormais simulé, mais avec une politique de bot très fruste : deux cartes en surplus contre une carte manquante, sans marchandage. Un joueur humain négocierait bien mieux.
-- Les ports, l'or, l'exploration et les chevaliers ne sont pas encore dans le moteur.
-- La construction semi-simultanée existe dans le moteur mais les bots ne l'utilisent pas : ils n'annoncent jamais hors de leur tour.
+- L'exploration et les barbares ne sont pas dans le moteur ; les jetons de défenseur et l'exploration majeure restent donc inertes au barème.
+- La construction semi-simultanée existe dans le moteur mais les bots ne l'utilisent pas : ils n'annoncent jamais hors de leur tour. C'est aujourd'hui la plus grosse mécanique absente des mesures.
+- Les bots ne choisissent pas leur objectif secret : ils gardent celui que le moteur leur attribue par défaut, sans regarder s'il colle à leur position.
 
 Ces mesures disent donc où se situe le **plancher**, pas le plafond réel du jeu fini.

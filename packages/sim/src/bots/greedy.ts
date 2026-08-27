@@ -17,6 +17,7 @@ import {
   CORE_RESOURCES,
   amount,
   canAfford,
+  canPlayCard,
   counts,
   playerOf,
   suggestDiscard,
@@ -26,8 +27,10 @@ import {
 import {
   type Bot,
   affordableBuilds,
+  monumentSites,
   openRoads,
   openSettlements,
+  upgradableCities,
   upgradableSettlements,
 } from '../bot.js';
 
@@ -71,6 +74,71 @@ function mandatoryCommand(
       .sort()
       .find((id) => !state.board.isBlocked(id));
     return target === undefined ? undefined : { actionId, playerId, type: 'MOVE_ROBBER', to: target };
+  }
+
+  return undefined;
+}
+
+/** La ressource dont le bot manque le plus — cible naturelle d'une carte. */
+function scarcest(state: GameState, playerId: PlayerId): Resource | undefined {
+  const player = playerOf(state, playerId);
+  if (!player) return undefined;
+  let worst: Resource | undefined;
+  for (const r of CORE_RESOURCES) {
+    if (worst === undefined || amount(player.hand, r) < amount(player.hand, worst)) worst = r;
+  }
+  return worst;
+}
+
+/**
+ * Jouer une carte développement.
+ *
+ * Les bots achetaient des cartes sans jamais en jouer une seule. La
+ * conséquence dépassait les cartes elles-mêmes : la plus grande puissance
+ * militaire n'était **jamais** attribuée, et deux points de victoire
+ * n'existaient dans aucune mesure d'équilibrage.
+ *
+ * L'ordre suit la valeur : le chevalier d'abord, parce qu'il vise un titre ;
+ * puis la construction offerte ; puis ce qui débloque des ressources.
+ */
+function playDevCard(state: GameState, playerId: PlayerId, actionId: string): Command | undefined {
+  const player = playerOf(state, playerId);
+  if (!player) return undefined;
+
+  const playable = (card: Parameters<typeof canPlayCard>[1]): boolean =>
+    canPlayCard(player.devCards, card).ok;
+
+  if (playable('knight')) {
+    const to = [...state.board.allHexData().keys()].sort().find((id) => !state.board.isBlocked(id));
+    if (to !== undefined) return { actionId, playerId, type: 'PLAY_KNIGHT', to };
+  }
+
+  if (playable('freeBuild')) {
+    const city = upgradableSettlements(state, playerId)[0];
+    if (city !== undefined) {
+      return { actionId, playerId, type: 'PLAY_FREE_BUILD', target: { kind: 'city', vertex: city } };
+    }
+    const spot = openSettlements(state, playerId, false)[0];
+    if (spot !== undefined && player.settlementsLeft > 0) {
+      return { actionId, playerId, type: 'PLAY_FREE_BUILD', target: { kind: 'settlement', vertex: spot } };
+    }
+    const edge = openRoads(state, playerId)[0];
+    if (edge !== undefined && player.roadsLeft > 0) {
+      return { actionId, playerId, type: 'PLAY_FREE_BUILD', target: { kind: 'road', edge } };
+    }
+  }
+
+  if (playable('roadBuilding') && player.roadsLeft > 0) {
+    const edges = openRoads(state, playerId).slice(0, Math.min(2, player.roadsLeft));
+    if (edges.length > 0) return { actionId, playerId, type: 'PLAY_ROAD_BUILDING', edges };
+  }
+
+  const need = scarcest(state, playerId);
+  if (need !== undefined && playable('invention') && amount(state.bank, need) >= 2) {
+    return { actionId, playerId, type: 'PLAY_INVENTION', resources: counts({ [need]: 2 }) };
+  }
+  if (need !== undefined && playable('monopoly')) {
+    return { actionId, playerId, type: 'PLAY_MONOPOLY', resource: need };
   }
 
   return undefined;
@@ -192,13 +260,26 @@ export class GreedyBot implements Bot {
     if (state.phase === 'freeTrade') return playerTrade(state, playerId, actionId);
     if (state.phase !== 'activeTurn') return undefined;
 
-    // L'ordre de `affordableBuilds` est déjà celui de la valeur en points :
-    // ville, colonie, route, carte.
+    // Une carte jouée passe avant une construction : elle est déjà payée, et
+    // le quota d'une carte par tour se perdrait sinon.
+    const card = playDevCard(state, playerId, actionId);
+    if (card) return card;
+
+    // L'ordre de `affordableBuilds` est celui de la valeur en points :
+    // monument, ville, colonie, métropole, route, carte.
     const [best] = affordableBuilds(state, playerId);
     // Rien d'abordable : on convertit un surplus plutôt que de thésauriser.
     if (best === undefined) return bankTrade(state, playerId, actionId);
 
     switch (best) {
+      case 'BUILD_MONUMENT': {
+        const vertex = monumentSites(state, playerId)[0];
+        return vertex === undefined ? undefined : { actionId, playerId, type: 'BUILD_MONUMENT', vertex };
+      }
+      case 'BUILD_METROPOLIS': {
+        const vertex = upgradableCities(state, playerId)[0];
+        return vertex === undefined ? undefined : { actionId, playerId, type: 'BUILD_METROPOLIS', vertex };
+      }
       case 'BUILD_CITY': {
         const vertex = upgradableSettlements(state, playerId)[0];
         return vertex === undefined ? undefined : { actionId, playerId, type: 'BUILD_CITY', vertex };
@@ -229,6 +310,13 @@ export class RandomBot implements Bot {
     if (mandatory) return mandatory;
     if (state.phase !== 'activeTurn') return undefined;
 
+    // Une fois sur deux : le hasard doit aussi produire des mains qui gardent
+    // leurs cartes, sinon il jouerait plus régulièrement que le bot cupide.
+    if (this.rng.next() < 0.5) {
+      const card = playDevCard(state, playerId, actionId);
+      if (card) return card;
+    }
+
     const options = affordableBuilds(state, playerId);
     if (options.length === 0) return bankTrade(state, playerId, actionId);
 
@@ -239,6 +327,16 @@ export class RandomBot implements Bot {
 
     const choice = options[this.rng.int(options.length)];
     switch (choice) {
+      case 'BUILD_MONUMENT': {
+        const spots = monumentSites(state, playerId);
+        const vertex = spots[this.rng.int(spots.length)];
+        return vertex === undefined ? undefined : { actionId, playerId, type: 'BUILD_MONUMENT', vertex };
+      }
+      case 'BUILD_METROPOLIS': {
+        const spots = upgradableCities(state, playerId);
+        const vertex = spots[this.rng.int(spots.length)];
+        return vertex === undefined ? undefined : { actionId, playerId, type: 'BUILD_METROPOLIS', vertex };
+      }
       case 'BUILD_CITY': {
         const spots = upgradableSettlements(state, playerId);
         const vertex = spots[this.rng.int(spots.length)];
