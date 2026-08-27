@@ -189,13 +189,25 @@ describe('tour joué par défaut', () => {
 
   it('enchaîne plusieurs tours d affilée sans jamais bloquer', () => {
     const state = startedGame(4);
-    for (let i = 0; i < 4; i++) {
-      const active = state.players[state.activeIndex]?.id as string;
-      // Chaque joueur concerné règle d'abord sa défausse éventuelle.
-      for (const p of state.players) autoPlay(state, p.id, 3);
-      autoPlay(state, active);
+    const startCycle = state.cycle;
+
+    // On sollicite tous les joueurs à chaque passe plutôt que le seul actif :
+    // un 7 peut imposer une défausse à n'importe qui, et cette défausse
+    // bloque la partie tant qu'elle n'est pas réglée.
+    let passes = 0;
+    while (state.cycle < startCycle + 5 && passes++ < 200) {
+      let acted = false;
+      for (const player of state.players) {
+        const command = nextDefaultCommand(state, player.id, `loop${counter++}`);
+        if (!command) continue;
+        expect(dispatch(state, command).ok).toBe(true);
+        acted = true;
+      }
+      // Aucun joueur n'a rien à jouer alors que la partie n'est pas finie :
+      // ce serait un blocage, exactement ce que ce test surveille.
+      if (!acted) break;
     }
-    expect(state.cycle).toBeGreaterThanOrEqual(5);
-    expect(state.phase).toBe('production');
+
+    expect(state.cycle).toBeGreaterThanOrEqual(startCycle + 5);
   });
 });
