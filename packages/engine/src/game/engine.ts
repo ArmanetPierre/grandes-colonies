@@ -11,9 +11,9 @@
  */
 
 import { parseHexKey } from '../board/axial.js';
-import type { HexId, VertexId } from '../board/graph.js';
+import type { EdgeId, HexId, VertexId } from '../board/graph.js';
 import { vertexIdsOfHex } from '../board/graph.js';
-import { buildDeck, beginTurn, buyCard, canPlayCard, knightsPlayed, playCard } from '../devCards.js';
+import { type DevCardKind, buildDeck, beginTurn, buyCard, canPlayCard, knightsPlayed, playCard } from '../devCards.js';
 import { largestArmyHolder } from '../largestArmy.js';
 import { longestRouteHolder } from '../longestRoute.js';
 import { canPlaceRoad, canPlaceSettlement, canUpgradeToCity } from '../placement.js';
@@ -84,6 +84,10 @@ function execute(state: GameState, command: Command): CommandResult {
     case 'BUILD_CITY':             return buildCity(state, command.playerId, command.vertex);
     case 'BUY_DEV_CARD':           return buyDevCard(state, command.playerId);
     case 'PLAY_KNIGHT':            return playKnight(state, command.playerId, command.to, command.victim);
+    case 'PLAY_ROAD_BUILDING':     return playRoadBuilding(state, command.playerId, command.edges);
+    case 'PLAY_INVENTION':         return playInvention(state, command.playerId, command.resources);
+    case 'PLAY_MONOPOLY':          return playMonopoly(state, command.playerId, command.resource);
+    case 'PLAY_FREE_BUILD':        return playFreeBuild(state, command.playerId, command.target);
     case 'TRADE_WITH_BANK':        return tradeWithBank(state, command.playerId, command.give, command.receive);
     case 'DECLARE_BUILD':          return declareBuild(state, command.playerId, command.target);
     case 'CANCEL_BUILD':           return cancelBuild(state, command.playerId, command.intentId);
@@ -452,6 +456,187 @@ function playKnight(state: GameState, playerId: string, to: HexId, victim?: stri
     ...moved.events,
   ];
   events.push(...refreshArmyTitle(state));
+  return { ok: true, events };
+}
+
+/**
+ * Garde commune aux cartes développement autres que le chevalier.
+ *
+ * Elles se jouent pendant le tour actif et par le seul joueur actif, comme le
+ * chevalier : l'associé construit et commerce, il ne joue pas de cartes.
+ */
+function ensureCanPlayCard(
+  state: GameState,
+  playerId: string,
+  card: DevCardKind,
+): { readonly player: PlayerState } | CommandResult {
+  if (state.phase !== 'activeTurn') return reject('wrong-phase');
+  if (activePlayer(state).id !== playerId) return reject('not-your-turn');
+  if (someoneMustDiscard(state)) return reject('must-discard-first');
+  if (state.pendingRobber) return reject('invalid-robber-move', 'déplace le voleur d abord');
+
+  const player = playerOf(state, playerId);
+  if (!player) return reject('unknown-player');
+
+  const check = canPlayCard(player.devCards, card);
+  if (!check.ok) return reject('card-not-playable', check.reason);
+  return { player };
+}
+
+const isRejection = (v: { readonly player: PlayerState } | CommandResult): v is CommandResult =>
+  'ok' in v;
+
+/**
+ * Construction de routes : deux routes gratuites.
+ *
+ * Les emplacements sont validés dans l'ordre donné, car la seconde route
+ * s'appuie souvent sur la première. Une seule route est acceptée : un joueur
+ * à court de pièces, ou enfermé, doit pouvoir jouer sa carte quand même
+ * plutôt que de la garder morte en main.
+ */
+function playRoadBuilding(state: GameState, playerId: string, edges: readonly EdgeId[]): CommandResult {
+  const guard = ensureCanPlayCard(state, playerId, 'roadBuilding');
+  if (isRejection(guard)) return guard;
+  const { player } = guard;
+
+  if (edges.length < 1 || edges.length > 2) return reject('invalid-selection', 'une ou deux routes');
+  if (new Set(edges).size !== edges.length) return reject('invalid-placement', 'deux fois la même route');
+  if (player.roadsLeft < edges.length) return reject('no-pieces-left');
+
+  // On valide tout avant de poser quoi que ce soit : un refus ne doit jamais
+  // laisser une seule des deux routes sur le plateau.
+  const placed: EdgeId[] = [];
+  for (const edge of edges) {
+    const check = canPlaceRoad(state.board, edge, playerId);
+    if (!check.ok) {
+      for (const done of placed) state.board.clearRoad(done);
+      return reject('invalid-placement', check.reason);
+    }
+    state.board.setRoad(edge, playerId);
+    placed.push(edge);
+  }
+
+  player.roadsLeft -= placed.length;
+  player.devCards = playCard(player.devCards, 'roadBuilding');
+
+  const events: DomainEvent[] = [{ type: 'DevCardPlayed', player: playerId, card: 'roadBuilding' }];
+  for (const edge of placed) events.push({ type: 'RoadPlaced', player: playerId, edge });
+  events.push(...refreshRouteTitle(state));
+  return { ok: true, events };
+}
+
+/** Invention : deux ressources prises à la banque, au choix du joueur. */
+function playInvention(state: GameState, playerId: string, resources: ResourceCounts): CommandResult {
+  const guard = ensureCanPlayCard(state, playerId, 'invention');
+  if (isRejection(guard)) return guard;
+  const { player } = guard;
+
+  const asked = counts(resources);
+  if (total(asked) !== 2) return reject('invalid-selection', 'exactement deux ressources');
+
+  // La banque est finie : on ne crée pas de ressources qu'elle n'a plus.
+  for (const resource of RESOURCES) {
+    const want = amount(asked, resource);
+    if (want > 0 && amount(state.bank, resource) < want) {
+      return reject('invalid-trade', 'la banque est à sec');
+    }
+  }
+
+  player.hand = addCounts(player.hand, asked);
+  state.bank = subtractCounts(state.bank, asked);
+  player.devCards = playCard(player.devCards, 'invention');
+
+  return {
+    ok: true,
+    events: [
+      { type: 'DevCardPlayed', player: playerId, card: 'invention' },
+      { type: 'ResourcesGranted', player: playerId, resources: asked },
+    ],
+  };
+}
+
+/**
+ * Monopole : tous les autres joueurs cèdent la ressource nommée.
+ *
+ * À douze, cette carte est bien plus violente qu'à quatre — c'est la raison
+ * pour laquelle elle reste rare dans la pioche (§38).
+ */
+function playMonopoly(state: GameState, playerId: string, resource: Resource): CommandResult {
+  const guard = ensureCanPlayCard(state, playerId, 'monopoly');
+  if (isRejection(guard)) return guard;
+  const { player } = guard;
+
+  if (!RESOURCES.includes(resource)) return reject('invalid-selection', 'ressource inconnue');
+
+  const taken: { from: string; count: number }[] = [];
+  for (const victim of state.players) {
+    if (victim.id === playerId) continue;
+    const held = amount(victim.hand, resource);
+    if (held <= 0) continue;
+    victim.hand = subtractCounts(victim.hand, counts({ [resource]: held }));
+    taken.push({ from: victim.id, count: held });
+  }
+
+  const seized = taken.reduce((sum, t) => sum + t.count, 0);
+  if (seized > 0) player.hand = addCounts(player.hand, counts({ [resource]: seized }));
+  player.devCards = playCard(player.devCards, 'monopoly');
+
+  return {
+    ok: true,
+    events: [
+      { type: 'DevCardPlayed', player: playerId, card: 'monopoly' },
+      { type: 'MonopolyResolved', player: playerId, resource, taken },
+    ],
+  };
+}
+
+/**
+ * Bâtisseur : une construction offerte, au choix du joueur.
+ *
+ * La carte offre la combinaison de ressources d'une construction, pas une
+ * construction supplémentaire : les règles de placement, les pièces
+ * disponibles et les emplacements gelés s'appliquent comme d'habitude.
+ */
+function playFreeBuild(state: GameState, playerId: string, target: IntentTarget): CommandResult {
+  const guard = ensureCanPlayCard(state, playerId, 'freeBuild');
+  if (isRejection(guard)) return guard;
+  const { player } = guard;
+
+  if (state.frozenLocations.has(locationOf(target))) return reject('location-frozen');
+
+  let event: DomainEvent;
+  if (target.kind === 'road') {
+    if (player.roadsLeft <= 0) return reject('no-pieces-left');
+    const check = canPlaceRoad(state.board, target.edge, playerId);
+    if (!check.ok) return reject('invalid-placement', check.reason);
+    state.board.setRoad(target.edge, playerId);
+    player.roadsLeft--;
+    event = { type: 'RoadPlaced', player: playerId, edge: target.edge };
+  } else if (target.kind === 'settlement') {
+    if (player.settlementsLeft <= 0) return reject('no-pieces-left');
+    const check = canPlaceSettlement(state.board, target.vertex, playerId);
+    if (!check.ok) return reject('invalid-placement', check.reason);
+    state.board.setBuilding(target.vertex, { kind: 'settlement', owner: playerId });
+    player.settlementsLeft--;
+    event = { type: 'SettlementPlaced', player: playerId, vertex: target.vertex };
+  } else {
+    if (player.citiesLeft <= 0) return reject('no-pieces-left');
+    const check = canUpgradeToCity(state.board, target.vertex, playerId);
+    if (!check.ok) return reject('invalid-placement', check.reason);
+    state.board.setBuilding(target.vertex, { kind: 'city', owner: playerId });
+    player.citiesLeft--;
+    player.settlementsLeft++;
+    event = { type: 'CityBuilt', player: playerId, vertex: target.vertex };
+  }
+
+  player.devCards = playCard(player.devCards, 'freeBuild');
+
+  const events: DomainEvent[] = [
+    { type: 'DevCardPlayed', player: playerId, card: 'freeBuild' },
+    event,
+  ];
+  if (target.kind === 'road') events.push(...refreshRouteTitle(state));
+  events.push(...checkVictory(state));
   return { ok: true, events };
 }
 

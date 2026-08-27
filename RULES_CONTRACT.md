@@ -166,7 +166,54 @@ Un siège est conservé **deux tours de table** avant que l'hôte ne se voie pro
 
 ---
 
-## 7. Journal des décisions
+## 7. Cartes développement
+
+Le paquet en compte cinq sortes (`GRAND_COLONIES_DECK`, 60 cartes). Deux
+règles valent pour toutes, et comptent plus à douze qu'à quatre : **une carte
+ne se joue pas le tour de son achat**, et **une seule carte par tour**. Sans
+la première, on convertirait des ressources en chevalier au moment précis où
+l'on en a besoin ; sans la seconde, un joueur qui a thésaurisé viderait sa
+main d'un coup, hors de toute réaction.
+
+Seul le **joueur actif** joue des cartes. L'associé construit et commerce,
+mais ne joue pas de cartes : c'est déjà la règle du chevalier, et l'étendre
+évite d'avoir à arbitrer deux monopoles dans le même tour.
+
+| Carte | Effet | Fenêtre |
+|---|---|---|
+| Chevalier | Déplace le voleur, compte pour la puissance militaire | Production **ou** tour actif |
+| Construction de routes | Une ou deux routes gratuites | Tour actif |
+| Invention | Deux ressources au choix, prises à la banque | Tour actif |
+| Monopole | Tous les autres joueurs cèdent la ressource nommée | Tour actif |
+| Bâtisseur | **Une** construction offerte, au choix | Tour actif |
+
+Le chevalier garde sa fenêtre plus large parce qu'il faut pouvoir écarter le
+voleur *avant* de lancer les dés.
+
+### Précisions
+
+**Construction de routes** accepte une seule route. Un joueur enfermé, ou à
+court de pièces, doit pouvoir jouer sa carte plutôt que de la garder morte en
+main. Les deux emplacements sont validés dans l'ordre donné, car la seconde
+route s'appuie souvent sur la première ; si la seconde est illégale, aucune
+des deux n'est posée.
+
+**Invention** respecte le stock de la banque, qui est fini.
+
+**Bâtisseur** offre la *combinaison de ressources* d'une construction — route,
+colonie ou cité — et non une construction supplémentaire : règles de
+placement, pièces disponibles et emplacements gelés s'appliquent normalement.
+Ce chiffrage la met à parité avec Construction de routes (deux routes, soit
+quatre ressources) tout en laissant le choix au joueur.
+
+> **À confirmer.** L'effet du Bâtisseur n'était défini nulle part ; le nom
+> seul (« combinaison de construction offerte ») autorisait plusieurs
+> lectures. Celle retenue est la plus économe et la mieux équilibrée, mais
+> elle reste à valider en partie.
+
+---
+
+## 8. Journal des décisions
 
 | Date | Question | Décision |
 |---|---|---|
@@ -184,3 +231,7 @@ Un siège est conservé **deux tours de table** avant que l'hôte ne se voie pro
 | 2026-08-27 | Siège abandonné | **Deux tours de table** avant de proposer un bot |
 | 2026-08-27 | Réponse à une offre pendant le tour | **Recevable si le joueur actif est l'une des deux parties** |
 | 2026-08-27 | Durée de vie d'une offre | **Le cycle en cours** |
+| 2026-08-27 | Qui joue les cartes développement | **Le joueur actif seul** — comme le chevalier |
+| 2026-08-27 | Fenêtre des cartes autres que le chevalier | **Tour actif uniquement** |
+| 2026-08-27 | Construction de routes avec une seule pose | **Autorisée** — sinon la carte reste morte en main |
+| 2026-08-27 | Effet du Bâtisseur | **Une construction offerte au choix** — *à confirmer en partie* |

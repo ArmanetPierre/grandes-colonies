@@ -11,7 +11,10 @@
  */
 
 import { COSTS, canAfford, total } from '../resources.js';
-import { canPlayCard } from '../devCards.js';
+import { type DevCardKind, canPlayCard } from '../devCards.js';
+
+/** Les cartes autres que le chevalier, qui a ses propres règles de phase. */
+const OTHER_CARDS: readonly DevCardKind[] = ['roadBuilding', 'invention', 'monopoly', 'freeBuild'];
 import { type GameState, activePlayer, pairedPlayer, playerOf } from './state.js';
 
 export const CAPABILITIES = [
@@ -22,6 +25,7 @@ export const CAPABILITIES = [
   'CAN_DECLARE_BUILD',
   'CAN_BUY_DEV_CARD',
   'CAN_PLAY_KNIGHT',
+  'CAN_PLAY_DEV_CARD',
   'CAN_MOVE_ROBBER',
   'CAN_DISCARD',
   'CAN_END_TURN',
@@ -90,6 +94,12 @@ export function getCapabilities(state: GameState, playerId: string): Set<Capabil
       caps.add('CAN_TRADE_BANK');
       if (state.deck.length > 0 && canAfford(player.hand, COSTS.devCard)) caps.add('CAN_BUY_DEV_CARD');
       if (canPlayCard(player.devCards, 'knight').ok) caps.add('CAN_PLAY_KNIGHT');
+      // Les autres cartes ne se jouent que pendant le tour actif, et par le
+      // seul joueur actif : l'associé construit et commerce, il ne joue pas
+      // de cartes. La vue privée dit *lesquelles* sont jouables.
+      if (role === 'active' && OTHER_CARDS.some((c) => canPlayCard(player.devCards, c).ok)) {
+        caps.add('CAN_PLAY_DEV_CARD');
+      }
     }
     // Seul l'actif négocie pendant son tour (contrat §1).
     if (role === 'active') {

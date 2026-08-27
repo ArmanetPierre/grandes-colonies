@@ -146,6 +146,18 @@ export class Board {
     this.routes.set(e, { owner, kind });
   }
 
+  /**
+   * Retire une route.
+   *
+   * Aucune règle ne détruit de route en cours de partie ; ce retrait sert à
+   * défaire une pose provisoire, quand on doit poser pour savoir si la suite
+   * est légale — le cas de la carte Construction de routes, dont la seconde
+   * route s'appuie souvent sur la première.
+   */
+  clearRoad(e: EdgeId): void {
+    this.routes.delete(e);
+  }
+
   allBuildings(): ReadonlyMap<VertexId, Building> {
     return this.buildings;
   }

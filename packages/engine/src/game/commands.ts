@@ -39,6 +39,10 @@ export type Command =
   | (CommandBase & { readonly type: 'BUILD_CITY'; readonly vertex: VertexId })
   | (CommandBase & { readonly type: 'BUY_DEV_CARD' })
   | (CommandBase & { readonly type: 'PLAY_KNIGHT'; readonly from?: HexId; readonly to: HexId; readonly victim?: PlayerId })
+  | (CommandBase & { readonly type: 'PLAY_ROAD_BUILDING'; readonly edges: readonly EdgeId[] })
+  | (CommandBase & { readonly type: 'PLAY_INVENTION'; readonly resources: ResourceCounts })
+  | (CommandBase & { readonly type: 'PLAY_MONOPOLY'; readonly resource: Resource })
+  | (CommandBase & { readonly type: 'PLAY_FREE_BUILD'; readonly target: IntentTarget })
   | (CommandBase & { readonly type: 'TRADE_WITH_BANK'; readonly give: ResourceCounts; readonly receive: ResourceCounts })
   | (CommandBase & { readonly type: 'DECLARE_BUILD'; readonly target: IntentTarget })
   | (CommandBase & { readonly type: 'CANCEL_BUILD'; readonly intentId: string })
@@ -71,6 +75,8 @@ export type DomainEvent =
   | { readonly type: 'ResourceStolen'; readonly thief: PlayerId; readonly victim: PlayerId; readonly resource: Resource }
   | { readonly type: 'DevCardBought'; readonly player: PlayerId; readonly card: DevCardKind }
   | { readonly type: 'DevCardPlayed'; readonly player: PlayerId; readonly card: DevCardKind }
+  | { readonly type: 'MonopolyResolved'; readonly player: PlayerId; readonly resource: Resource; readonly taken: readonly { readonly from: PlayerId; readonly count: number }[] }
+  | { readonly type: 'ResourcesGranted'; readonly player: PlayerId; readonly resources: ResourceCounts }
   | { readonly type: 'BankTraded'; readonly player: PlayerId; readonly give: ResourceCounts; readonly receive: ResourceCounts }
   | { readonly type: 'TitleChanged'; readonly title: 'longestRoute' | 'largestArmy'; readonly from: PlayerId | undefined; readonly to: PlayerId | undefined }
   | { readonly type: 'PhaseChanged'; readonly from: Phase; readonly to: Phase }
@@ -114,6 +120,7 @@ export type RejectionReason =
   | 'invalid-offer'
   | 'offer-not-for-you'
   | 'unknown-command'
+  | 'invalid-selection'
   | 'offer-stale'
   | 'game-over';
 
