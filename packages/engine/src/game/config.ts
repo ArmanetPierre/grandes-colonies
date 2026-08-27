@@ -37,6 +37,14 @@ export interface GameConfig {
   readonly roadsPerPlayer: number;
   readonly settlementsPerPlayer: number;
   readonly citiesPerPlayer: number;
+  /**
+   * Métropoles disponibles pour toute la partie, tous joueurs confondus.
+   *
+   * C'est un prix de course, comme la route la plus longue : une
+   * amélioration accessible à tous gonflerait tous les scores sans rien
+   * départager (contrat §8).
+   */
+  readonly metropolisesTotal: number;
 
   /**
    * Durées en secondes. Le moteur ne les applique pas — il ignore le temps —
@@ -78,6 +86,7 @@ export function defaultConfig(playerCount: number): GameConfig {
     roadsPerPlayer: 20,
     settlementsPerPlayer: 5,
     citiesPerPlayer: 4,
+    metropolisesTotal: 3,
     activeTurnSeconds: 90,
     pairedTurnSeconds: 90,
     tradingWindowSeconds: 30,

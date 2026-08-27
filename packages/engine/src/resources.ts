@@ -111,7 +111,9 @@ export function missingFor(have: ResourceCounts, cost: ResourceCounts): Resource
   return Object.freeze(out);
 }
 
-export type Buildable = 'road' | 'settlement' | 'city' | 'devCard' | 'maritimeRoute' | 'tradingPost';
+export type Buildable =
+  | 'road' | 'settlement' | 'city' | 'metropolis' | 'monument'
+  | 'devCard' | 'maritimeRoute' | 'tradingPost';
 
 /**
  * Coûts de construction. Les quatre premiers sont ceux de Catan ; la route
@@ -121,6 +123,13 @@ export const COSTS: Readonly<Record<Buildable, ResourceCounts>> = Object.freeze(
   road: counts({ wood: 1, brick: 1 }),
   settlement: counts({ wood: 1, brick: 1, wool: 1, grain: 1 }),
   city: counts({ ore: 3, grain: 2 }),
+  // L'or n'avait aucun usage : produit, compté par la banque, réclamé par
+  // rien. La métropole le lui donne, et donne aux tuiles d'or une valeur de
+  // placement (contrat §8).
+  metropolis: counts({ ore: 3, grain: 2, gold: 2 }),
+  // Une ressource de chaque : le monument oblige à passer par le commerce,
+  // ce qui fait vivre la table au lieu de l'assécher.
+  monument: counts({ wood: 1, brick: 1, wool: 1, grain: 1, ore: 1 }),
   devCard: counts({ ore: 1, wool: 1, grain: 1 }),
   maritimeRoute: counts({ wood: 1, wool: 1 }),
   tradingPost: counts({ brick: 2, wool: 1 }),

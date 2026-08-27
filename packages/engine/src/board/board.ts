@@ -25,7 +25,7 @@ export interface HexData {
   readonly token?: Token;
 }
 
-export type BuildingKind = 'settlement' | 'city';
+export type BuildingKind = 'settlement' | 'city' | 'metropolis';
 
 /**
  * Grand Colonies distingue routes terrestres et routes maritimes (§12), mais
@@ -58,6 +58,10 @@ export interface BoardInit {
 const YIELD_PER_BUILDING: Readonly<Record<BuildingKind, number>> = {
   settlement: 1,
   city: 2,
+  // La métropole ne produit pas plus qu'une cité : sa récompense est le
+  // point supplémentaire (contrat §8). Doubler aussi sa production
+  // creuserait un écart que rien ne rattraperait à douze joueurs.
+  metropolis: 2,
 };
 
 export function buildingYield(kind: BuildingKind): number {

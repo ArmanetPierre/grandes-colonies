@@ -388,3 +388,14 @@ body {
 }
 .gc-lobby-seat.is-free { opacity: .45; font-style: italic; }
 .gc-lobby-seat.is-me { border-color: var(--gc-accent); font-weight: 600; }
+
+/* ── métropole et monument ─────────────────────────────────────────────
+   La métropole se distingue de la cité : trois pour toute la partie, on
+   doit voir d'un coup d'œil qui les tient. */
+.gc-building.gc-metropolis {
+  background: var(--gc-gold); border: 2px solid var(--gc-ink);
+  width: 15px; height: 15px;
+}
+/* Le monument n'occupe aucun sommet : il se signale dans la liste des
+   joueurs, faute de quoi deux points apparaîtraient sans cause visible. */
+.gc-monument { color: var(--gc-gold); font-size: 11px; }

@@ -37,6 +37,8 @@ export type Command =
   | (CommandBase & { readonly type: 'BUILD_ROAD'; readonly edge: EdgeId })
   | (CommandBase & { readonly type: 'BUILD_SETTLEMENT'; readonly vertex: VertexId })
   | (CommandBase & { readonly type: 'BUILD_CITY'; readonly vertex: VertexId })
+  | (CommandBase & { readonly type: 'BUILD_METROPOLIS'; readonly vertex: VertexId })
+  | (CommandBase & { readonly type: 'BUILD_MONUMENT'; readonly vertex: VertexId })
   | (CommandBase & { readonly type: 'BUY_DEV_CARD' })
   | (CommandBase & { readonly type: 'PLAY_KNIGHT'; readonly from?: HexId; readonly to: HexId; readonly victim?: PlayerId })
   | (CommandBase & { readonly type: 'PLAY_ROAD_BUILDING'; readonly edges: readonly EdgeId[] })
@@ -67,6 +69,8 @@ export type DomainEvent =
   | { readonly type: 'SettlementPlaced'; readonly player: PlayerId; readonly vertex: VertexId }
   | { readonly type: 'RoadPlaced'; readonly player: PlayerId; readonly edge: EdgeId }
   | { readonly type: 'CityBuilt'; readonly player: PlayerId; readonly vertex: VertexId }
+  | { readonly type: 'MetropolisBuilt'; readonly player: PlayerId; readonly vertex: VertexId; readonly remaining: number }
+  | { readonly type: 'MonumentRaised'; readonly player: PlayerId; readonly vertex: VertexId }
   | { readonly type: 'DiceRolled'; readonly player: PlayerId; readonly a: number; readonly b: number; readonly total: number }
   | { readonly type: 'ResourcesProduced'; readonly gains: ReadonlyMap<PlayerId, ResourceCounts> }
   | { readonly type: 'DiscardRequired'; readonly players: ReadonlyMap<PlayerId, number> }
@@ -121,6 +125,7 @@ export type RejectionReason =
   | 'offer-not-for-you'
   | 'unknown-command'
   | 'invalid-selection'
+  | 'none-left'
   | 'offer-stale'
   | 'game-over';
 

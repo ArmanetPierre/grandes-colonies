@@ -16,7 +16,13 @@ import { vertexIdsOfHex } from '../board/graph.js';
 import { type DevCardKind, buildDeck, beginTurn, buyCard, canPlayCard, knightsPlayed, playCard } from '../devCards.js';
 import { largestArmyHolder } from '../largestArmy.js';
 import { longestRouteHolder } from '../longestRoute.js';
-import { canPlaceRoad, canPlaceSettlement, canUpgradeToCity } from '../placement.js';
+import {
+  canPlaceRoad,
+  canPlaceSettlement,
+  canRaiseMonument,
+  canUpgradeToCity,
+  canUpgradeToMetropolis,
+} from '../placement.js';
 import { applyBankLimits, computeProduction } from '../production.js';
 import {
   type Resource,
@@ -82,6 +88,8 @@ function execute(state: GameState, command: Command): CommandResult {
     case 'BUILD_ROAD':             return buildRoad(state, command.playerId, command.edge);
     case 'BUILD_SETTLEMENT':       return buildSettlement(state, command.playerId, command.vertex);
     case 'BUILD_CITY':             return buildCity(state, command.playerId, command.vertex);
+    case 'BUILD_METROPOLIS':       return buildMetropolis(state, command.playerId, command.vertex);
+    case 'BUILD_MONUMENT':         return buildMonument(state, command.playerId, command.vertex);
     case 'BUY_DEV_CARD':           return buyDevCard(state, command.playerId);
     case 'PLAY_KNIGHT':            return playKnight(state, command.playerId, command.to, command.victim);
     case 'PLAY_ROAD_BUILDING':     return playRoadBuilding(state, command.playerId, command.edges);
@@ -413,6 +421,74 @@ function buildCity(state: GameState, playerId: string, vertex: VertexId): Comman
   player.settlementsLeft++; // la colonie retourne dans la réserve
 
   const events: DomainEvent[] = [{ type: 'CityBuilt', player: playerId, vertex }];
+  return { ok: true, events };
+}
+
+/** Métropoles déjà bâties sur le plateau, tous joueurs confondus. */
+export function metropolisesBuilt(state: GameState, player?: string): number {
+  let count = 0;
+  for (const building of state.board.allBuildings().values()) {
+    if (building.kind !== 'metropolis') continue;
+    if (player !== undefined && building.owner !== player) continue;
+    count++;
+  }
+  return count;
+}
+
+/**
+ * Améliore une cité en métropole.
+ *
+ * Trois seulement pour toute la partie : c'est un prix de course, et le
+ * refus « il n'en reste plus » doit arriver avant tout paiement.
+ */
+function buildMetropolis(state: GameState, playerId: string, vertex: VertexId): CommandResult {
+  const blocked = ensureCanAct(state, playerId);
+  if (blocked) return blocked;
+
+  const player = playerOf(state, playerId);
+  if (!player) return reject('unknown-player');
+
+  const remaining = state.config.metropolisesTotal - metropolisesBuilt(state);
+  if (remaining <= 0) return reject('none-left', 'les trois métropoles sont bâties');
+  if (!canAfford(player.hand, COSTS.metropolis)) return reject('not-enough-resources');
+
+  const check = canUpgradeToMetropolis(state.board, vertex, playerId);
+  if (!check.ok) return reject('invalid-placement', check.reason);
+
+  pay(state, playerId, COSTS.metropolis);
+  state.board.setBuilding(vertex, { kind: 'metropolis', owner: playerId });
+
+  // La cité n'est pas rendue : la métropole *est* cette cité, améliorée.
+  const events: DomainEvent[] = [
+    { type: 'MetropolisBuilt', player: playerId, vertex, remaining: remaining - 1 },
+  ];
+  events.push(...checkVictory(state));
+  return { ok: true, events };
+}
+
+/**
+ * Élève un monument sur une cité ou une métropole.
+ *
+ * Un seul par joueur. C'est la sortie de celui qui a des ressources et plus
+ * aucun sommet libre : il fait croître son score en hauteur (contrat §8).
+ */
+function buildMonument(state: GameState, playerId: string, vertex: VertexId): CommandResult {
+  const blocked = ensureCanAct(state, playerId);
+  if (blocked) return blocked;
+
+  const player = playerOf(state, playerId);
+  if (!player) return reject('unknown-player');
+  if (player.hasMonument) return reject('none-left', 'ton monument est déjà élevé');
+  if (!canAfford(player.hand, COSTS.monument)) return reject('not-enough-resources');
+
+  const check = canRaiseMonument(state.board, vertex, playerId);
+  if (!check.ok) return reject('invalid-placement', check.reason);
+
+  pay(state, playerId, COSTS.monument);
+  player.hasMonument = true;
+
+  const events: DomainEvent[] = [{ type: 'MonumentRaised', player: playerId, vertex }];
+  events.push(...checkVictory(state));
   return { ok: true, events };
 }
 
@@ -1034,6 +1110,8 @@ export function playerPoints(state: GameState, playerId: string): VictoryBreakdo
     hasLongestRoute: state.longestRouteHolder === playerId,
     hasLargestArmy: state.largestArmyHolder === playerId,
     secretObjectivesCompleted: objectiveDone(state, player) ? 1 : 0,
+    metropolises: metropolisesBuilt(state, playerId),
+    monuments: player.hasMonument ? 1 : 0,
   }, state.config.victory);
 }
 
@@ -1078,11 +1156,10 @@ function checkVictory(state: GameState): DomainEvent[] {
   let best: { player: PlayerState; points: number } | undefined;
   for (const player of order) {
     if (!player) continue;
-    const points = victoryPoints(state.board, player.id, {
-      hasLongestRoute: state.longestRouteHolder === player.id,
-      hasLargestArmy: state.largestArmyHolder === player.id,
-      secretObjectivesCompleted: objectiveDone(state, player) ? 1 : 0,
-    }, state.config.victory);
+    // On passe par `playerPoints` plutôt que de recomposer les mêmes extras :
+    // cette duplication avait déjà failli faire gagner un joueur sans compter
+    // ses métropoles ni son monument.
+    const points = playerPoints(state, player.id)?.total ?? 0;
 
     if (points < target) continue;
     // Strictement supérieur : à égalité, le premier rencontré dans l'ordre

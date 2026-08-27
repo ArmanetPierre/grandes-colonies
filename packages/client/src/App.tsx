@@ -62,6 +62,9 @@ function formatTimer(ms: number | undefined): string {
 
 const NAME_KEY = 'grand-colonies:name';
 
+/** Ce qu'un joueur peut s'apprêter à poser. */
+type BuildKind = 'settlement' | 'city' | 'metropolis' | 'monument' | 'road' | null;
+
 export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }) {
   /**
    * Le nom est demandé avant toute connexion, et mémorisé.
@@ -82,7 +85,7 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
    * pas choisi : sur un plateau de cinquante tuiles, afficher tous les
    * emplacements de tous les types en même temps serait illisible.
    */
-  const [intent, setIntent] = useState<'settlement' | 'city' | 'road' | null>(null);
+  const [intent, setIntent] = useState<BuildKind>(null);
   /**
    * Annoncer plutôt que construire.
    *
@@ -150,7 +153,7 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
   const freeBuilding = card?.kind === 'freeBuild';
   const canPick = caps.has('CAN_BUILD') || freeBuilding
     || (declaring && caps.has('CAN_DECLARE_BUILD'));
-  const setupIntent: typeof intent = caps.has('CAN_PLACE_SETUP')
+  const setupIntent: BuildKind = caps.has('CAN_PLACE_SETUP')
     ? ((priv?.spots.roads.length ?? 0) > 0 ? 'road' : 'settlement')
     : null;
   const active = setupIntent ?? intent;
@@ -182,6 +185,8 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
     : !picking ? []
     : active === 'settlement' ? priv?.spots.settlements
     : active === 'city' ? priv?.spots.cities
+    : active === 'metropolis' ? priv?.spots.metropolises
+    : active === 'monument' ? priv?.spots.monuments
     : [];
   const shownEdges = roadCard
     ? (roadCard.edges[0] === undefined ? priv?.spots.roads : secondRoadSpots(roadCard.edges[0]))
@@ -189,7 +194,7 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
     : picking && active === 'road' ? priv?.spots.roads
     : [];
 
-  const place = useCallback((kind: typeof intent, target: string) => {
+  const place = useCallback((kind: BuildKind, target: string) => {
     if (!kind || !pub) return;
     const setup = pub.phase === 'setup';
 
@@ -210,6 +215,10 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
       send(setup ? 'PLACE_SETUP_ROAD' : 'BUILD_ROAD', { edge: target });
     } else if (kind === 'settlement') {
       send(setup ? 'PLACE_SETUP_SETTLEMENT' : 'BUILD_SETTLEMENT', { vertex: target });
+    } else if (kind === 'metropolis') {
+      send('BUILD_METROPOLIS', { vertex: target });
+    } else if (kind === 'monument') {
+      send('BUILD_MONUMENT', { vertex: target });
     } else {
       send('BUILD_CITY', { vertex: target });
     }
@@ -294,6 +303,7 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
               {player.role !== 'idle' && (
                 <span className="gc-role">{player.role === 'active' ? 'Actif' : 'Associé'}</span>
               )}
+              {player.hasMonument && <span className="gc-monument" title="Monument élevé">▲</span>}
               <span className="gc-stat">{player.publicPoints} PV · {player.handSize} c.</span>
               {player.mustDiscard > 0 && <span className="gc-warn" title="Doit défausser">⚠</span>}
             </div>
@@ -407,6 +417,15 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
           <Build label="Ville" kind="city" count={priv.spots.cities.length}
                  active={intent} setActive={setIntent}
                  enabled={caps.has('CAN_BUILD') || freeBuilding || (declaring && caps.has('CAN_DECLARE_BUILD'))} />
+          {/* Rareté oblige : on ne montre la métropole que s'il en reste une. */}
+          {priv.spots.metropolises.length > 0 && (
+            <Build label="Métropole" kind="metropolis" count={priv.spots.metropolises.length}
+                   active={intent} setActive={setIntent} enabled={caps.has('CAN_BUILD')} />
+          )}
+          {priv.spots.monuments.length > 0 && (
+            <Build label="Monument" kind="monument" count={priv.spots.monuments.length}
+                   active={intent} setActive={setIntent} enabled={caps.has('CAN_BUILD')} />
+          )}
           {caps.has('CAN_DECLARE_BUILD') && !caps.has('CAN_BUILD') && (
             <button
               className={`gc-action gc-action-quiet${declaring ? ' is-armed' : ''}`}
@@ -482,10 +501,10 @@ function NameEntry({ onChoose }: { onChoose: (name: string) => void }) {
  */
 function Build({ label, kind, count, active, setActive, enabled }: {
   label: string;
-  kind: 'settlement' | 'city' | 'road';
+  kind: Exclude<BuildKind, null>;
   count: number;
-  active: 'settlement' | 'city' | 'road' | null;
-  setActive: (kind: 'settlement' | 'city' | 'road' | null) => void;
+  active: BuildKind;
+  setActive: (kind: BuildKind) => void;
   enabled: boolean;
 }) {
   const usable = enabled && count > 0;

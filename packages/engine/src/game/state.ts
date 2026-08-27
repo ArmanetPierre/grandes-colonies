@@ -38,6 +38,8 @@ export interface PlayerState {
   roadsLeft: number;
   settlementsLeft: number;
   citiesLeft: number;
+  /** Le monument est unique par joueur : posé ou non, rien d'autre. */
+  hasMonument: boolean;
   /** Cartes à défausser après un 7 ; zéro le reste du temps. */
   mustDiscard: number;
 
@@ -148,6 +150,7 @@ export function createGame(options: NewGameOptions): GameState {
     roadsLeft: options.config.roadsPerPlayer,
     settlementsLeft: options.config.settlementsPerPlayer,
     citiesLeft: options.config.citiesPerPlayer,
+    hasMonument: false,
     mustDiscard: 0,
     offeredObjectives: [],
     chosenObjective: undefined,

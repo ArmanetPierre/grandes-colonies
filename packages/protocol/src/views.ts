@@ -28,7 +28,11 @@ import {
   knightsPlayed,
   RESOURCES,
   canPlaceRoad,
+  canRaiseMonument,
   canUpgradeToCity,
+  canUpgradeToMetropolis,
+  metropolisesBuilt,
+  playerOf,
   playerPoints,
   roadSpots,
   roleOf,
@@ -50,6 +54,13 @@ export interface PublicPlayer {
   readonly roadsLeft: number;
   readonly settlementsLeft: number;
   readonly citiesLeft: number;
+  /**
+   * Monument élevé ? Public, comme la construction elle-même.
+   *
+   * Sans lui, le score d'un joueur bondirait de deux points sans cause
+   * visible sur le plateau : le monument n'occupe pas de sommet à lui.
+   */
+  readonly hasMonument: boolean;
   readonly mustDiscard: number;
   readonly connected: boolean;
 }
@@ -144,6 +155,10 @@ export interface PrivatePlayerView {
   readonly spots: {
     readonly settlements: readonly VertexId[];
     readonly cities: readonly VertexId[];
+    /** Cités améliorables, tant qu'il reste une métropole à prendre. */
+    readonly metropolises: readonly VertexId[];
+    /** Cités et métropoles où élever son unique monument. */
+    readonly monuments: readonly VertexId[];
     readonly roads: readonly EdgeId[];
     readonly robber: readonly HexId[];
   };
@@ -216,6 +231,7 @@ export function publicView(state: GameState, connectivity?: Connectivity): Publi
       roadsLeft: p.roadsLeft,
       settlementsLeft: p.settlementsLeft,
       citiesLeft: p.citiesLeft,
+      hasMonument: p.hasMonument,
       mustDiscard: p.mustDiscard,
       connected: connectivity?.isConnected(p.id) ?? true,
     })),
@@ -307,7 +323,7 @@ function buildableSpots(
   capabilities: readonly Capability[],
 ): PrivatePlayerView['spots'] {
   const has = (capability: Capability): boolean => capabilities.includes(capability);
-  const empty = { settlements: [], cities: [], roads: [], robber: [] };
+  const empty = { settlements: [], cities: [], roads: [], robber: [], metropolises: [], monuments: [] };
 
   if (has('CAN_PLACE_SETUP')) {
     // Pendant la mise en place, la colonie précède sa route.
@@ -342,11 +358,28 @@ function buildableSpots(
     return { ...empty, robber };
   }
 
+  const player = playerOf(state, playerId);
+  const mine = [...state.board.allBuildings().entries()]
+    .filter(([, b]) => b.owner === playerId);
+
+  // Inutile de proposer une amélioration s'il n'en reste aucune à prendre.
+  const metropolisLeft = state.config.metropolisesTotal - metropolisesBuilt(state) > 0;
+
   return {
     settlements: settlementSpots(state.board, playerId),
-    cities: [...state.board.allBuildings().entries()]
-      .filter(([vertex, b]) => b.owner === playerId && canUpgradeToCity(state.board, vertex, playerId).ok)
+    cities: mine
+      .filter(([vertex]) => canUpgradeToCity(state.board, vertex, playerId).ok)
       .map(([vertex]) => vertex),
+    metropolises: metropolisLeft
+      ? mine
+        .filter(([vertex]) => canUpgradeToMetropolis(state.board, vertex, playerId).ok)
+        .map(([vertex]) => vertex)
+      : [],
+    monuments: player?.hasMonument
+      ? []
+      : mine
+        .filter(([vertex]) => canRaiseMonument(state.board, vertex, playerId).ok)
+        .map(([vertex]) => vertex),
     roads: roadSpots(state.board, playerId),
     robber,
   };

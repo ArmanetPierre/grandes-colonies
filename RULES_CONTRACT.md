@@ -213,7 +213,55 @@ quatre ressources) tout en laissant le choix au joueur.
 
 ---
 
-## 8. Journal des décisions
+## 8. Métropoles et monuments
+
+Le barème de victoire chiffrait ces deux constructions depuis le début — 3
+points et 2 points — mais rien ne les attribuait : la table était morte. Ce
+sont pourtant les mécaniques qui séparent Grand Colonies du Catan de base, et
+elles répondent au problème mesuré en simulation : les parties s'éternisent
+parce que les joueurs finissent **à court d'emplacements**, pas à court de
+ressources. Métropole et monument font croître le score **en hauteur** plutôt
+qu'en surface.
+
+### La métropole
+
+Améliore une de tes cités. Coût : **3 minerai, 2 blé, 2 or**. Elle vaut
+3 points **au lieu** des 2 de la cité — un point net — et produit autant
+qu'elle, ni plus.
+
+**Il n'y en a que trois pour toute la partie.** C'est un prix de course,
+comme la route la plus longue : à douze joueurs, une amélioration accessible
+à tous gonflerait tous les scores sans rien départager.
+
+> **Pourquoi l'or.** L'or était une ressource morte : produit par ses
+> hexagones, compté par la banque, mais réclamé par aucun coût — le seul
+> objectif qui s'en servait est désactivé faute de système. Il s'accumulait
+> en main jusqu'à la défausse. La métropole lui donne enfin une raison
+> d'exister, et donne aux tuiles d'or une valeur de placement.
+
+### Le monument
+
+Se bâtit sur une de tes cités ou métropoles. Coût : **une ressource de
+chaque** — bois, brique, laine, blé, minerai. **Un seul par joueur.** Vaut
+2 points.
+
+Cinq ressources pour deux points, c'est le tarif d'une cité, mais **sans
+emplacement à trouver**. C'est délibéré : le monument est la sortie d'un
+joueur bloqué, celui qui a des ressources et plus aucun sommet libre. « Une
+de chaque » l'oblige à passer par le commerce, ce qui fait vivre la table au
+lieu de l'assécher.
+
+### Ce qui reste inerte
+
+`defenderToken` (1 point) et `majorExploration` (1 point) demeurent dans le
+barème sans être attribués. Le premier attend les barbares, le second
+l'archipel. Ils sont conservés plutôt que retirés, sur le modèle des
+objectifs indisponibles : le jour où leur système arrive, il n'y aura rien à
+rechiffrer.
+
+---
+
+## 9. Journal des décisions
 
 | Date | Question | Décision |
 |---|---|---|
@@ -235,3 +283,8 @@ quatre ressources) tout en laissant le choix au joueur.
 | 2026-08-27 | Fenêtre des cartes autres que le chevalier | **Tour actif uniquement** |
 | 2026-08-27 | Construction de routes avec une seule pose | **Autorisée** — sinon la carte reste morte en main |
 | 2026-08-27 | Effet du Bâtisseur | **Une construction offerte au choix** — *à confirmer en partie* |
+| 2026-08-27 | Effet de la métropole | **Amélioration d'une cité, 3 PV au lieu de 2**, trois pour la partie |
+| 2026-08-27 | Coût de la métropole | **3 minerai, 2 blé, 2 or** — donne enfin un usage à l'or |
+| 2026-08-27 | Effet du monument | **2 PV, un seul par joueur**, bâti sur une cité |
+| 2026-08-27 | Coût du monument | **Une ressource de chaque** — oblige à commercer |
+| 2026-08-27 | Jetons de défenseur et exploration majeure | **Conservés au barème, inertes** en attendant leur système |

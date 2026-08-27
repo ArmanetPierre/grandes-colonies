@@ -26,6 +26,7 @@ export type PlacementError =
   | 'not-connected'      // aucune route ni bâtiment à soi n'y touche
   | 'not-owner'          // la construction appartient à un autre joueur
   | 'not-a-settlement'   // on ne peut améliorer qu'une colonie
+  | 'not-a-city'         // la métropole et le monument exigent une cité
   | 'unbuildable-land';  // que de la mer ou de l'inexploré autour
 
 export type Placement = { readonly ok: true } | { readonly ok: false; readonly reason: PlacementError };
@@ -114,6 +115,40 @@ export function canUpgradeToCity(board: Board, vertex: VertexId, player: PlayerI
   if (!building) return fail('not-a-settlement');
   if (building.owner !== player) return fail('not-owner');
   if (building.kind !== 'settlement') return fail('not-a-settlement');
+
+  return OK;
+}
+
+/**
+ * Une cité peut-elle devenir métropole ?
+ *
+ * La rareté — trois pour toute la partie — n'est pas vérifiée ici : elle
+ * relève de l'état de la partie, pas du plateau. Le moteur s'en charge.
+ */
+export function canUpgradeToMetropolis(board: Board, vertex: VertexId, player: PlayerId): Placement {
+  if (!board.graph.hasVertex(vertex)) return fail('off-board');
+
+  const building = board.buildingAt(vertex);
+  if (!building) return fail('not-a-city');
+  if (building.owner !== player) return fail('not-owner');
+  if (building.kind !== 'city') return fail('not-a-city');
+
+  return OK;
+}
+
+/**
+ * Un monument peut-il s'élever ici ?
+ *
+ * Il demande une cité ou une métropole : le monument couronne un
+ * investissement, il ne se pose pas sur un terrain nu.
+ */
+export function canRaiseMonument(board: Board, vertex: VertexId, player: PlayerId): Placement {
+  if (!board.graph.hasVertex(vertex)) return fail('off-board');
+
+  const building = board.buildingAt(vertex);
+  if (!building) return fail('not-a-city');
+  if (building.owner !== player) return fail('not-owner');
+  if (building.kind === 'settlement') return fail('not-a-city');
 
   return OK;
 }

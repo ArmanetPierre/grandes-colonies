@@ -72,7 +72,9 @@ export function getCapabilities(state: GameState, playerId: string): Set<Capabil
   const role = roleOf(state, playerId);
   const affordsAny = canAfford(player.hand, COSTS.road)
     || canAfford(player.hand, COSTS.settlement)
-    || canAfford(player.hand, COSTS.city);
+    || canAfford(player.hand, COSTS.city)
+    || canAfford(player.hand, COSTS.metropolis)
+    || (!player.hasMonument && canAfford(player.hand, COSTS.monument));
 
   if (state.phase === 'production') {
     if (role === 'active' && !waiting) caps.add('CAN_ROLL_DICE');
