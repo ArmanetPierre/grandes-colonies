@@ -63,7 +63,7 @@ function formatTimer(ms: number | undefined): string {
 const NAME_KEY = 'grand-colonies:name';
 
 /** Ce qu'un joueur peut s'apprêter à poser. */
-type BuildKind = 'settlement' | 'city' | 'metropolis' | 'monument' | 'road' | null;
+type BuildKind = 'settlement' | 'city' | 'metropolis' | 'monument' | 'road' | 'maritime' | null;
 
 export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }) {
   /**
@@ -199,7 +199,9 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
   const shownEdges = roadCard
     ? (roadCard.edges[0] === undefined ? priv?.spots.roads : secondRoadSpots(roadCard.edges[0]))
     : knightArmed ? []
-    : picking && active === 'road' ? priv?.spots.roads
+    : !picking ? []
+    : active === 'road' ? priv?.spots.roads
+    : active === 'maritime' ? priv?.spots.maritime
     : [];
 
   const place = useCallback((kind: BuildKind, target: string) => {
@@ -219,6 +221,8 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
       send('DECLARE_BUILD', {
         target: kind === 'road' ? { kind: 'road', edge: target } : { kind, vertex: target },
       });
+    } else if (kind === 'maritime') {
+      send('BUILD_MARITIME_ROUTE', { edge: target });
     } else if (kind === 'road') {
       send(setup ? 'PLACE_SETUP_ROAD' : 'BUILD_ROAD', { edge: target });
     } else if (kind === 'settlement') {
@@ -432,6 +436,11 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
           <Build label="Ville" kind="city" count={priv.spots.cities.length}
                  active={intent} setActive={setIntent}
                  enabled={caps.has('CAN_BUILD') || freeBuilding || (declaring && caps.has('CAN_DECLARE_BUILD'))} />
+          {/* La voie maritime n'apparaît que là où il y a de la mer à longer. */}
+          {priv.spots.maritime.length > 0 && (
+            <Build label="Voie maritime" kind="maritime" count={priv.spots.maritime.length}
+                   active={intent} setActive={setIntent} enabled={caps.has('CAN_BUILD')} />
+          )}
           {/* Rareté oblige : on ne montre la métropole que s'il en reste une. */}
           {priv.spots.metropolises.length > 0 && (
             <Build label="Métropole" kind="metropolis" count={priv.spots.metropolises.length}

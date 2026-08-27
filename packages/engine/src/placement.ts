@@ -14,6 +14,7 @@ import {
   type VertexId,
   adjacentVertices,
   edgesOfVertex,
+  hexesOfEdge,
   verticesOfEdge,
 } from './board/graph.js';
 import { isProductive } from './resources.js';
@@ -27,7 +28,8 @@ export type PlacementError =
   | 'not-owner'          // la construction appartient à un autre joueur
   | 'not-a-settlement'   // on ne peut améliorer qu'une colonie
   | 'not-a-city'         // la métropole et le monument exigent une cité
-  | 'unbuildable-land';  // que de la mer ou de l'inexploré autour
+  | 'unbuildable-land'   // que de la mer ou de l'inexploré autour
+  | 'needs-water';       // une route maritime doit longer la mer
 
 export type Placement = { readonly ok: true } | { readonly ok: false; readonly reason: PlacementError };
 
@@ -53,6 +55,47 @@ function touchesBuildableLand(board: Board, vertex: VertexId): boolean {
     if (terrain === 'sea' || terrain === 'unexplored') continue;
     // Le désert ne produit rien mais reste constructible.
     if (terrain === 'desert' || isProductive(terrain)) return true;
+  }
+  return false;
+}
+
+/** L'arête longe-t-elle de la terre constructible ? */
+function edgeTouchesLand(board: Board, edge: EdgeId): boolean {
+  for (const hex of hexesOfEdge(edge)) {
+    const terrain = board.terrainAt(hex);
+    if (terrain === undefined || terrain === 'sea' || terrain === 'unexplored') continue;
+    return true;
+  }
+  return false;
+}
+
+/** L'arête longe-t-elle la mer ? */
+function edgeTouchesWater(board: Board, edge: EdgeId): boolean {
+  for (const hex of hexesOfEdge(edge)) {
+    // Hors plateau compte comme large : le pourtour est de l'eau.
+    if (!board.graph.has(hex)) return true;
+    if (board.terrainAt(hex) === 'sea') return true;
+  }
+  return false;
+}
+
+/**
+ * Le réseau du joueur atteint-il cette arête ?
+ *
+ * Commun aux deux sortes de routes : terrestres et maritimes forment un seul
+ * réseau commercial (§12), on passe donc de l'une à l'autre sans rupture.
+ */
+function connectsToNetwork(board: Board, edge: EdgeId, player: PlayerId): boolean {
+  for (const vertex of verticesOfEdge(edge)) {
+    const building = board.buildingAt(vertex);
+    if (building?.owner === player) return true;
+
+    // Un bâtiment adverse coupe le réseau : on ne traverse pas chez l'autre.
+    if (building && building.owner !== player) continue;
+
+    for (const other of edgesOfVertex(vertex)) {
+      if (other !== edge && board.roadAt(other) === player) return true;
+    }
   }
   return false;
 }
@@ -91,21 +134,34 @@ export function canPlaceRoad(board: Board, edge: EdgeId, player: PlayerId): Plac
   if (!board.graph.hasEdge(edge)) return fail('off-board');
   if (board.roadAt(edge)) return fail('occupied');
 
+  // Une route terrestre longe forcément de la terre. Rien ne le vérifiait :
+  // on pouvait tracer une route sur la mer ouverte, du moment qu'elle
+  // touchait son propre réseau.
+  if (!edgeTouchesLand(board, edge)) return fail('unbuildable-land');
+
   // Une route doit partir de quelque chose à soi : un bâtiment ou une autre
   // route, à l'une ou l'autre extrémité.
-  for (const vertex of verticesOfEdge(edge)) {
-    const building = board.buildingAt(vertex);
-    if (building?.owner === player) return OK;
+  return connectsToNetwork(board, edge, player) ? OK : fail('not-connected');
+}
 
-    // Un bâtiment adverse coupe le réseau : on ne traverse pas chez l'autre.
-    if (building && building.owner !== player) continue;
+/**
+ * Une route maritime peut-elle être posée ici ?
+ *
+ * Elle longe la mer là où la route terrestre longe la terre. Une arête
+ * côtière — une face de mer, une face de terre — accepte les deux : c'est
+ * elle qui fait le lien entre les deux réseaux.
+ */
+export function canPlaceMaritimeRoute(board: Board, edge: EdgeId, player: PlayerId): Placement {
+  if (!board.graph.hasEdge(edge)) return fail('off-board');
+  if (board.roadAt(edge)) return fail('occupied');
+  if (!edgeTouchesWater(board, edge)) return fail('needs-water');
 
-    for (const other of edgesOfVertex(vertex)) {
-      if (other !== edge && board.roadAt(other) === player) return OK;
-    }
-  }
+  return connectsToNetwork(board, edge, player) ? OK : fail('not-connected');
+}
 
-  return fail('not-connected');
+/** Toutes les arêtes où ce joueur pourrait poser une route maritime. */
+export function maritimeSpots(board: Board, player: PlayerId): EdgeId[] {
+  return [...board.graph.edges].filter((e) => canPlaceMaritimeRoute(board, e, player).ok);
 }
 
 export function canUpgradeToCity(board: Board, vertex: VertexId, player: PlayerId): Placement {

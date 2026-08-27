@@ -71,6 +71,7 @@ export function getCapabilities(state: GameState, playerId: string): Set<Capabil
 
   const role = roleOf(state, playerId);
   const affordsAny = canAfford(player.hand, COSTS.road)
+    || canAfford(player.hand, COSTS.maritimeRoute)
     || canAfford(player.hand, COSTS.settlement)
     || canAfford(player.hand, COSTS.city)
     || canAfford(player.hand, COSTS.metropolis)

@@ -35,6 +35,7 @@ export type Command =
   | (CommandBase & { readonly type: 'DISCARD'; readonly resources: ResourceCounts })
   | (CommandBase & { readonly type: 'MOVE_ROBBER'; readonly from?: HexId; readonly to: HexId; readonly victim?: PlayerId })
   | (CommandBase & { readonly type: 'BUILD_ROAD'; readonly edge: EdgeId })
+  | (CommandBase & { readonly type: 'BUILD_MARITIME_ROUTE'; readonly edge: EdgeId })
   | (CommandBase & { readonly type: 'BUILD_SETTLEMENT'; readonly vertex: VertexId })
   | (CommandBase & { readonly type: 'BUILD_CITY'; readonly vertex: VertexId })
   | (CommandBase & { readonly type: 'BUILD_METROPOLIS'; readonly vertex: VertexId })
@@ -68,6 +69,7 @@ export type DomainEvent =
   | { readonly type: 'SetupCompleted' }
   | { readonly type: 'SettlementPlaced'; readonly player: PlayerId; readonly vertex: VertexId }
   | { readonly type: 'RoadPlaced'; readonly player: PlayerId; readonly edge: EdgeId }
+  | { readonly type: 'MaritimeRoutePlaced'; readonly player: PlayerId; readonly edge: EdgeId }
   | { readonly type: 'CityBuilt'; readonly player: PlayerId; readonly vertex: VertexId }
   | { readonly type: 'MetropolisBuilt'; readonly player: PlayerId; readonly vertex: VertexId; readonly remaining: number }
   | { readonly type: 'MonumentRaised'; readonly player: PlayerId; readonly vertex: VertexId }

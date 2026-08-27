@@ -17,6 +17,7 @@ import { type DevCardKind, buildDeck, beginTurn, buyCard, canPlayCard, knightsPl
 import { largestArmyHolder } from '../largestArmy.js';
 import { longestRouteHolder } from '../longestRoute.js';
 import {
+  canPlaceMaritimeRoute,
   canPlaceRoad,
   canPlaceSettlement,
   canRaiseMonument,
@@ -86,6 +87,7 @@ function execute(state: GameState, command: Command): CommandResult {
     case 'DISCARD':                return discard(state, command.playerId, command.resources);
     case 'MOVE_ROBBER':            return moveRobber(state, command.playerId, command.to, command.victim);
     case 'BUILD_ROAD':             return buildRoad(state, command.playerId, command.edge);
+    case 'BUILD_MARITIME_ROUTE':   return buildMaritimeRoute(state, command.playerId, command.edge);
     case 'BUILD_SETTLEMENT':       return buildSettlement(state, command.playerId, command.vertex);
     case 'BUILD_CITY':             return buildCity(state, command.playerId, command.vertex);
     case 'BUILD_METROPOLIS':       return buildMetropolis(state, command.playerId, command.vertex);
@@ -398,6 +400,35 @@ function buildRoad(state: GameState, playerId: string, edge: string): CommandRes
   player.roadsLeft--;
 
   const events: DomainEvent[] = [{ type: 'RoadPlaced', player: playerId, edge }];
+  events.push(...refreshRouteTitle(state));
+  return { ok: true, events };
+}
+
+/**
+ * Route maritime.
+ *
+ * Elle coûte moins cher qu'une route terrestre — bois et laine plutôt que
+ * bois et brique — et puise dans la même réserve de pièces : c'est un choix
+ * de tracé, pas une seconde armée de routes. Les deux forment un seul réseau
+ * commercial pour le décompte du plus long (§12).
+ */
+function buildMaritimeRoute(state: GameState, playerId: string, edge: string): CommandResult {
+  const blocked = ensureCanAct(state, playerId);
+  if (blocked) return blocked;
+
+  const player = playerOf(state, playerId);
+  if (!player) return reject('unknown-player');
+  if (player.roadsLeft <= 0) return reject('no-pieces-left');
+  if (!canAfford(player.hand, COSTS.maritimeRoute)) return reject('not-enough-resources');
+
+  const check = canPlaceMaritimeRoute(state.board, edge, playerId);
+  if (!check.ok) return reject('invalid-placement', check.reason);
+
+  pay(state, playerId, COSTS.maritimeRoute);
+  state.board.setRoad(edge, playerId, 'maritime');
+  player.roadsLeft--;
+
+  const events: DomainEvent[] = [{ type: 'MaritimeRoutePlaced', player: playerId, edge }];
   events.push(...refreshRouteTitle(state));
   return { ok: true, events };
 }

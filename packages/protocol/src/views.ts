@@ -35,6 +35,7 @@ import {
   robberVictims,
   playerOf,
   playerPoints,
+  maritimeSpots,
   roadSpots,
   roleOf,
   settlementSpots,
@@ -161,6 +162,8 @@ export interface PrivatePlayerView {
     /** Cités et métropoles où élever son unique monument. */
     readonly monuments: readonly VertexId[];
     readonly roads: readonly EdgeId[];
+    /** Arêtes maritimes praticables — le long de la mer. */
+    readonly maritime: readonly EdgeId[];
     readonly robber: readonly HexId[];
     /**
      * Victimes possibles, par hexagone visé.
@@ -332,7 +335,7 @@ function buildableSpots(
 ): PrivatePlayerView['spots'] {
   const has = (capability: Capability): boolean => capabilities.includes(capability);
   const empty = {
-    settlements: [], cities: [], roads: [], robber: [],
+    settlements: [], cities: [], roads: [], maritime: [], robber: [],
     metropolises: [], monuments: [], robberVictims: {},
   };
 
@@ -400,6 +403,7 @@ function buildableSpots(
         .filter(([vertex]) => canRaiseMonument(state.board, vertex, playerId).ok)
         .map(([vertex]) => vertex),
     roads: roadSpots(state.board, playerId),
+    maritime: maritimeSpots(state.board, playerId),
     robber,
     robberVictims: victims,
   };
