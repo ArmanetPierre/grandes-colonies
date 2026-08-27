@@ -32,6 +32,7 @@ import {
   canUpgradeToCity,
   canUpgradeToMetropolis,
   metropolisesBuilt,
+  robberVictims,
   playerOf,
   playerPoints,
   roadSpots,
@@ -161,6 +162,13 @@ export interface PrivatePlayerView {
     readonly monuments: readonly VertexId[];
     readonly roads: readonly EdgeId[];
     readonly robber: readonly HexId[];
+    /**
+     * Victimes possibles, par hexagone visé.
+     *
+     * Sans elle le client déplaçait le voleur sans jamais désigner personne,
+     * et le vol — la moitié de l'intérêt du voleur — n'avait jamais lieu.
+     */
+    readonly robberVictims: Readonly<Record<HexId, readonly PlayerId[]>>;
   };
 
   /**
@@ -323,7 +331,10 @@ function buildableSpots(
   capabilities: readonly Capability[],
 ): PrivatePlayerView['spots'] {
   const has = (capability: Capability): boolean => capabilities.includes(capability);
-  const empty = { settlements: [], cities: [], roads: [], robber: [], metropolises: [], monuments: [] };
+  const empty = {
+    settlements: [], cities: [], roads: [], robber: [],
+    metropolises: [], monuments: [], robberVictims: {},
+  };
 
   if (has('CAN_PLACE_SETUP')) {
     // Pendant la mise en place, la colonie précède sa route.
@@ -344,8 +355,16 @@ function buildableSpots(
     ? [...state.board.allHexData().keys()].filter((id) => !state.board.isBlocked(id))
     : [];
 
+  // Calculées seulement pour les hexagones réellement proposés : les recenser
+  // toutes à chaque diffusion, pour douze joueurs, serait du gaspillage.
+  const victims: Record<HexId, readonly PlayerId[]> = {};
+  for (const hex of robber) {
+    const candidates = robberVictims(state, hex, playerId);
+    if (candidates.length > 0) victims[hex] = candidates;
+  }
+
   // Un déplacement dû bloque tout le reste : inutile de proposer autre chose.
-  if (has('CAN_MOVE_ROBBER')) return { ...empty, robber };
+  if (has('CAN_MOVE_ROBBER')) return { ...empty, robber, robberVictims: victims };
 
   /**
    * Les cartes Construction de routes et Bâtisseur sont gratuites.
@@ -355,7 +374,7 @@ function buildableSpots(
    * des listes vides : sa carte serait jouable sans aucun endroit où cliquer.
    */
   if (!has('CAN_BUILD') && !has('CAN_DECLARE_BUILD') && !has('CAN_PLAY_DEV_CARD')) {
-    return { ...empty, robber };
+    return { ...empty, robber, robberVictims: victims };
   }
 
   const player = playerOf(state, playerId);
@@ -382,6 +401,7 @@ function buildableSpots(
         .map(([vertex]) => vertex),
     roads: roadSpots(state.board, playerId),
     robber,
+    robberVictims: victims,
   };
 }
 

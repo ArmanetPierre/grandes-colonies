@@ -269,3 +269,41 @@ describe('emplacements et cartes gratuites', () => {
     expect(view?.spots.robber.length).toBeGreaterThan(0);
   });
 });
+
+describe('victimes du voleur', () => {
+  /**
+   * Le vol n'avait jamais lieu : le client déplaçait le voleur sans jamais
+   * désigner personne, faute de savoir qui était volable.
+   */
+  it('nomme les joueurs volables sur chaque hexagone proposé', () => {
+    const state = startedGame();
+    dispatch(state, cmd('ROLL_DICE', 'p1'));
+    state.pendingRobber = true;
+    for (const p of state.players) p.mustDiscard = 0;
+    // Tout le monde tient des cartes : sans main, personne n'est volable.
+    for (const p of state.players) p.hand = counts({ wood: 2 });
+
+    const view = privateView(state, 'p1');
+    expect(view?.capabilities).toContain('CAN_MOVE_ROBBER');
+
+    const entries = Object.entries(view?.spots.robberVictims ?? {});
+    expect(entries.length).toBeGreaterThan(0);
+    for (const [, victims] of entries) {
+      expect(victims.length).toBeGreaterThan(0);
+      // On ne se vole jamais soi-même.
+      expect(victims).not.toContain('p1');
+    }
+  });
+
+  it('ne propose pas un joueur à la main vide', () => {
+    const state = startedGame();
+    dispatch(state, cmd('ROLL_DICE', 'p1'));
+    state.pendingRobber = true;
+    for (const p of state.players) { p.mustDiscard = 0; p.hand = counts({}); }
+
+    const view = privateView(state, 'p1');
+    // Des hexagones sont proposés, mais aucune victime.
+    expect(view?.spots.robber.length).toBeGreaterThan(0);
+    expect(Object.keys(view?.spots.robberVictims ?? {})).toHaveLength(0);
+  });
+});

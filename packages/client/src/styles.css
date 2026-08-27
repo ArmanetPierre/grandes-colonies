@@ -399,3 +399,8 @@ body {
 /* Le monument n'occupe aucun sommet : il se signale dans la liste des
    joueurs, faute de quoi deux points apparaîtraient sans cause visible. */
 .gc-monument { color: var(--gc-gold); font-size: 11px; }
+
+/* ── choix de la victime du voleur ─────────────────────────────────────── */
+.gc-victims { display: grid; gap: 6px; margin: 12px 0; }
+.gc-victims button { display: flex; align-items: center; gap: 8px; text-align: left; }
+.gc-victims small { margin-left: auto; color: var(--gc-ink-soft); font-weight: 500; }

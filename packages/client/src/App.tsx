@@ -103,6 +103,14 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
    * même chose.
    */
   const [card, setCard] = useState<{ kind: CardRequest['kind']; edges: string[] } | null>(null);
+  /**
+   * Le voleur est posé, reste à désigner qui l'on dépouille.
+   *
+   * Tant que ce choix n'existait pas, le client envoyait le déplacement sans
+   * victime et le moteur, faute de nom, ne volait rien : le voleur bloquait
+   * la production mais ne prenait rien à personne.
+   */
+  const [robbing, setRobbing] = useState<{ hex: string; victims: readonly string[] } | null>(null);
   const connection = useRef<GameConnection | undefined>(undefined);
 
   useEffect(() => {
@@ -234,13 +242,20 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
     setCard(null);
   };
 
+  /** Le déplacement du voleur, avec ou sans victime selon ce qu'offre l'hexagone. */
+  const moveRobber = (hex: string, victim?: string): void => {
+    const type = card?.kind === 'knight' ? 'PLAY_KNIGHT' : 'MOVE_ROBBER';
+    send(type, { to: hex, ...(victim ? { victim } : {}) });
+    setCard(null);
+    setRobbing(null);
+  };
+
   const clickHex = (hex: string): void => {
-    if (card?.kind === 'knight') {
-      send('PLAY_KNIGHT', { to: hex });
-      setCard(null);
-      return;
-    }
-    send('MOVE_ROBBER', { to: hex });
+    const victims = priv?.spots.robberVictims[hex] ?? [];
+    // Un seul candidat : le demander serait une cérémonie inutile.
+    if (victims.length === 1) { moveRobber(hex, victims[0]); return; }
+    if (victims.length === 0) { moveRobber(hex); return; }
+    setRobbing({ hex, victims });
   };
 
   if (name === null) return <NameEntry onChoose={(chosen) => {
@@ -455,6 +470,42 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
 
       {priv.mustDiscard > 0 && (
         <Discard pub={pub} priv={priv} onDiscard={(resources) => send('DISCARD', { resources })} />
+      )}
+
+      {robbing && (
+        <div className="gc-modal-backdrop">
+          <div className="gc-modal">
+            <header className="gc-modal-head">
+              <span className="gc-modal-title">Qui dépouilles-tu ?</span>
+            </header>
+            <p className="gc-modal-hint">
+              Une carte au hasard, prise dans la main de la victime.
+            </p>
+            <div className="gc-victims">
+              {robbing.victims.map((victim) => {
+                const target = pub.players.find((p) => p.id === victim);
+                return (
+                  <button
+                    key={victim}
+                    className="gc-action gc-action-quiet"
+                    onClick={() => moveRobber(robbing.hex, victim)}
+                  >
+                    <span className="gc-chip" style={{ background: colorOf(victim, order) }} />
+                    {target?.name ?? victim}
+                    <small>{target?.handSize ?? 0} cartes</small>
+                  </button>
+                );
+              })}
+            </div>
+            {/* Renoncer reste possible : mieux vaut un voleur bien placé sans
+                vol qu'un joueur bloqué qui n'ose pas cliquer. */}
+            <div className="gc-modal-actions">
+              <button className="gc-action gc-action-quiet" onClick={() => moveRobber(robbing.hex)}>
+                Ne voler personne
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {notice && <div className="gc-notice">{notice}</div>}

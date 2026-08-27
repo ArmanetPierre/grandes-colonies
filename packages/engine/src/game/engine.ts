@@ -286,6 +286,28 @@ function relocateRobber(
   return { ok: true, events };
 }
 
+/**
+ * Qui peut être dépouillé sur cet hexagone.
+ *
+ * Un joueur n'est une victime que s'il y possède une construction **et**
+ * détient au moins une carte : proposer quelqu'un à la main vide ferait
+ * perdre son vol au joueur actif sans qu'il comprenne pourquoi.
+ *
+ * Calculé par le serveur plutôt que déduit par le client : c'est la même
+ * règle que celle appliquée à la réception, et deux implémentations
+ * finiraient par diverger.
+ */
+export function robberVictims(state: GameState, hex: HexId, thief: string): string[] {
+  const found = new Set<string>();
+  for (const vertex of vertexIdsOfHex(parseHexKey(hex))) {
+    const owner = state.board.buildingAt(vertex)?.owner;
+    if (owner === undefined || owner === thief) continue;
+    if (total(playerOf(state, owner)?.hand ?? {}) === 0) continue;
+    found.add(owner);
+  }
+  return [...found].sort();
+}
+
 function stealFrom(state: GameState, thief: string, victimId: string, hex: HexId): CommandResult {
   if (victimId === thief) return reject('invalid-victim', 'on ne se vole pas soi-même');
 
