@@ -270,3 +270,61 @@ describe('spike réseau', () => {
     await pause(150);
   }), 20000);
 });
+
+describe('robustesse du transport', () => {
+  /**
+   * Une soirée à douze ne doit pas pouvoir être coupée par un seul message
+   * malformé. Le cas n'est pas théorique : pendant le développement, un autre
+   * programme de la machine s'est connecté au port et a pris un siège.
+   */
+  it('survit à une commande de type inconnu', () => withServer(async (url) => {
+    const client = await TestClient.connect(url);
+    client.send({ type: 'join', name: 'Alpha' });
+    await client.waitFor('seat');
+
+    client.send({ type: 'command', command: { actionId: 'z1', type: 'PAS_UNE_COMMANDE' } });
+    const rejection = await client.waitFor('rejected');
+    expect(rejection.payload['reason']).toBe('unknown-command');
+
+    // Le serveur est toujours là : il répond encore à un autre joueur.
+    const second = await TestClient.connect(url);
+    second.send({ type: 'join', name: 'Beta' });
+    expect(await second.waitFor('seat')).toBeDefined();
+
+    await client.close();
+    await second.close();
+  }));
+
+  it('ignore un message sans identifiant d action', () => withServer(async (url) => {
+    const client = await TestClient.connect(url);
+    client.send({ type: 'join', name: 'Alpha' });
+    await client.waitFor('seat');
+
+    // Sans actionId, la déduplication n'a plus de clé : on ne joue pas.
+    client.send({ type: 'command', command: { type: 'ROLL_DICE' } });
+    await pause(120);
+
+    const second = await TestClient.connect(url);
+    second.send({ type: 'join', name: 'Beta' });
+    expect(await second.waitFor('seat')).toBeDefined();
+
+    await client.close();
+    await second.close();
+  }));
+
+  it('ne tombe pas sur un JSON illisible', () => withServer(async (url) => {
+    const client = await TestClient.connect(url);
+    client.send({ type: 'join', name: 'Alpha' });
+    await client.waitFor('seat');
+
+    (client as unknown as { socket: WebSocket }).socket.send('{ ceci n est pas du JSON');
+    await pause(120);
+
+    const second = await TestClient.connect(url);
+    second.send({ type: 'join', name: 'Beta' });
+    expect(await second.waitFor('seat')).toBeDefined();
+
+    await client.close();
+    await second.close();
+  }));
+});

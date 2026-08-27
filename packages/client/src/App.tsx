@@ -21,6 +21,7 @@ import {
 } from './net/connection.js';
 import { Board, colorOf } from './ui/Board.jsx';
 import { Discard } from './ui/Discard.jsx';
+import { GameOver } from './ui/GameOver.jsx';
 import { Trade } from './ui/Trade.jsx';
 
 const RESOURCE_LABELS: Record<string, string> = {
@@ -78,6 +79,14 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
    * emplacements de tous les types en même temps serait illisible.
    */
   const [intent, setIntent] = useState<'settlement' | 'city' | 'road' | null>(null);
+  /**
+   * Annoncer plutôt que construire.
+   *
+   * C'est le même geste — choisir un type, puis un emplacement — mais
+   * l'annonce réserve les ressources et attend la fin du cycle. Un
+   * interrupteur explicite évite qu'on annonce en croyant construire.
+   */
+  const [declaring, setDeclaring] = useState(false);
   const connection = useRef<GameConnection | undefined>(undefined);
 
   useEffect(() => {
@@ -109,21 +118,30 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
 
   // Pendant la mise en place, le jeu impose la suite : colonie puis route.
   // Inutile de demander au joueur de choisir ce qu'il sait déjà.
+  const canPick = caps.has('CAN_BUILD') || (declaring && caps.has('CAN_DECLARE_BUILD'));
   const setupIntent: typeof intent = caps.has('CAN_PLACE_SETUP')
     ? ((priv?.spots.roads.length ?? 0) > 0 ? 'road' : 'settlement')
     : null;
   const active = setupIntent ?? intent;
 
-  const shownVertices = active === 'settlement' ? priv?.spots.settlements
+  const picking = setupIntent !== null || canPick;
+  const shownVertices = !picking ? []
+    : active === 'settlement' ? priv?.spots.settlements
     : active === 'city' ? priv?.spots.cities
     : [];
-  const shownEdges = active === 'road' ? priv?.spots.roads : [];
+  const shownEdges = picking && active === 'road' ? priv?.spots.roads : [];
 
   const place = useCallback((kind: typeof intent, target: string) => {
     if (!kind || !pub) return;
     const setup = pub.phase === 'setup';
 
-    if (kind === 'road') {
+    if (declaring && !setup) {
+      // L'annonce vise un emplacement sans le prendre : les ressources sont
+      // réservées, la résolution aura lieu en fin de cycle.
+      send('DECLARE_BUILD', {
+        target: kind === 'road' ? { kind: 'road', edge: target } : { kind, vertex: target },
+      });
+    } else if (kind === 'road') {
       send(setup ? 'PLACE_SETUP_ROAD' : 'BUILD_ROAD', { edge: target });
     } else if (kind === 'settlement') {
       send(setup ? 'PLACE_SETUP_SETTLEMENT' : 'BUILD_SETTLEMENT', { vertex: target });
@@ -131,7 +149,7 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
       send('BUILD_CITY', { vertex: target });
     }
     setIntent(null);
-  }, [pub, send]);
+  }, [pub, send, declaring]);
 
   if (name === null) return <NameEntry onChoose={(chosen) => {
     localStorage.setItem(NAME_KEY, chosen);
@@ -148,6 +166,7 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
   }
 
   const me = pub.players.find((p) => p.id === priv.id);
+  const myIntents = pub.intents.filter((i) => i.player === priv.id);
   const overLimit = (me?.handSize ?? 0) > pub.handLimit;
 
   return (
@@ -234,13 +253,41 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
           </span>
         </div>
 
+        {myIntents.length > 0 && (
+          <div className="gc-my-intents">
+            <span className="gc-my-intents-label">Annonces</span>
+            {myIntents.map((declared) => (
+              <button
+                key={declared.id}
+                className="gc-action gc-action-mini gc-action-quiet"
+                onClick={() => send('CANCEL_BUILD', { intentId: declared.id })}
+                title="Retirer l'annonce et récupérer les ressources"
+              >
+                {declared.contested ? 'contestée' : 'en attente'} ✕
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="gc-actions">
           <Build label="Route" kind="road" count={priv.spots.roads.length}
-                 active={intent} setActive={setIntent} enabled={caps.has('CAN_BUILD')} />
+                 active={intent} setActive={setIntent}
+                 enabled={caps.has('CAN_BUILD') || (declaring && caps.has('CAN_DECLARE_BUILD'))} />
           <Build label="Colonie" kind="settlement" count={priv.spots.settlements.length}
-                 active={intent} setActive={setIntent} enabled={caps.has('CAN_BUILD')} />
+                 active={intent} setActive={setIntent}
+                 enabled={caps.has('CAN_BUILD') || (declaring && caps.has('CAN_DECLARE_BUILD'))} />
           <Build label="Ville" kind="city" count={priv.spots.cities.length}
-                 active={intent} setActive={setIntent} enabled={caps.has('CAN_BUILD')} />
+                 active={intent} setActive={setIntent}
+                 enabled={caps.has('CAN_BUILD') || (declaring && caps.has('CAN_DECLARE_BUILD'))} />
+          {caps.has('CAN_DECLARE_BUILD') && !caps.has('CAN_BUILD') && (
+            <button
+              className={`gc-action gc-action-quiet${declaring ? ' is-armed' : ''}`}
+              onClick={() => { setDeclaring((on) => !on); setIntent(null); }}
+            >
+              {declaring ? 'Annonce armée' : 'Annoncer'}
+              <small>{declaring ? 'choisis un emplacement' : 'hors de ton tour'}</small>
+            </button>
+          )}
           <Action label="Lancer les dés" enabled={caps.has('CAN_ROLL_DICE')} onClick={() => send('ROLL_DICE')} />
           <Action label="Carte dév." enabled={caps.has('CAN_BUY_DEV_CARD')} onClick={() => send('BUY_DEV_CARD')}
                   reason="pas assez de ressources" />
@@ -248,6 +295,8 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
           <Action label="Fin de cycle" enabled={caps.has('CAN_END_CYCLE')} onClick={() => send('END_CYCLE')} />
         </div>
       </footer>
+
+      {pub.winner && <GameOver view={pub} me={priv.id} />}
 
       {priv.mustDiscard > 0 && (
         <Discard pub={pub} priv={priv} onDiscard={(resources) => send('DISCARD', { resources })} />

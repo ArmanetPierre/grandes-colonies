@@ -113,6 +113,7 @@ export type RejectionReason =
   | 'unknown-offer'
   | 'invalid-offer'
   | 'offer-not-for-you'
+  | 'unknown-command'
   | 'offer-stale'
   | 'game-over';
 

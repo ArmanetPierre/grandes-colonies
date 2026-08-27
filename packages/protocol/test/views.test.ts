@@ -187,6 +187,42 @@ describe('vue privée', () => {
   });
 });
 
+describe('classement final', () => {
+  it('reste vide tant que la partie dure', () => {
+    const view = publicView(startedGame());
+    // Le publier plus tôt révélerait les objectifs secrets de tout le monde.
+    expect(view.standings).toHaveLength(0);
+  });
+
+  it('révèle points et objectifs une fois la partie finie', () => {
+    const state = startedGame();
+    state.phase = 'ended';
+    state.winner = 'p1';
+
+    const standings = publicView(state).standings;
+    expect(standings).toHaveLength(6);
+    expect(standings.every((row) => row.objective !== undefined)).toBe(true);
+    // Classé du meilleur au moins bon.
+    for (let i = 1; i < standings.length; i++) {
+      expect(standings[i - 1]?.points).toBeGreaterThanOrEqual(standings[i]?.points ?? 0);
+    }
+  });
+
+  it('compte les deux points d un objectif rempli', () => {
+    const state = startedGame();
+    const p1 = playerOf(state, 'p1');
+    if (!p1) throw new Error('joueur absent');
+    p1.chosenObjective = 'settler';
+
+    const free = [...state.board.graph.vertices].sort().filter((v) => !state.board.buildingAt(v));
+    for (const v of free.slice(0, 5)) state.board.setBuilding(v, { kind: 'settlement', owner: 'p1' });
+    state.phase = 'ended';
+
+    const row = publicView(state).standings.find((r) => r.player === 'p1');
+    expect(row?.objectiveDone).toBe(true);
+  });
+});
+
 describe('révélation en fin de partie', () => {
   it('ne révèle rien tant que la partie dure', () => {
     expect(revealedObjectives(startedGame())).toHaveLength(0);

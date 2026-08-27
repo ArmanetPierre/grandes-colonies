@@ -287,3 +287,25 @@ body {
   padding: 8px 14px; width: 260px;
   background: var(--gc-raised); border: 1px solid var(--gc-line); color: var(--gc-ink);
 }
+
+/* ── annonces en cours ───────────────────────────────────────────── */
+.gc-my-intents { display: flex; align-items: center; gap: 6px; }
+.gc-my-intents-label {
+  font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--gc-ink-soft);
+}
+
+/* ── fin de partie ───────────────────────────────────────────────── */
+.gc-modal-wide { width: min(620px, 94vw); }
+.gc-standings { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+.gc-standings tr { border-bottom: 1px solid var(--gc-line); }
+.gc-standings tr.is-winner { background: color-mix(in srgb, var(--gc-accent) 12%, transparent); }
+.gc-standings td { padding: 7px 5px; }
+.gc-rank { width: 22px; color: var(--gc-ink-soft); font-variant-numeric: tabular-nums; }
+.gc-standing-name { font-weight: 600; }
+.gc-standing-obj { font-size: 11.5px; color: var(--gc-ink-soft); }
+.gc-standing-points {
+  text-align: right; font-family: var(--gc-font-display); font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.gc-done { color: var(--gc-accent); font-weight: 600; }
+.gc-missed { opacity: .6; }

@@ -151,9 +151,24 @@ export class GameServer {
   private handleCommand(socket: WebSocket, command: Command): void {
     const playerId = this.seatOf.get(socket);
     if (playerId === undefined) return;
+    // Un message sans identifiant d'action casserait la déduplication.
+    if (typeof command?.actionId !== 'string') return;
 
     // On impose l'identité du siège : un client ne joue jamais pour un autre.
-    const outcome = this.session.submit({ ...command, playerId });
+    // Et on isole le moteur : une exception inattendue ne doit coûter la
+    // partie qu'à son auteur, jamais aux onze autres joueurs.
+    let outcome;
+    try {
+      outcome = this.session.submit({ ...command, playerId });
+    } catch (error) {
+      console.error('[serveur] commande rejetée sur exception', command.type, error);
+      this.send(socket, 'rejected', {
+        actionId: command.actionId,
+        reason: 'internal-error',
+        detail: error instanceof Error ? error.message : String(error),
+      });
+      return;
+    }
 
     if (!outcome.result.ok) {
       this.send(socket, 'rejected', {

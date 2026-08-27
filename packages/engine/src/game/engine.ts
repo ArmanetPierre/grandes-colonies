@@ -94,6 +94,12 @@ function execute(state: GameState, command: Command): CommandResult {
     case 'ACCEPT_TRADE':           return acceptTrade(state, command.playerId, command.offerId);
     case 'END_CYCLE':              return endCycle(state, command.playerId);
   }
+
+  // Le typage garantit l'exhaustivité à la compilation, mais les commandes
+  // arrivent par le réseau : rien n'empêche un client bricolé — ou un autre
+  // programme qui tombe sur le port — d'envoyer un type inconnu. Sans ce
+  // retour, la fonction rendait `undefined` et l'appelant levait.
+  return reject('unknown-command', (command as { type?: string }).type);
 }
 
 // ── mise en place ──────────────────────────────────────────────────────────

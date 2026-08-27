@@ -96,6 +96,19 @@ export interface PublicGameView {
   readonly winner: PlayerId | undefined;
   readonly handLimit: number;
   readonly victoryTarget: number;
+  /**
+   * Classement final, révélé seulement quand la partie est finie.
+   *
+   * Les objectifs secrets y figurent : ils cessent d'être secrets au moment
+   * où le décompte est arrêté, et c'est le moment de jeu où l'on veut
+   * comprendre d'où venaient les points de chacun.
+   */
+  readonly standings: readonly {
+    readonly player: PlayerId;
+    readonly points: number;
+    readonly objective: ObjectiveId | undefined;
+    readonly objectiveDone: boolean;
+  }[];
 }
 
 export interface PrivatePlayerView {
@@ -216,7 +229,25 @@ export function publicView(state: GameState, connectivity?: Connectivity): Publi
     winner: state.winner,
     handLimit: state.config.handLimit,
     victoryTarget: state.config.victory.target,
+    standings: finalStandings(state),
   };
+}
+
+/** Vide tant que la partie dure : rien ne doit fuir avant la fin. */
+function finalStandings(state: GameState): PublicGameView['standings'] {
+  if (state.phase !== 'ended') return [];
+
+  return state.players
+    .map((player) => {
+      const breakdown = playerPoints(state, player.id);
+      return {
+        player: player.id,
+        points: breakdown?.total ?? 0,
+        objective: activeObjective(player),
+        objectiveDone: (breakdown?.secretObjectives ?? 0) > 0,
+      };
+    })
+    .sort((a, b) => b.points - a.points);
 }
 
 /** Le score visible : tout sauf l'objectif secret. */
