@@ -12,7 +12,8 @@
     "typecheck": "tsc --build --force",
     "dev:server": "tsx packages/server/src/dev.ts",
     "dev:client": "vite --config packages/client/vite.config.ts packages/client",
-    "host": "tsx apps/host/src/main.ts"
+    "host": "tsx apps/host/src/main.ts",
+    "play": "node scripts/play.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.3.0",
