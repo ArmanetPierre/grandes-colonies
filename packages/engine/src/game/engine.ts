@@ -44,6 +44,8 @@ import {
   playerOf,
 } from './state.js';
 import { type ObjectiveId, isObjectiveComplete } from '../objectives.js';
+import { tradeRate } from '../ports.js';
+import { type TradeOffer, checkOffer, isAddressedTo } from './trade.js';
 
 const reject = (reason: RejectionReason, detail?: string): CommandResult =>
   detail === undefined ? { ok: false, reason } : { ok: false, reason, detail };
@@ -87,6 +89,9 @@ function execute(state: GameState, command: Command): CommandResult {
     case 'CANCEL_BUILD':           return cancelBuild(state, command.playerId, command.intentId);
     case 'END_TURN':               return endTurn(state, command.playerId);
     case 'CHOOSE_OBJECTIVE':       return chooseObjective(state, command.playerId, command.objective);
+    case 'CREATE_TRADE':           return createTrade(state, command.playerId, command.to, command.give, command.receive);
+    case 'CANCEL_TRADE':           return cancelTrade(state, command.playerId, command.offerId);
+    case 'ACCEPT_TRADE':           return acceptTrade(state, command.playerId, command.offerId);
     case 'END_CYCLE':              return endCycle(state, command.playerId);
   }
 }
@@ -447,8 +452,10 @@ function playKnight(state: GameState, playerId: string, to: HexId, victim?: stri
 // ── commerce ───────────────────────────────────────────────────────────────
 
 /**
- * Échange avec la banque au taux de base : quatre cartes identiques contre
- * une au choix. Les ports, qui améliorent ce taux, viendront avec eux.
+ * Échange avec la banque, au meilleur taux dont dispose le joueur.
+ *
+ * Quatre contre une sans port, trois avec un port générique, deux avec un
+ * port spécialisé ou marchand (§11).
  */
 function tradeWithBank(
   state: GameState,
@@ -471,8 +478,9 @@ function tradeWithBank(
   const from = given[0] as Resource;
   const to = received[0] as Resource;
   if (from === to) return reject('invalid-trade', 'échange sans effet');
-  if (amount(give, from) !== 4 || amount(receive, to) !== 1) {
-    return reject('invalid-trade', 'le taux de base est de quatre contre une');
+  const rate = tradeRate(state.board, playerId, from);
+  if (amount(give, from) !== rate || amount(receive, to) !== 1) {
+    return reject('invalid-trade', `taux applicable : ${rate} contre 1`);
   }
   if (!canAfford(player.hand, give)) return reject('not-enough-resources');
   if (amount(state.bank, to) < 1) return reject('invalid-trade', 'la banque est à sec');
@@ -481,6 +489,126 @@ function tradeWithBank(
   state.bank = subtractCounts(addCounts(state.bank, give), receive);
 
   return { ok: true, events: [{ type: 'BankTraded', player: playerId, give, receive }] };
+}
+
+// ── commerce entre joueurs ─────────────────────────────────────────────────
+
+/**
+ * Qui peut PROPOSER un échange, et quand (contrat §1 et §4).
+ *
+ * Le joueur associé en est exclu : il construit et commerce avec la banque,
+ * mais négocier lui donnerait le double avantage d'agir hors de son tour ET
+ * de peser sur le marché.
+ */
+function canOfferTrade(state: GameState, playerId: string): boolean {
+  if (state.phase === 'freeTrade') return true;
+  return state.phase === 'activeTurn' && activePlayer(state).id === playerId;
+}
+
+/**
+ * Qui peut ACCEPTER un échange.
+ *
+ * Le contrat dit que le joueur actif négocie avec les autres pendant son
+ * tour, mais il ne précisait pas qui pouvait répondre. Restreindre la
+ * réponse au seul joueur actif rendait la règle vide : une offre sans
+ * contrepartie possible ne sert à rien. Pendant le tour, un échange est donc
+ * recevable dès lors que le joueur actif en est l'une des deux parties.
+ */
+function canAcceptTrade(state: GameState, playerId: string, offer: TradeOffer): boolean {
+  if (state.phase === 'freeTrade') return true;
+  if (state.phase !== 'activeTurn') return false;
+
+  const active = activePlayer(state).id;
+  return offer.from === active || playerId === active;
+}
+
+function createTrade(
+  state: GameState,
+  playerId: string,
+  to: string | undefined,
+  give: ResourceCounts,
+  receive: ResourceCounts,
+): CommandResult {
+  if (!canOfferTrade(state, playerId)) return reject('wrong-phase');
+
+  const problem = checkOffer(playerId, to, give, receive);
+  if (problem) return reject('invalid-offer', problem);
+
+  const player = playerOf(state, playerId);
+  if (!player) return reject('unknown-player');
+  // On vérifie à la création pour éviter les offres manifestement creuses,
+  // mais c'est la vérification à l'acceptation qui fait foi.
+  if (!canAfford(player.hand, give)) return reject('not-enough-resources');
+  if (to !== undefined && !playerOf(state, to)) return reject('unknown-player');
+
+  const offer: TradeOffer = {
+    id: `t${state.offerCounter}`,
+    from: playerId,
+    to,
+    give,
+    receive,
+    cycle: state.cycle,
+  };
+  state.offerCounter++;
+  state.offers.push(offer);
+
+  return {
+    ok: true,
+    events: [{ type: 'TradeCreated', offerId: offer.id, from: playerId, to, give, receive }],
+  };
+}
+
+function cancelTrade(state: GameState, playerId: string, offerId: string): CommandResult {
+  const index = state.offers.findIndex((o) => o.id === offerId);
+  if (index === -1) return reject('unknown-offer');
+
+  const offer = state.offers[index];
+  if (!offer) return reject('unknown-offer');
+  if (offer.from !== playerId) return reject('not-your-turn', 'offre d un autre joueur');
+
+  state.offers.splice(index, 1);
+  return { ok: true, events: [{ type: 'TradeCancelled', offerId, by: playerId }] };
+}
+
+/**
+ * Acceptation d'une offre — le point le plus délicat du commerce.
+ *
+ * Tout est vérifié ici et au dernier moment : phase, destinataire, et surtout
+ * les DEUX inventaires. Entre la création et l'acceptation, l'auteur a pu
+ * dépenser ses ressources ou les réserver pour une construction. L'offre
+ * devient alors caduque, et le dire explicitement vaut mieux que d'échouer
+ * à moitié.
+ */
+function acceptTrade(state: GameState, playerId: string, offerId: string): CommandResult {
+  const index = state.offers.findIndex((o) => o.id === offerId);
+  if (index === -1) return reject('unknown-offer');
+
+  const offer = state.offers[index];
+  if (!offer) return reject('unknown-offer');
+  if (!canAcceptTrade(state, playerId, offer)) return reject('wrong-phase');
+  if (!isAddressedTo(offer, playerId)) return reject('offer-not-for-you');
+
+  const proposer = playerOf(state, offer.from);
+  const accepter = playerOf(state, playerId);
+  if (!proposer || !accepter) return reject('unknown-player');
+
+  if (!canAfford(proposer.hand, offer.give)) {
+    // L'auteur ne peut plus honorer : l'offre disparaît plutôt que de traîner.
+    state.offers.splice(index, 1);
+    return reject('offer-stale', 'le proposant n a plus les ressources');
+  }
+  if (!canAfford(accepter.hand, offer.receive)) return reject('not-enough-resources');
+
+  // Les deux transferts sont faits d'un bloc, après toutes les vérifications.
+  proposer.hand = addCounts(subtractCounts(proposer.hand, offer.give), offer.receive);
+  accepter.hand = addCounts(subtractCounts(accepter.hand, offer.receive), offer.give);
+
+  state.offers.splice(index, 1);
+
+  return {
+    ok: true,
+    events: [{ type: 'TradeAccepted', offerId, from: offer.from, to: playerId }],
+  };
 }
 
 // ── fin de tour ────────────────────────────────────────────────────────────
@@ -641,6 +769,10 @@ function endCycle(state: GameState, playerId: string): CommandResult {
     events.push({ type: 'LocationFrozen', location });
   }
   state.intents = [];
+
+  // Les offres ne franchissent pas le cycle : les inventaires ont trop changé.
+  for (const offer of state.offers) events.push({ type: 'TradeExpired', offerId: offer.id });
+  state.offers = [];
 
   events.push(...refreshRouteTitle(state));
   events.push({ type: 'CycleEnded', cycle: state.cycle });

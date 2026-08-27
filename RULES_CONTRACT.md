@@ -105,6 +105,14 @@ Une **fenêtre dédiée de 30 secondes** par cycle, pendant laquelle tous les jo
 
 L'acceptation d'une offre est **atomique côté serveur** : inventaire de A, inventaire de B, phase, validité de l'offre, puis les deux transferts. Si l'inventaire de l'un a changé entre-temps, l'offre devient caduque.
 
+### Qui peut répondre pendant le tour actif
+
+Le §1 accorde au joueur actif le droit de négocier avec les autres pendant son tour, mais ne précisait pas **qui pouvait lui répondre**. Restreindre la réponse au seul joueur actif rendait la règle vide : une offre sans contrepartie possible ne sert à rien.
+
+**Pendant le tour, un échange est recevable dès lors que le joueur actif en est l'une des deux parties.** N'importe quel joueur peut donc accepter une offre du joueur actif, ou lui répondre s'il l'a sollicité — mais deux joueurs non actifs ne peuvent pas échanger entre eux avant la phase C.
+
+Les offres **ne franchissent pas le cycle** : les inventaires ont trop changé pour qu'une offre d'un cycle précédent garde un sens. Elles expirent à la résolution.
+
 Les ressources réservées par une annonce de construction **ne sont pas échangeables**.
 
 > **À surveiller au playtest.** À 12 joueurs, 30 secondes pour négocier *et* valider, c'est très court. Si la fenêtre se révèle insuffisante, les leviers sont : l'allonger, ou basculer sur un commerce permanent pendant tout le cycle.
@@ -174,3 +182,5 @@ Un siège est conservé **deux tours de table** avant que l'hôte ne se voie pro
 | 2026-08-27 | Joueur associé absent | **Tour sauté** |
 | 2026-08-27 | Défausse d'un absent | **Suggestion validée d'office** |
 | 2026-08-27 | Siège abandonné | **Deux tours de table** avant de proposer un bot |
+| 2026-08-27 | Réponse à une offre pendant le tour | **Recevable si le joueur actif est l'une des deux parties** |
+| 2026-08-27 | Durée de vie d'une offre | **Le cycle en cours** |

@@ -44,6 +44,9 @@ export type Command =
   | (CommandBase & { readonly type: 'CANCEL_BUILD'; readonly intentId: string })
   | (CommandBase & { readonly type: 'END_TURN' })
   | (CommandBase & { readonly type: 'CHOOSE_OBJECTIVE'; readonly objective: ObjectiveId })
+  | (CommandBase & { readonly type: 'CREATE_TRADE'; readonly to?: PlayerId; readonly give: ResourceCounts; readonly receive: ResourceCounts })
+  | (CommandBase & { readonly type: 'CANCEL_TRADE'; readonly offerId: string })
+  | (CommandBase & { readonly type: 'ACCEPT_TRADE'; readonly offerId: string })
   | (CommandBase & { readonly type: 'END_CYCLE' });
 
 export type CommandType = Command['type'];
@@ -77,6 +80,10 @@ export type DomainEvent =
   | { readonly type: 'BuildResolved'; readonly player: PlayerId; readonly intentId: string; readonly target: IntentTarget }
   | { readonly type: 'BuildRefunded'; readonly player: PlayerId; readonly intentId: string; readonly reason: 'lost-conflict' | 'no-longer-legal' }
   | { readonly type: 'LocationFrozen'; readonly location: string }
+  | { readonly type: 'TradeCreated'; readonly offerId: string; readonly from: PlayerId; readonly to: PlayerId | undefined; readonly give: ResourceCounts; readonly receive: ResourceCounts }
+  | { readonly type: 'TradeCancelled'; readonly offerId: string; readonly by: PlayerId }
+  | { readonly type: 'TradeAccepted'; readonly offerId: string; readonly from: PlayerId; readonly to: PlayerId }
+  | { readonly type: 'TradeExpired'; readonly offerId: string }
   | { readonly type: 'ObjectiveChosen'; readonly player: PlayerId }
   | { readonly type: 'ObjectiveRevealed'; readonly player: PlayerId; readonly objective: ObjectiveId; readonly complete: boolean }
   | { readonly type: 'CycleEnded'; readonly cycle: number }
@@ -103,6 +110,10 @@ export type RejectionReason =
   | 'already-declared'
   | 'unknown-intent'
   | 'not-offered'
+  | 'unknown-offer'
+  | 'invalid-offer'
+  | 'offer-not-for-you'
+  | 'offer-stale'
   | 'game-over';
 
 export type CommandResult =

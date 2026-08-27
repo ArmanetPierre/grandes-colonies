@@ -16,6 +16,7 @@ import { SeededRandom } from '../rng.js';
 import type { DevCardKind } from '../devCards.js';
 import type { GameConfig } from './config.js';
 import type { BuildIntent } from './buildIntent.js';
+import type { TradeOffer } from './trade.js';
 import { type ObjectiveId, availableObjectives } from '../objectives.js';
 
 /**
@@ -104,6 +105,10 @@ export interface GameState {
   intentCounter: number;
   /** Emplacements gelés jusqu'à la fin du cycle en cours. */
   frozenLocations: Set<string>;
+
+  /** Offres d'échange en cours. Vidées à chaque fin de cycle. */
+  offers: TradeOffer[];
+  offerCounter: number;
 }
 
 export interface NewGameOptions {
@@ -177,6 +182,8 @@ export function createGame(options: NewGameOptions): GameState {
     intents: [],
     intentCounter: 0,
     frozenLocations: new Set(),
+    offers: [],
+    offerCounter: 0,
   };
 }
 

@@ -41,6 +41,10 @@ export interface GameOutcome {
   readonly builds: readonly number[];
   /** Nombre de fois où un joueur a dû défausser sur un 7. */
   readonly discards: number;
+  /** Offres d'échange proposées entre joueurs. */
+  readonly tradesOffered: number;
+  /** Offres effectivement acceptées — le taux d'acceptation du §19. */
+  readonly tradesAccepted: number;
   /** Taille de main moyenne, tous joueurs et tous cycles confondus. */
   readonly averageHand: number;
   /** Plus grande main observée. */
@@ -87,6 +91,8 @@ export function playGame(options: SimulationOptions): GameOutcome {
   const builds = new Array<number>(playerCount).fill(0);
   const rolls = new Map<number, number>();
   let discards = 0;
+  let tradesOffered = 0;
+  let tradesAccepted = 0;
   let handSamples = 0;
   let handTotal = 0;
   let peakHand = 0;
@@ -99,6 +105,8 @@ export function playGame(options: SimulationOptions): GameOutcome {
     for (const event of events) {
       if (event.type === 'DiceRolled') rolls.set(event.total, (rolls.get(event.total) ?? 0) + 1);
       if (event.type === 'ResourcesDiscarded') discards++;
+      if (event.type === 'TradeCreated') tradesOffered++;
+      if (event.type === 'TradeAccepted') tradesAccepted++;
       if (event.type === 'SettlementPlaced' || event.type === 'CityBuilt' || event.type === 'RoadPlaced') {
         const index = players.findIndex((p) => p.id === event.player);
         if (index >= 0) builds[index] = (builds[index] ?? 0) + 1;
@@ -159,6 +167,8 @@ export function playGame(options: SimulationOptions): GameOutcome {
     }
 
     if (state.phase === 'freeTrade') {
+      // Tout le monde négocie pendant la fenêtre, pas seulement l'actif.
+      for (let i = 0; i < playerCount; i++) drain(i, 6);
       run({ actionId: next(), playerId: players[activeIndex]?.id ?? '', type: 'END_CYCLE' });
       continue;
     }
@@ -191,6 +201,8 @@ export function playGame(options: SimulationOptions): GameOutcome {
     activeTurns,
     builds,
     discards,
+    tradesOffered,
+    tradesAccepted,
     averageHand: handSamples === 0 ? 0 : handTotal / handSamples,
     peakHand,
     cyclesOverLimit,

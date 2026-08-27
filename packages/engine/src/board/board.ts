@@ -12,6 +12,7 @@ import {
   vertexIdsOfHex,
 } from './graph.js';
 import { type Terrain, isProductive } from '../resources.js';
+import type { Port } from '../ports.js';
 
 export type PlayerId = string;
 
@@ -46,6 +47,8 @@ export interface Building {
 export interface BoardInit {
   readonly hexes: ReadonlyMap<HexId, HexData>;
   readonly positions: readonly Axial[];
+  /** Ports, attachés aux sommets côtiers. */
+  readonly ports?: ReadonlyMap<VertexId, Port>;
 }
 
 /**
@@ -66,6 +69,7 @@ export class Board {
   private readonly data: Map<HexId, HexData>;
   private readonly robbers: Set<HexId>;
   private readonly buildings: Map<VertexId, Building>;
+  private readonly ports: Map<VertexId, Port>;
   private readonly routes: Map<EdgeId, Route>;
 
   constructor(init: BoardInit) {
@@ -73,6 +77,7 @@ export class Board {
     this.data = new Map(init.hexes);
     this.robbers = new Set();
     this.buildings = new Map();
+    this.ports = new Map(init.ports ?? []);
     this.routes = new Map();
   }
 
@@ -147,6 +152,16 @@ export class Board {
 
   allRoutes(): ReadonlyMap<EdgeId, Route> {
     return this.routes;
+  }
+
+  // ── ports ────────────────────────────────────────────────────────────
+
+  portAt(v: VertexId): Port | undefined {
+    return this.ports.get(v);
+  }
+
+  allPorts(): ReadonlyMap<VertexId, Port> {
+    return this.ports;
   }
 
   /** Les constructions posées sur les sommets d'un hexagone. */

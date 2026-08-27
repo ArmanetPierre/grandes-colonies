@@ -10,7 +10,8 @@ import type { SeededRandom } from '../rng.js';
 import type { Terrain } from '../resources.js';
 import { type Axial, hexKey, hexesWithin, distance } from './axial.js';
 import type { BoardInit, HexData, Token } from './board.js';
-import type { HexId } from './graph.js';
+import { type HexId, type VertexId, vertexIdsOfHex } from './graph.js';
+import type { Port, PortKind } from '../ports.js';
 
 /**
  * Séquence des jetons du Catan classique.
@@ -72,7 +73,75 @@ export function classicBoard(rng: SeededRandom): BoardInit {
     hexes.set(hexKey(position), { terrain, token });
   });
 
-  return { positions, hexes };
+  const landKeys = new Set(positions.map(hexKey));
+  return { positions, hexes, ports: placePorts(rng, landKeys, hexes, 9) };
+}
+
+/**
+ * Répartition des ports (§11) : deux tiers de spécialisés, un tiers de
+ * génériques, plus un port marchand qui donne 2:1 sur tout.
+ */
+const PORT_KINDS: readonly PortKind[] = [
+  'generic', 'generic', 'wood', 'brick', 'wool', 'grain', 'ore', 'merchant',
+];
+
+/**
+ * Place les ports sur des sommets côtiers, espacés les uns des autres.
+ *
+ * L'espacement compte : deux ports adjacents seraient captés par une seule
+ * colonie, ce qui donnerait un avantage décisif au premier joueur qui la pose.
+ */
+function placePorts(
+  rng: SeededRandom,
+  landKeys: ReadonlySet<HexId>,
+  hexes: ReadonlyMap<HexId, HexData>,
+  count: number,
+): Map<VertexId, Port> {
+  // Un sommet est côtier s'il touche à la fois une terre et une non-terre.
+  const coastal = new Set<VertexId>();
+  for (const key of landKeys) {
+    const [q, r] = key.split(',').map(Number);
+    if (q === undefined || r === undefined) continue;
+    for (const vertex of vertexIdsOfHex({ q, r })) {
+      const touching = vertex.split('|');
+      const touchesLand = touching.some((h) => landKeys.has(h));
+      const touchesWater = touching.some((h) => !landKeys.has(h) || hexes.get(h)?.terrain === 'sea');
+      if (touchesLand && touchesWater) coastal.add(vertex);
+    }
+  }
+
+  const kinds = rng.shuffle(PORT_KINDS);
+  const ports = new Map<VertexId, Port>();
+  const taken = new Set<VertexId>();
+
+  for (const vertex of rng.shuffle([...coastal].sort())) {
+    if (ports.size >= count) break;
+    if (taken.has(vertex)) continue;
+
+    const kind = kinds[ports.size % kinds.length];
+    if (kind === undefined) break;
+    ports.set(vertex, { kind });
+
+    // On réserve les sommets voisins pour éviter deux ports sur une colonie.
+    taken.add(vertex);
+    for (const neighbour of adjacentVertexKeys(vertex)) taken.add(neighbour);
+  }
+
+  return ports;
+}
+
+/** Sommets voisins, déduits des trios d'hexagones (voir graph.ts). */
+function adjacentVertexKeys(vertex: VertexId): VertexId[] {
+  const hexes = vertex.split('|');
+  const out: VertexId[] = [];
+  for (let i = 0; i < hexes.length; i++) {
+    for (let j = i + 1; j < hexes.length; j++) {
+      const a = hexes[i];
+      const b = hexes[j];
+      if (a !== undefined && b !== undefined) out.push([a, b].sort().join('|'));
+    }
+  }
+  return out;
 }
 
 export interface XxlOptions {
@@ -168,5 +237,7 @@ export function xxlBoard(rng: SeededRandom, options: XxlOptions): BoardInit {
     hexes.set(key, { terrain, token: shuffledTokens[tokenIndex++] as Token });
   }
 
-  return { positions, hexes };
+  // Le §4 prévoit 6 à 8 ports ; on suit l'effectif via la taille des terres.
+  const portCount = Math.min(12, Math.max(6, Math.round(options.landCount / 5)));
+  return { positions, hexes, ports: placePorts(rng, landKeys, hexes, portCount) };
 }

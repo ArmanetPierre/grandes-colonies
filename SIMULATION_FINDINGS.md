@@ -141,10 +141,32 @@ Trois leviers, non exclusifs.
 
 ---
 
+## Troisième tour : ports et commerce entre joueurs
+
+Implémentés le 2026-08-27, avec 22 tests dédiés.
+
+**Ports** — génériques à 3:1, spécialisés à 2:1, plus le port marchand du §11 qui donne 2:1 sur toute ressource. Ils sont posés sur des sommets côtiers **espacés** : deux ports adjacents seraient captés par une seule colonie, ce qui donnerait un avantage décisif au premier joueur qui la pose.
+
+**Commerce entre joueurs** — offres nominatives ou ouvertes, acceptation atomique, expiration en fin de cycle.
+
+### Ce que la mesure a montré
+
+Avec des bots acceptant largement, les parties conclues ont raccourci de **40 %** — de 159-240 cycles à 101-126. Le commerce est donc bien le levier attendu par le §37.
+
+Mais le résultat s'est révélé **très sensible à la politique de négociation des bots**. Trois réglages successifs ont donné des taux d'acceptation de 73 %, 8 % puis 14 %, et des taux de conclusion allant de 1/6 à 4/6 sans corrélation nette.
+
+> **Conclusion méthodologique : les bots sont devenus le facteur limitant, pas le jeu.** Continuer à les régler mesurerait mes heuristiques plutôt que ton design. Les prochaines conclusions d'équilibrage demandent soit des bots nettement meilleurs, soit — et c'est plus rapide — un playtest humain.
+
+### Une lacune du contrat, révélée par les tests
+
+Le contrat accordait au joueur actif le droit de négocier pendant son tour, mais ne disait pas **qui pouvait lui répondre**. Restreindre la réponse au seul joueur actif rendait la règle vide : une offre sans contrepartie possible ne sert à rien. Tranché et consigné : pendant le tour, un échange est recevable dès lors que le joueur actif en est l'une des deux parties.
+
+---
+
 ## Limites de ces mesures
 
 - Les bots sont volontairement simples : ils construisent par ordre de valeur en points et ne planifient rien. Un humain expanderait mieux et atteindrait probablement quelques points de plus.
-- Le commerce **entre joueurs** n'est pas simulé, faute d'être implémenté. C'est un manque important : le §37 du game design en fait le cœur du jeu à douze.
+- Le commerce entre joueurs est désormais simulé, mais avec une politique de bot très fruste : deux cartes en surplus contre une carte manquante, sans marchandage. Un joueur humain négocierait bien mieux.
 - Les ports, l'or, l'exploration et les chevaliers ne sont pas encore dans le moteur.
 - La construction semi-simultanée existe dans le moteur mais les bots ne l'utilisent pas : ils n'annoncent jamais hors de leur tour.
 

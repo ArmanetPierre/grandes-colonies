@@ -16,9 +16,11 @@ import {
   type SeededRandom,
   CORE_RESOURCES,
   amount,
+  canAfford,
   counts,
   playerOf,
   suggestDiscard,
+  tradeRate,
 } from '@grand-colonies/engine';
 
 import {
@@ -87,11 +89,23 @@ function bankTrade(state: GameState, playerId: PlayerId, actionId: string): Comm
   const player = playerOf(state, playerId);
   if (!player) return undefined;
 
+  // Le taux dépend des ports que le joueur contrôle : deux contre une sur un
+  // port spécialisé, contre quatre sans port. Ignorer cette différence
+  // reviendrait à ne jamais exploiter les ports du plateau.
   let surplus: Resource | undefined;
+  let surplusRate = 0;
   let scarcest: Resource | undefined;
+
   for (const r of CORE_RESOURCES) {
     const held = amount(player.hand, r);
-    if (held >= 4 && (surplus === undefined || held > amount(player.hand, surplus))) surplus = r;
+    const rate = tradeRate(state.board, playerId, r);
+
+    // On privilégie le surplus dont l'échange coûte le moins cher.
+    if (held >= rate) {
+      const better = surplus === undefined || rate < surplusRate
+        || (rate === surplusRate && held > amount(player.hand, surplus));
+      if (better) { surplus = r; surplusRate = rate; }
+    }
     if (scarcest === undefined || held < amount(player.hand, scarcest)) scarcest = r;
   }
 
@@ -100,8 +114,71 @@ function bankTrade(state: GameState, playerId: PlayerId, actionId: string): Comm
 
   return {
     actionId, playerId, type: 'TRADE_WITH_BANK',
-    give: counts({ [surplus]: 4 }),
+    give: counts({ [surplus]: surplusRate }),
     receive: counts({ [scarcest]: 1 }),
+  };
+}
+
+/** Le surplus et le manque d'un joueur, pour composer une offre. */
+function imbalance(state: GameState, playerId: PlayerId): { surplus: Resource; scarce: Resource } | undefined {
+  const player = playerOf(state, playerId);
+  if (!player) return undefined;
+
+  let surplus: Resource | undefined;
+  let scarce: Resource | undefined;
+  for (const r of CORE_RESOURCES) {
+    const held = amount(player.hand, r);
+    if (held >= 3 && (surplus === undefined || held > amount(player.hand, surplus))) surplus = r;
+    if (scarce === undefined || held < amount(player.hand, scarce)) scarce = r;
+  }
+
+  if (surplus === undefined || scarce === undefined || surplus === scarce) return undefined;
+  return { surplus, scarce };
+}
+
+/**
+ * Négociation entre joueurs, pendant la fenêtre de commerce.
+ *
+ * Le §37 du game design en fait le cœur du jeu à douze : c'est par elle qu'un
+ * joueur qui n'agit qu'un cycle sur douze reste dans la partie. Les bots la
+ * pratiquent de la façon la plus fruste qui soit — deux cartes en surplus
+ * contre une carte manquante, sans marchander — mais cela suffit à mesurer si
+ * le système débloque l'expansion.
+ */
+function playerTrade(state: GameState, playerId: PlayerId, actionId: string): Command | undefined {
+  const player = playerOf(state, playerId);
+  if (!player) return undefined;
+
+  const gap = imbalance(state, playerId);
+
+  // Accepter est immédiat, donc préférable à proposer — mais pas à
+  // n'importe quel prix. Accepter toute offre payable revenait à céder sa
+  // dernière ressource rare contre une dont on n'avait pas besoin.
+  for (const offer of state.offers) {
+    if (offer.from === playerId) continue;
+    if (offer.to !== undefined && offer.to !== playerId) continue;
+    if (!canAfford(player.hand, offer.receive)) continue;
+
+    // L'offre doit apporter ce qui manque sans vider une réserve.
+    // Exiger davantage — ne céder que du surplus confortable — faisait
+    // chuter le taux d'acceptation à 8 % et paralysait le marché.
+    const brings = gap !== undefined && amount(offer.give, gap.scarce) > 0;
+    const leavesSomething = CORE_RESOURCES.every(
+      (r) => amount(offer.receive, r) === 0 || amount(player.hand, r) > amount(offer.receive, r),
+    );
+    if (!brings || !leavesSomething) continue;
+
+    return { actionId, playerId, type: 'ACCEPT_TRADE', offerId: offer.id };
+  }
+
+  // Une seule offre en vol à la fois, pour ne pas inonder le marché.
+  if (state.offers.some((o) => o.from === playerId)) return undefined;
+  if (!gap) return undefined;
+
+  return {
+    actionId, playerId, type: 'CREATE_TRADE',
+    give: counts({ [gap.surplus]: 2 }),
+    receive: counts({ [gap.scarce]: 1 }),
   };
 }
 
@@ -111,6 +188,8 @@ export class GreedyBot implements Bot {
   decide(state: GameState, playerId: PlayerId, actionId: string): Command | undefined {
     const mandatory = mandatoryCommand(state, playerId, actionId, () => 0);
     if (mandatory) return mandatory;
+
+    if (state.phase === 'freeTrade') return playerTrade(state, playerId, actionId);
     if (state.phase !== 'activeTurn') return undefined;
 
     // L'ordre de `affordableBuilds` est déjà celui de la valeur en points :
