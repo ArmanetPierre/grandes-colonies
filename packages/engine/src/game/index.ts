@@ -1,3 +1,4 @@
+export * from './capabilities.js';
 export * from './trade.js';
 export * from './autoplay.js';
 export * from './buildIntent.js';
