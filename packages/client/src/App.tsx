@@ -24,6 +24,7 @@ import { Board, colorOf } from './ui/Board.jsx';
 import { type CardRequest, DevCards } from './ui/DevCards.jsx';
 import { Discard } from './ui/Discard.jsx';
 import { GameOver } from './ui/GameOver.jsx';
+import { type Entry, Journal, describe } from './ui/Journal.jsx';
 import { Lobby } from './ui/Lobby.jsx';
 import { ObjectiveChoice } from './ui/ObjectiveChoice.jsx';
 import { Trade } from './ui/Trade.jsx';
@@ -62,6 +63,9 @@ function formatTimer(ms: number | undefined): string {
 
 const NAME_KEY = 'grand-colonies:name';
 
+/** Lignes de journal conservées. Au-delà, personne ne remonte. */
+const JOURNAL_LENGTH = 40;
+
 /** Ce qu'un joueur peut s'apprêter à poser. */
 type BuildKind = 'settlement' | 'city' | 'metropolis' | 'monument' | 'road' | 'maritime' | null;
 
@@ -80,6 +84,13 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
   const [priv, setPriv] = useState<PrivatePlayerView>();
   const [timer, setTimer] = useState<TimerInfo>();
   const [notice, setNotice] = useState<string>();
+  /**
+   * Les dernières lignes du journal, la plus récente en tête.
+   *
+   * Bornées : une partie à douze joueurs produit des milliers d'événements, et
+   * personne ne remonte au cycle trois.
+   */
+  const [journal, setJournal] = useState<readonly Entry[]>([]);
   /**
    * Ce que le joueur s'apprête à poser. Rien n'est cliquable tant qu'il n'a
    * pas choisi : sur un plateau de cinquante tuiles, afficher tous les
@@ -121,6 +132,11 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
       onPublic: setPub,
       onPrivate: setPriv,
       onTimer: setTimer,
+      onEvents: (events) => {
+        const fresh = events.map(describe).filter((e): e is Entry => e !== undefined);
+        if (fresh.length === 0) return;
+        setJournal((current) => [...fresh.reverse(), ...current].slice(0, JOURNAL_LENGTH));
+      },
       onRejected: (r: Rejection) => {
         // Le refus est motivé par le moteur : on le montre tel quel plutôt
         // que d'inventer une explication.
@@ -342,6 +358,8 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
             onBank={(giveCounts, receive) => send('TRADE_WITH_BANK', { give: giveCounts, receive })}
           />
         )}
+
+        <Journal view={pub} entries={journal} />
 
         <main className="gc-board-wrap">
           <Board

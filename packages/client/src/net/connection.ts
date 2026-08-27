@@ -13,7 +13,7 @@
  *     avoir à recharger la page pour la surmonter.
  */
 
-import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
+import type { PrivatePlayerView, PublicGameView, WireEvent } from '@grand-colonies/protocol';
 
 export interface SeatInfo {
   readonly playerId: string;
@@ -38,7 +38,7 @@ export interface ConnectionHandlers {
   onSeat?(seat: SeatInfo): void;
   onPublic?(view: PublicGameView): void;
   onPrivate?(view: PrivatePlayerView): void;
-  onEvents?(events: readonly unknown[]): void;
+  onEvents?(events: readonly WireEvent[]): void;
   onTimer?(timer: TimerInfo): void;
   onRejected?(rejection: Rejection): void;
   onStatus?(status: ConnectionStatus): void;
@@ -175,7 +175,7 @@ export class GameConnection {
       }
       case 'public': this.handlers.onPublic?.(frame.payload as PublicGameView); break;
       case 'private': this.handlers.onPrivate?.(frame.payload as PrivatePlayerView); break;
-      case 'events': this.handlers.onEvents?.(frame.payload as readonly unknown[]); break;
+      case 'events': this.handlers.onEvents?.(frame.payload as readonly WireEvent[]); break;
       case 'timer': this.handlers.onTimer?.(frame.payload as TimerInfo); break;
       case 'rejected': this.handlers.onRejected?.(frame.payload as Rejection); break;
       case 'full':

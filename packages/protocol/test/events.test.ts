@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { DomainEvent } from '@grand-colonies/engine';
 
-import { fromWire, toWire, toWireAll } from '../src/events.js';
+import { fromWire, redactAllFor, redactFor, toWire, toWireAll } from '../src/events.js';
 
 /** Ce qui arriverait réellement au client. */
 const roundTrip = (event: DomainEvent) =>
@@ -85,5 +85,50 @@ describe('les autres événements traversent intacts', () => {
 
   it('convertit une liste entière', () => {
     expect(toWireAll(samples)).toHaveLength(samples.length);
+  });
+});
+
+describe('étanchéité du flux d événements', () => {
+  /**
+   * Le flux contournait entièrement les vues : il diffusait à toute la table
+   * la nature exacte de la carte que chacun venait d'acheter. Toute
+   * l'étanchéité de `publicView` tombait par cette porte.
+   */
+  it('ne révèle la carte achetée qu à son acheteur', () => {
+    const event = toWire({ type: 'DevCardBought', player: 'p1', card: 'knight' });
+
+    const owner = redactFor(event, 'p1');
+    if (owner.type !== 'DevCardBought') throw new Error('mauvais type');
+    expect(owner.card).toBe('knight');
+
+    const other = redactFor(event, 'p2');
+    if (other.type !== 'DevCardBought') throw new Error('mauvais type');
+    expect(other.card).toBeUndefined();
+    // Et rien ne subsiste dans le JSON réellement transmis.
+    expect(JSON.stringify(other)).not.toContain('knight');
+  });
+
+  /** La victime voit bien ce qui lui manque : elle a le droit de savoir. */
+  it('ne révèle la carte volée qu au voleur et à sa victime', () => {
+    const event = toWire({ type: 'ResourceStolen', thief: 'p1', victim: 'p2', resource: 'ore' });
+
+    for (const viewer of ['p1', 'p2']) {
+      const seen = redactFor(event, viewer);
+      if (seen.type !== 'ResourceStolen') throw new Error('mauvais type');
+      expect(seen.resource).toBe('ore');
+    }
+
+    const third = redactFor(event, 'p3');
+    if (third.type !== 'ResourceStolen') throw new Error('mauvais type');
+    expect(third.resource).toBeUndefined();
+    expect(JSON.stringify(third)).not.toContain('ore');
+    // Le vol reste public : seule la carte est cachée.
+    expect(third.thief).toBe('p1');
+    expect(third.victim).toBe('p2');
+  });
+
+  it('laisse les autres événements intacts', () => {
+    const event = toWire({ type: 'DevCardPlayed', player: 'p1', card: 'monopoly' });
+    expect(redactAllFor([event], 'p9')).toEqual([event]);
   });
 });

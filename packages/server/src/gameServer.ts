@@ -25,8 +25,8 @@ import {
 
 import { WebSocketServer, type WebSocket } from 'ws';
 
-import type { Command, GameConfig } from '@grand-colonies/engine';
-import { toWireAll } from '@grand-colonies/protocol';
+import type { Command, DomainEvent, GameConfig } from '@grand-colonies/engine';
+import { redactAllFor, toWireAll } from '@grand-colonies/protocol';
 
 import { GameSession } from './session.js';
 
@@ -206,7 +206,7 @@ export class GameServer {
       return;
     }
 
-    if (outcome.events.length > 0) this.broadcast('events', toWireAll(outcome.events));
+    if (outcome.events.length > 0) this.broadcastEvents(outcome.events);
     this.broadcastAll();
   }
 
@@ -223,7 +223,7 @@ export class GameServer {
   private tick(): void {
     const events = this.session.tick();
     if (events.length > 0) {
-      this.broadcast('events', toWireAll(events));
+      this.broadcastEvents(events);
       this.broadcastAll();
       return;
     }
@@ -246,6 +246,20 @@ export class GameServer {
     const frame = JSON.stringify({ type, payload });
     for (const socket of this.wss.clients) {
       if (socket.readyState === socket.OPEN) socket.send(frame);
+    }
+  }
+
+  /**
+   * Les événements, expurgés pour chaque destinataire.
+   *
+   * Un envoi par siège plutôt qu'une trame unique : deux événements portent
+   * une information privée — la carte développement achetée, la ressource
+   * dérobée — et une diffusion commune les révélerait à toute la table.
+   */
+  private broadcastEvents(events: readonly DomainEvent[]): void {
+    const wire = toWireAll(events);
+    for (const [socket, playerId] of this.seatOf) {
+      this.send(socket, 'events', redactAllFor(wire, playerId));
     }
   }
 

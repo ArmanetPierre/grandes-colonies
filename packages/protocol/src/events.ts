@@ -14,7 +14,7 @@
  * perte et se relit sans dictionnaire de reprise.
  */
 
-import type { DomainEvent, PlayerId, ResourceCounts } from '@grand-colonies/engine';
+import type { DevCardKind, DomainEvent, PlayerId, Resource, ResourceCounts } from '@grand-colonies/engine';
 
 /** Une entrée de dictionnaire, sous une forme que JSON préserve. */
 export interface Pair<T> {
@@ -29,9 +29,22 @@ export interface Pair<T> {
  * `Map`.
  */
 export type WireEvent =
-  | Exclude<DomainEvent, { type: 'ResourcesProduced' } | { type: 'DiscardRequired' }>
+  | Exclude<
+      DomainEvent,
+      { type: 'ResourcesProduced' } | { type: 'DiscardRequired' }
+      | { type: 'DevCardBought' } | { type: 'ResourceStolen' }
+    >
   | { readonly type: 'ResourcesProduced'; readonly gains: readonly Pair<ResourceCounts>[] }
-  | { readonly type: 'DiscardRequired'; readonly players: readonly Pair<number>[] };
+  | { readonly type: 'DiscardRequired'; readonly players: readonly Pair<number>[] }
+  /** `card` n'est présent que pour l'acheteur (voir `redactFor`). */
+  | { readonly type: 'DevCardBought'; readonly player: PlayerId; readonly card?: DevCardKind }
+  /** `resource` n'est présent que pour le voleur et sa victime. */
+  | {
+      readonly type: 'ResourceStolen';
+      readonly thief: PlayerId;
+      readonly victim: PlayerId;
+      readonly resource?: Resource;
+    };
 
 const pairsOf = <T>(map: ReadonlyMap<PlayerId, T>): Pair<T>[] =>
   [...map].map(([player, value]) => ({ player, value }));
@@ -71,4 +84,29 @@ export function fromWire(event: WireEvent): DomainEvent {
     };
   }
   return event as DomainEvent;
+}
+
+/**
+ * Retire d'un événement ce que ce destinataire n'a pas le droit de savoir.
+ *
+ * Le flux d'événements contournait entièrement les vues : il diffusait à tout
+ * le monde la nature exacte de la carte développement que chacun venait
+ * d'acheter, et la ressource dérobée par le voleur. Toute l'étanchéité
+ * construite dans `publicView` tombait par cette porte.
+ *
+ * Une carte achetée n'est connue que de son acheteur ; une carte volée, du
+ * voleur et de sa victime — cette dernière voit bien ce qui lui manque.
+ */
+export function redactFor(event: WireEvent, viewer: PlayerId): WireEvent {
+  if (event.type === 'DevCardBought' && event.player !== viewer) {
+    return { type: 'DevCardBought', player: event.player };
+  }
+  if (event.type === 'ResourceStolen' && event.thief !== viewer && event.victim !== viewer) {
+    return { type: 'ResourceStolen', thief: event.thief, victim: event.victim };
+  }
+  return event;
+}
+
+export function redactAllFor(events: readonly WireEvent[], viewer: PlayerId): WireEvent[] {
+  return events.map((event) => redactFor(event, viewer));
 }
