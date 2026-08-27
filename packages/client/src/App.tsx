@@ -24,6 +24,7 @@ import { Board, colorOf } from './ui/Board.jsx';
 import { type CardRequest, DevCards } from './ui/DevCards.jsx';
 import { Discard } from './ui/Discard.jsx';
 import { GameOver } from './ui/GameOver.jsx';
+import { ObjectiveChoice } from './ui/ObjectiveChoice.jsx';
 import { Trade } from './ui/Trade.jsx';
 
 const RESOURCE_LABELS: Record<string, string> = {
@@ -419,6 +420,14 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
       </footer>
 
       {pub.winner && <GameOver view={pub} me={priv.id} />}
+
+      {/* Bloquant, et avant tout le reste : le choix oriente la partie. */}
+      {!pub.winner && priv.chosenObjective === undefined && priv.offeredObjectives.length > 0 && (
+        <ObjectiveChoice
+          priv={priv}
+          onChoose={(objective) => send('CHOOSE_OBJECTIVE', { objective })}
+        />
+      )}
 
       {priv.mustDiscard > 0 && (
         <Discard pub={pub} priv={priv} onDiscard={(resources) => send('DISCARD', { resources })} />

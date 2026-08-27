@@ -11,16 +11,7 @@
 
 import type { PublicGameView } from '@grand-colonies/protocol';
 
-const OBJECTIVE_LABELS: Record<string, string> = {
-  architect: 'Architecte — 8 bâtiments',
-  urbanist: 'Bâtisseur de cités — 4 villes',
-  settler: 'Colonisateur — 5 colonies',
-  roadNetwork: 'Grand bâtisseur — 12 routes',
-  warlord: 'Seigneur militaire — 3 chevaliers',
-  explorer: 'Explorateur',
-  magnate: 'Magnat',
-  diplomat: 'Diplomate',
-};
+import { objectiveLabel } from './objectives.js';
 
 export interface GameOverProps {
   readonly view: PublicGameView;
@@ -50,7 +41,7 @@ export function GameOver({ view, me }: GameOverProps) {
                   {row.player === me && ' (toi)'}
                 </td>
                 <td className="gc-standing-obj">
-                  {row.objective ? OBJECTIVE_LABELS[row.objective] ?? row.objective : '—'}
+                  {row.objective ? objectiveLabel(row.objective) : '—'}
                   {row.objective && (
                     <span className={row.objectiveDone ? 'gc-done' : 'gc-missed'}>
                       {row.objectiveDone ? ' ✓ +2' : ' manqué'}

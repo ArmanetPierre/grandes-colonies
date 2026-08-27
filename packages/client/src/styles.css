@@ -349,3 +349,23 @@ body {
 .gc-pick-count { text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
 .gc-modal-count { font-size: 12px; color: var(--gc-ink-soft); font-variant-numeric: tabular-nums; }
 .gc-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ── choix de l'objectif secret ────────────────────────────────────────
+   Deux cartes côte à côte, assez larges pour se lire d'un coup : le
+   joueur compare, il ne parcourt pas une liste. */
+.gc-objectives { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.gc-objective {
+  display: block; text-align: left; cursor: pointer;
+  background: var(--gc-raised); border: 1px solid var(--gc-line);
+  padding: 14px 16px; font-family: var(--gc-font-ui);
+}
+.gc-objective:hover { border-color: var(--gc-accent); }
+.gc-objective-title {
+  display: block; font-family: var(--gc-font-display); font-size: 19px;
+  color: var(--gc-accent); margin-bottom: 4px;
+}
+.gc-objective-desc { display: block; font-size: 12.5px; color: var(--gc-ink); }
+
+@media (max-width: 620px) {
+  .gc-objectives { grid-template-columns: 1fr; }
+}
