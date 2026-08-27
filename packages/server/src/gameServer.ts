@@ -26,6 +26,7 @@ import {
 import { WebSocketServer, type WebSocket } from 'ws';
 
 import type { Command, GameConfig } from '@grand-colonies/engine';
+import { toWireAll } from '@grand-colonies/protocol';
 
 import { GameSession } from './session.js';
 
@@ -202,7 +203,7 @@ export class GameServer {
       return;
     }
 
-    if (outcome.events.length > 0) this.broadcast('events', outcome.events);
+    if (outcome.events.length > 0) this.broadcast('events', toWireAll(outcome.events));
     this.broadcastAll();
   }
 
@@ -219,7 +220,7 @@ export class GameServer {
   private tick(): void {
     const events = this.session.tick();
     if (events.length > 0) {
-      this.broadcast('events', events);
+      this.broadcast('events', toWireAll(events));
       this.broadcastAll();
       return;
     }
