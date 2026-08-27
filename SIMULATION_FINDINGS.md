@@ -74,6 +74,57 @@ Le pic de 72 cartes à 4 joueurs illustre un point du §16 du plan : **la limite
 
 ---
 
+## Correctifs appliqués et second tour de mesure
+
+Deux des trois leviers ont été actionnés le 2026-08-27.
+
+**Objectifs secrets implémentés.** Cinq d'entre eux sont mesurables aujourd'hui — architecte, bâtisseur de cités, colonisateur, grand bâtisseur, seigneur militaire. Les trois autres du §21 sont déclarés mais indisponibles : un joueur ne doit jamais tirer un objectif que le moteur ne sait pas évaluer. Chaque joueur en reçoit deux et n'en garde qu'un ; à défaut de choix, le premier fait foi — même principe que la validation automatique du §2 du contrat.
+
+**Dotation de routes portée de 15 à 20.** C'était le verrou mesuré.
+
+### Résultat
+
+**Le seuil de 15 est redevenu atteignable.** Avant correctifs : aucune partie, à aucun effectif. Après :
+
+| Joueurs | Parties conclues | Cycles moyens |
+|---:|---:|---:|
+| 4 | 3 / 6 | 242 |
+| 6 | 2 / 6 | 226 |
+| 8 | 2 / 6 | 149 |
+| 10 | 2 / 6 | 206 |
+| 12 | 3 / 6 | 240 |
+
+### Un bug de mesure, corrigé au passage
+
+Le simulateur recomposait le score à la main et **oubliait l'objectif secret**, sous-estimant chaque total de deux points. Le décompte passe désormais par une fonction unique, `playerPoints`, qui inclut titres et objectif. C'est aussi celle que le client devra utiliser : recomposer un score ailleurs, c'est se condamner à en oublier une part.
+
+### Un second bug, plus grave
+
+`xxlOptionsFor(4)` renvoyait **44 hexagones — le plateau de douze joueurs pour une partie à quatre**. Chaque joueur ne touchait que six tuiles sur quarante-quatre et ne produisait presque jamais. En dessous de huit joueurs, le simulateur utilise désormais le plateau classique, conformément au §2 du game design qui réserve Grand Colonies aux effectifs de 8 à 12.
+
+---
+
+## Le problème suivant : la durée
+
+C'est maintenant l'écart le plus criant, et il est important.
+
+La cible du §2 est de **120 à 160 minutes**. À deux minutes par cycle, cela autorise environ **60 cycles**. Les mesures en réclament **150 à 240**, soit **cinq à huit heures** de partie.
+
+Autrement dit : le jeu est gagnable, mais **quatre fois trop lentement**. Et une partie sur deux ne se conclut toujours pas dans la limite de 300 cycles.
+
+### Ce qui pourrait combler l'écart
+
+Plusieurs systèmes manquants sont précisément des accélérateurs, ce qui rend la mesure actuelle pessimiste :
+
+- **les ports** — la simulation a déjà montré que l'accès au commerce conditionne l'expansion ; le 4:1 est un taux punitif ;
+- **le commerce entre joueurs**, cœur du jeu selon le §37, entièrement absent ;
+- **les métropoles** (3 points), **monuments** (2), **exploration** et **défense** — quatre sources de points encore absentes du barème ;
+- **la construction semi-simultanée**, implémentée mais que les bots n'utilisent jamais.
+
+Il serait prématuré de retoucher les coûts ou le seuil de victoire avant d'avoir mesuré avec ces systèmes : on corrigerait un déséquilibre qui n'existera plus.
+
+---
+
 ## Ce qu'il faut trancher
 
 Trois leviers, non exclusifs.
@@ -85,6 +136,8 @@ Trois leviers, non exclusifs.
 **Abaisser le seuil de victoire.** À 12 points, les parties se concluent avec le barème actuel. C'est le levier le plus simple, mais il contredit l'intention du §22, qui justifiait 15 par la taille de la carte.
 
 > Ma recommandation : **les trois premiers d'abord, le seuil en dernier recours.** Le seuil de 15 n'est pas arbitraire — il vient de la taille du plateau. Le baisser reviendrait à traiter le symptôme plutôt que la cause, qui est un barème incomplet et une dotation de routes calquée sur un jeu à quatre joueurs.
+>
+> **Mise à jour du 2026-08-27 :** les deux premiers leviers ont été actionnés et ont suffi à rendre la victoire atteignable. Le seuil reste à 15. La prochaine mesure n'aura de sens qu'après l'implémentation des ports et du commerce entre joueurs.
 
 ---
 

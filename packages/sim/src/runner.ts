@@ -18,8 +18,10 @@ import {
   defaultConfig,
   dispatch,
   pairedPlayer,
+  classicBoard,
+  playerPoints,
   total,
-  victoryPoints,
+  usesXxlBoard,
   xxlBoard,
   xxlOptionsFor,
 } from '@grand-colonies/engine';
@@ -71,12 +73,13 @@ export function playGame(options: SimulationOptions): GameOutcome {
   const players = Array.from({ length: playerCount }, (_, i) => ({ id: `p${i + 1}`, name: `J${i + 1}` }));
   const config = options.config ?? defaultConfig(playerCount);
 
-  const state = createGame({
-    players,
-    board: xxlBoard(setupRng, xxlOptionsFor(playerCount)),
-    config,
-    seed: `${seed}:game`,
-  });
+  // En dessous de huit joueurs, le plateau XXL disperserait tellement les
+  // colonies que la production s'effondrerait.
+  const board = usesXxlBoard(playerCount)
+    ? xxlBoard(setupRng, xxlOptionsFor(playerCount))
+    : classicBoard(setupRng);
+
+  const state = createGame({ players, board, config, seed: `${seed}:game` });
 
   const bots = players.map((_, i) => options.makeBot(i, botRng));
 
@@ -175,10 +178,9 @@ export function playGame(options: SimulationOptions): GameOutcome {
     if (over) cyclesOverLimit++;
   }
 
-  const points = players.map((p) => victoryPoints(state.board, p.id, {
-    hasLongestRoute: state.longestRouteHolder === p.id,
-    hasLargestArmy: state.largestArmyHolder === p.id,
-  }, config.victory));
+  // Décompte complet : titres ET objectif secret. Les compter à la main
+  // ici avait fait sous-estimer chaque score de deux points.
+  const points = players.map((p) => playerPoints(state, p.id)?.total ?? 0);
 
   return {
     seed,

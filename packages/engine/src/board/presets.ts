@@ -86,6 +86,18 @@ export interface XxlOptions {
   readonly gold?: number;
 }
 
+/**
+ * Le plateau XXL est-il pertinent à cet effectif ?
+ *
+ * Grand Colonies est conçu pour 8 à 12 joueurs (§2). En dessous, un plateau
+ * de quarante-quatre hexagones disperse tellement les joueurs que la
+ * production s'effondre : chacun ne touche que six tuiles sur quarante-quatre
+ * et ne produit presque jamais. Le plateau classique convient mieux.
+ */
+export function usesXxlBoard(playerCount: number): boolean {
+  return playerCount >= 8;
+}
+
 export function xxlOptionsFor(playerCount: number): XxlOptions {
   // Le game design prévoit 44 à 52 hexagones selon l'effectif (§4).
   const landCount = Math.min(52, Math.max(44, playerCount * 4));

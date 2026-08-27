@@ -31,17 +31,19 @@ import {
   total,
   yieldOf,
 } from '../resources.js';
-import { victoryPoints } from '../victory.js';
+import { type VictoryBreakdown, victoryBreakdown, victoryPoints } from '../victory.js';
 import type { Command, CommandResult, DomainEvent, RejectionReason } from './commands.js';
 import { type BuildIntent, type IntentTarget, locationOf, resolveIntents } from './buildIntent.js';
 import {
   type GameState,
   type PlayerState,
+  activeObjective,
   activePlayer,
   pairedPlayer,
   playerIds,
   playerOf,
 } from './state.js';
+import { type ObjectiveId, isObjectiveComplete } from '../objectives.js';
 
 const reject = (reason: RejectionReason, detail?: string): CommandResult =>
   detail === undefined ? { ok: false, reason } : { ok: false, reason, detail };
@@ -84,6 +86,7 @@ function execute(state: GameState, command: Command): CommandResult {
     case 'DECLARE_BUILD':          return declareBuild(state, command.playerId, command.target);
     case 'CANCEL_BUILD':           return cancelBuild(state, command.playerId, command.intentId);
     case 'END_TURN':               return endTurn(state, command.playerId);
+    case 'CHOOSE_OBJECTIVE':       return chooseObjective(state, command.playerId, command.objective);
     case 'END_CYCLE':              return endCycle(state, command.playerId);
   }
 }
@@ -660,6 +663,57 @@ function endCycle(state: GameState, playerId: string): CommandResult {
   return { ok: true, events };
 }
 
+/**
+ * Choix de l'objectif conservé.
+ *
+ * Possible tant que la partie n'est pas finie : un joueur arrivé en retard
+ * ou déconnecté au démarrage doit pouvoir le faire ensuite. À défaut de
+ * choix, le premier objectif proposé fait foi.
+ */
+function chooseObjective(state: GameState, playerId: string, objective: ObjectiveId): CommandResult {
+  const player = playerOf(state, playerId);
+  if (!player) return reject('unknown-player');
+  if (!player.offeredObjectives.includes(objective)) return reject('not-offered');
+
+  player.chosenObjective = objective;
+  // L'événement ne révèle pas lequel : c'est une information privée.
+  return { ok: true, events: [{ type: 'ObjectiveChosen', player: playerId }] };
+}
+
+/** L'objectif d'un joueur est-il rempli ? */
+export function objectiveDone(state: GameState, player: PlayerState): boolean {
+  const objective = activeObjective(player);
+  if (objective === undefined) return false;
+
+  return isObjectiveComplete(objective, {
+    board: state.board,
+    player: player.id,
+    devCards: player.devCards,
+    roadsPlaced: state.config.roadsPerPlayer - player.roadsLeft,
+    gold: amount(player.hand, 'gold'),
+    territoriesExplored: 0,
+    contractsHonoured: 0,
+  });
+}
+
+/**
+ * Le décompte complet d'un joueur, objectif secret compris.
+ *
+ * C'est le seul point d'entrée à utiliser pour afficher ou mesurer un score :
+ * appeler `victoryPoints` directement oublierait l'objectif et les titres, et
+ * sous-estimerait le total de plusieurs points.
+ */
+export function playerPoints(state: GameState, playerId: string): VictoryBreakdown | undefined {
+  const player = playerOf(state, playerId);
+  if (!player) return undefined;
+
+  return victoryBreakdown(state.board, playerId, {
+    hasLongestRoute: state.longestRouteHolder === playerId,
+    hasLargestArmy: state.largestArmyHolder === playerId,
+    secretObjectivesCompleted: objectiveDone(state, player) ? 1 : 0,
+  }, state.config.victory);
+}
+
 // ── titres et victoire ─────────────────────────────────────────────────────
 
 function refreshRouteTitle(state: GameState): DomainEvent[] {
@@ -704,6 +758,7 @@ function checkVictory(state: GameState): DomainEvent[] {
     const points = victoryPoints(state.board, player.id, {
       hasLongestRoute: state.longestRouteHolder === player.id,
       hasLargestArmy: state.largestArmyHolder === player.id,
+      secretObjectivesCompleted: objectiveDone(state, player) ? 1 : 0,
     }, state.config.victory);
 
     if (points < target) continue;
@@ -716,7 +771,19 @@ function checkVictory(state: GameState): DomainEvent[] {
 
   state.winner = best.player.id;
   state.phase = 'ended';
-  return [{ type: 'GameWon', player: best.player.id, points: best.points }];
+
+  // La partie est finie : les objectifs cessent d'être secrets.
+  const revealed: DomainEvent[] = state.players.flatMap((player) => {
+    const objective = activeObjective(player);
+    return objective === undefined ? [] : [{
+      type: 'ObjectiveRevealed' as const,
+      player: player.id,
+      objective,
+      complete: objectiveDone(state, player),
+    }];
+  });
+
+  return [{ type: 'GameWon', player: best.player.id, points: best.points }, ...revealed];
 }
 
 /** Rejoue une partie depuis son état initial. Sert au replay et aux tests. */

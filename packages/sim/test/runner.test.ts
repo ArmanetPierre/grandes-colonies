@@ -8,30 +8,30 @@ import { playGame } from '../src/runner.js';
 const greedy = () => new GreedyBot();
 
 /**
- * Seuil abaissé à 10 points pour ces tests.
+ * Seuil abaissé à 12 points pour ces tests.
  *
- * Le barème complet du §22 n'est pas encore implémenté — objectifs secrets,
- * métropoles, monuments manquent — et le plafond réellement atteignable
- * plafonne autour de 12 (voir balance.test.ts). Viser 15 ici testerait
- * l'équilibrage plutôt que la machinerie du simulateur.
+ * Le seuil réel de 15 est désormais atteignable, mais demande plus de 200
+ * cycles : chaque test de fumée coûterait plusieurs secondes pour vérifier
+ * de la machinerie, pas de l'équilibrage. Ce dernier est mesuré séparément
+ * dans balance.test.ts.
  */
 function lowThreshold(playerCount: number) {
   const base = defaultConfig(playerCount);
-  return { ...base, victory: { ...base.victory, target: 10 } };
+  return { ...base, victory: { ...base.victory, target: 12 } };
 }
 
 describe('simulateur', () => {
   it('mène une partie à 4 joueurs jusqu à la victoire', () => {
-    const outcome = playGame({ playerCount: 4, seed: 'smoke-4', makeBot: greedy, config: lowThreshold(4) });
+    const outcome = playGame({ playerCount: 4, seed: 'f-4-0', makeBot: greedy, config: lowThreshold(4) });
     expect(outcome.winner).toBeDefined();
     expect(outcome.exhausted).toBe(false);
     expect(outcome.cycles).toBeGreaterThan(4);
   });
 
   it('mène une partie à 12 joueurs jusqu à la victoire', () => {
-    const outcome = playGame({ playerCount: 12, seed: 'smoke-12', makeBot: greedy, config: lowThreshold(12) });
+    const outcome = playGame({ playerCount: 12, seed: 'f-12-0', makeBot: greedy, config: lowThreshold(12) });
     expect(outcome.winner).toBeDefined();
-    expect(outcome.points.some((p) => p >= 10)).toBe(true);
+    expect(outcome.points.some((p) => p >= 12)).toBe(true);
   });
 
   it('rejoue exactement la même partie à graine égale', () => {

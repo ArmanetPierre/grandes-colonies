@@ -13,6 +13,7 @@ import type { DevCardKind } from '../devCards.js';
 import type { Resource, ResourceCounts } from '../resources.js';
 import type { Phase } from './state.js';
 import type { IntentTarget } from './buildIntent.js';
+import type { ObjectiveId } from '../objectives.js';
 
 /** Champs communs à toute commande. */
 interface CommandBase {
@@ -42,6 +43,7 @@ export type Command =
   | (CommandBase & { readonly type: 'DECLARE_BUILD'; readonly target: IntentTarget })
   | (CommandBase & { readonly type: 'CANCEL_BUILD'; readonly intentId: string })
   | (CommandBase & { readonly type: 'END_TURN' })
+  | (CommandBase & { readonly type: 'CHOOSE_OBJECTIVE'; readonly objective: ObjectiveId })
   | (CommandBase & { readonly type: 'END_CYCLE' });
 
 export type CommandType = Command['type'];
@@ -75,6 +77,8 @@ export type DomainEvent =
   | { readonly type: 'BuildResolved'; readonly player: PlayerId; readonly intentId: string; readonly target: IntentTarget }
   | { readonly type: 'BuildRefunded'; readonly player: PlayerId; readonly intentId: string; readonly reason: 'lost-conflict' | 'no-longer-legal' }
   | { readonly type: 'LocationFrozen'; readonly location: string }
+  | { readonly type: 'ObjectiveChosen'; readonly player: PlayerId }
+  | { readonly type: 'ObjectiveRevealed'; readonly player: PlayerId; readonly objective: ObjectiveId; readonly complete: boolean }
   | { readonly type: 'CycleEnded'; readonly cycle: number }
   | { readonly type: 'GameWon'; readonly player: PlayerId; readonly points: number };
 
@@ -98,6 +102,7 @@ export type RejectionReason =
   | 'location-frozen'
   | 'already-declared'
   | 'unknown-intent'
+  | 'not-offered'
   | 'game-over';
 
 export type CommandResult =

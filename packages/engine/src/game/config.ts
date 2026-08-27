@@ -27,7 +27,13 @@ export interface GameConfig {
   /** Chevaliers joués minimum pour la puissance militaire. */
   readonly minimumKnights: number;
 
-  /** Pièces dont dispose chaque joueur (§38). */
+  /**
+   * Pièces dont dispose chaque joueur (§38).
+   *
+   * La dotation de routes a été portée de 15 à 20 après mesure : à 15, un
+   * joueur finit avec quatre colonies en réserve et aucune route pour
+   * atteindre un emplacement légal. Voir SIMULATION_FINDINGS.md.
+   */
   readonly roadsPerPlayer: number;
   readonly settlementsPerPlayer: number;
   readonly citiesPerPlayer: number;
@@ -69,7 +75,7 @@ export function defaultConfig(playerCount: number): GameConfig {
     robberCount: robberCountFor(playerCount),
     minimumRouteLength: 5,
     minimumKnights: 3,
-    roadsPerPlayer: 15,
+    roadsPerPlayer: 20,
     settlementsPerPlayer: 5,
     citiesPerPlayer: 4,
     activeTurnSeconds: 90,

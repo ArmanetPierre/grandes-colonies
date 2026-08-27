@@ -16,6 +16,7 @@ import { SeededRandom } from '../rng.js';
 import type { DevCardKind } from '../devCards.js';
 import type { GameConfig } from './config.js';
 import type { BuildIntent } from './buildIntent.js';
+import { type ObjectiveId, availableObjectives } from '../objectives.js';
 
 /**
  * Les phases d'un cycle, telles que fixées par RULES_CONTRACT.md §1.
@@ -37,6 +38,18 @@ export interface PlayerState {
   citiesLeft: number;
   /** Cartes à défausser après un 7 ; zéro le reste du temps. */
   mustDiscard: number;
+
+  /**
+   * Les deux objectifs proposés au joueur, dont il n'en conserve qu'un (§21).
+   * Information privée : jamais transmise aux autres clients.
+   */
+  offeredObjectives: ObjectiveId[];
+  /**
+   * L'objectif retenu. Tant qu'il est absent, le premier des deux fait foi —
+   * même principe que la validation automatique du contrat §2 : ne pas
+   * choisir ne doit jamais bloquer la partie.
+   */
+  chosenObjective: ObjectiveId | undefined;
 }
 
 export interface GameState {
@@ -130,7 +143,17 @@ export function createGame(options: NewGameOptions): GameState {
     settlementsLeft: options.config.settlementsPerPlayer,
     citiesLeft: options.config.citiesPerPlayer,
     mustDiscard: 0,
+    offeredObjectives: [],
+    chosenObjective: undefined,
   }));
+
+  // Deux objectifs par joueur, tirés dans le paquet mélangé par la graine.
+  const pool = rng.shuffle(availableObjectives());
+  players.forEach((player, index) => {
+    const first = pool[(index * 2) % pool.length];
+    const second = pool[(index * 2 + 1) % pool.length];
+    player.offeredObjectives = [first, second].filter((o): o is ObjectiveId => o !== undefined);
+  });
 
   return {
     config: options.config,
@@ -172,6 +195,11 @@ export function pairedPlayer(state: GameState): PlayerState | undefined {
   if (state.players.length < 4) return undefined;
   const index = (state.activeIndex + 3) % state.players.length;
   return state.players[index];
+}
+
+/** L'objectif effectivement en jeu pour ce joueur. */
+export function activeObjective(player: PlayerState): ObjectiveId | undefined {
+  return player.chosenObjective ?? player.offeredObjectives[0];
 }
 
 export function playerIds(state: GameState): PlayerId[] {

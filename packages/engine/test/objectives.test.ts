@@ -1,0 +1,106 @@
+import { describe, expect, it } from 'vitest';
+
+import { type Axial, hexKey, hexesWithin } from '../src/board/axial.js';
+import { Board, type HexData } from '../src/board/board.js';
+import { EMPTY_HOLDING, beginTurn, buyCard, playCard } from '../src/devCards.js';
+import {
+  type ObjectiveContext,
+  OBJECTIVES,
+  availableObjectives,
+  isObjectiveComplete,
+} from '../src/objectives.js';
+
+const ORIGIN: Axial = { q: 0, r: 0 };
+
+function makeBoard(): Board {
+  const positions = hexesWithin(ORIGIN, 3);
+  const hexes = new Map<string, HexData>();
+  for (const p of positions) hexes.set(hexKey(p), { terrain: 'forest', token: 5 });
+  return new Board({ positions, hexes });
+}
+
+function give(board: Board, kind: 'settlement' | 'city', count: number, owner = 'p1'): void {
+  const free = [...board.graph.vertices].sort().filter((v) => !board.buildingAt(v));
+  for (const v of free.slice(0, count)) board.setBuilding(v, { kind, owner });
+}
+
+const context = (board: Board, over: Partial<ObjectiveContext> = {}): ObjectiveContext => ({
+  board,
+  player: 'p1',
+  devCards: EMPTY_HOLDING,
+  roadsPlaced: 0,
+  gold: 0,
+  territoriesExplored: 0,
+  contractsHonoured: 0,
+  ...over,
+});
+
+describe('objectifs secrets', () => {
+  it('ne distribue que les objectifs dont le système existe', () => {
+    const available = availableObjectives();
+    expect(available).toContain('architect');
+    // L'exploration et les contrats n'existent pas encore : un joueur ne doit
+    // jamais tirer un objectif impossible à remplir.
+    expect(available).not.toContain('explorer');
+    expect(available).not.toContain('diplomat');
+    expect(available).not.toContain('magnate');
+  });
+
+  it('déclare tout de même les objectifs à venir', () => {
+    expect(OBJECTIVES.explorer.available).toBe(false);
+    expect(OBJECTIVES.explorer.description).toContain('territoires');
+  });
+
+  it('valide l architecte à huit bâtiments', () => {
+    const board = makeBoard();
+    give(board, 'settlement', 7);
+    expect(isObjectiveComplete('architect', context(board))).toBe(false);
+    give(board, 'settlement', 1);
+    expect(isObjectiveComplete('architect', context(board))).toBe(true);
+  });
+
+  it('ne compte que les bâtiments du joueur', () => {
+    const board = makeBoard();
+    give(board, 'settlement', 8, 'p2');
+    expect(isObjectiveComplete('architect', context(board))).toBe(false);
+  });
+
+  it('valide le bâtisseur de cités à quatre villes', () => {
+    const board = makeBoard();
+    give(board, 'city', 3);
+    expect(isObjectiveComplete('urbanist', context(board))).toBe(false);
+    give(board, 'city', 1);
+    expect(isObjectiveComplete('urbanist', context(board))).toBe(true);
+  });
+
+  it('valide le colonisateur à cinq colonies simultanées', () => {
+    const board = makeBoard();
+    give(board, 'settlement', 5);
+    expect(isObjectiveComplete('settler', context(board))).toBe(true);
+    // Des villes ne comptent pas pour cet objectif.
+    const other = makeBoard();
+    give(other, 'city', 5);
+    expect(isObjectiveComplete('settler', context(other))).toBe(false);
+  });
+
+  it('valide le grand bâtisseur à douze routes posées', () => {
+    const board = makeBoard();
+    expect(isObjectiveComplete('roadNetwork', context(board, { roadsPlaced: 11 }))).toBe(false);
+    expect(isObjectiveComplete('roadNetwork', context(board, { roadsPlaced: 12 }))).toBe(true);
+  });
+
+  it('valide le seigneur militaire à trois chevaliers joués', () => {
+    const board = makeBoard();
+    let holding = EMPTY_HOLDING;
+    for (let i = 0; i < 3; i++) holding = buyCard(holding, 'knight');
+    holding = beginTurn(holding);
+
+    for (let i = 0; i < 2; i++) {
+      holding = beginTurn(playCard(holding, 'knight'));
+    }
+    expect(isObjectiveComplete('warlord', context(board, { devCards: holding }))).toBe(false);
+
+    holding = playCard(holding, 'knight');
+    expect(isObjectiveComplete('warlord', context(board, { devCards: holding }))).toBe(true);
+  });
+});
