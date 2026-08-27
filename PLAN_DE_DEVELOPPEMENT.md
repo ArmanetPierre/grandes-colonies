@@ -74,7 +74,7 @@ grand-colonies/
 ├── packages/
 │   ├── engine/      règles pures, état autoritaire, RNG déterministe
 │   ├── protocol/    commandes réseau, vues publiques/privées, types partagés
-│   ├── server/      Colyseus : rooms, lobby, timers, sessions, persistance
+│   ├── server/      WebSocket : sièges, timers, sessions, reconnexion
 │   ├── client/      React, rendu plateau SVG, commerce, journal, timers
 │   ├── sim/         bots, simulations, métriques d'équilibrage
 │   └── testkit/     builders de scénarios, fixtures, helpers, replay
@@ -87,7 +87,7 @@ grand-colonies/
 
 ### 4.2 Règle d'or
 
-**Colyseus ne contient aucune règle du jeu.** Le moteur doit pouvoir exécuter une partie complète sans navigateur, sans WebSocket et sans serveur.
+**Le serveur ne contient aucune règle du jeu.** Le moteur doit pouvoir exécuter une partie complète sans navigateur, sans WebSocket et sans serveur. Le serveur transporte et sérialise ; il ne décide rien.
 
 ```text
 Client
@@ -110,7 +110,7 @@ resolve(command, state)
 ### 4.3 Déploiement LAN
 
 ```text
-PC hôte : serveur Node (Colyseus) + fichiers statiques du client
+PC hôte : serveur Node (WebSocket) + fichiers statiques du client
 Joueurs : navigateur → http://<ip-locale>:<port>
 ```
 
@@ -218,7 +218,7 @@ Tester en priorité : cycle A–E, joueur actif, joueur associé, commerce libre
 
 ### Phase 2 — Spike réseau 12 joueurs (jetable)
 
-Application Colyseus minimale et **destinée à être jetée**. Elle teste l'infrastructure, rien d'autre : connexion de 12 navigateurs, 12 sièges, pseudo et couleur, état public, données privées différenciées, timer serveur, perte de connexion, reconnexion, F5, spam de commandes, doublons.
+Application serveur minimale et **destinée à être jetée**. Elle teste l'infrastructure, rien d'autre : connexion de 12 navigateurs, 12 sièges, pseudo et couleur, état public, données privées différenciées, timer serveur, perte de connexion, reconnexion, F5, spam de commandes, doublons.
 
 **Critères de sortie**
 
@@ -540,4 +540,4 @@ Les tours associés compensent partiellement (5–6 tours actifs + 5–6 tours a
 
 ---
 
-*v2 — 2026-08-26. Sources : [catanatron](https://github.com/bcollazo/catanatron) · [docs.catanatron.com](https://docs.catanatron.com/) · [JSettlers2](https://github.com/jdmonin/JSettlers2) · [Viral-Doshi/catan](https://github.com/Viral-Doshi/catan) · [Colyseus](https://colyseus.io/) · [game-icons.net](https://game-icons.net) · [Kenney](https://kenney.nl/assets) · [Red Blob Games — hexagons](https://www.redblobgames.com/grids/hexagons/)*
+*v2 — 2026-08-26. Sources : [catanatron](https://github.com/bcollazo/catanatron) · [docs.catanatron.com](https://docs.catanatron.com/) · [JSettlers2](https://github.com/jdmonin/JSettlers2) · [Viral-Doshi/catan](https://github.com/Viral-Doshi/catan) · [game-icons.net](https://game-icons.net) · [Kenney](https://kenney.nl/assets) · [Red Blob Games — hexagons](https://www.redblobgames.com/grids/hexagons/)*
