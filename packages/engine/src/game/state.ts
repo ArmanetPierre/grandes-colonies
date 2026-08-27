@@ -40,6 +40,8 @@ export interface PlayerState {
   citiesLeft: number;
   /** Le monument est unique par joueur : posé ou non, rien d'autre. */
   hasMonument: boolean;
+  /** Îles secondaires atteintes le premier — 1 point chacune (contrat §9). */
+  explorations: number;
   /** Cartes à défausser après un 7 ; zéro le reste du temps. */
   mustDiscard: number;
 
@@ -108,6 +110,13 @@ export interface GameState {
   intentCounter: number;
   /** Emplacements gelés jusqu'à la fin du cycle en cours. */
   frozenLocations: Set<string>;
+  /**
+   * Îles secondaires déjà atteintes, par identifiant.
+   *
+   * Seul le premier arrivé marque : sans cette trace, chaque colonie posée
+   * sur une île rapporterait un point de plus.
+   */
+  exploredIslands: Set<string>;
 
   /** Offres d'échange en cours. Vidées à chaque fin de cycle. */
   offers: TradeOffer[];
@@ -151,6 +160,7 @@ export function createGame(options: NewGameOptions): GameState {
     settlementsLeft: options.config.settlementsPerPlayer,
     citiesLeft: options.config.citiesPerPlayer,
     hasMonument: false,
+    explorations: 0,
     mustDiscard: 0,
     offeredObjectives: [],
     chosenObjective: undefined,
@@ -186,6 +196,7 @@ export function createGame(options: NewGameOptions): GameState {
     intents: [],
     intentCounter: 0,
     frozenLocations: new Set(),
+    exploredIslands: new Set(),
     offers: [],
     offerCounter: 0,
   };

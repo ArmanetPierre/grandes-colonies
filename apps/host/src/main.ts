@@ -61,8 +61,13 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
   const qrDataUrl = await QRCode.toDataURL(url, { width: 420, margin: 1 });
   const page = renderHostPage({ url, code, qrDataUrl, playerCount });
 
+  // `BOARD=disque` pour une soirée plus courte : la simulation mesure 138
+  // cycles à douze joueurs sur le disque, contre 216 sur l'archipel.
+  const boardKind = process.env['BOARD'] === 'disque' ? 'disc' as const : 'archipelago' as const;
+
   const server: GameServer = new GameServer({
     seed,
+    boardKind,
     playerNames: Array.from({ length: playerCount }, (_, i) => `Joueur ${i + 1}`),
     onRequest: (req, res) => {
       if (req.url === '/' || req.url === '/hote') {
@@ -97,6 +102,7 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
   console.log(`  Écran hôte   http://${host}:${port}`);
   console.log(`  Joueurs      ${url}`);
   console.log(`  Code         ${code}`);
+  console.log(`  Plateau      ${boardKind === 'disc' ? 'disque' : 'archipel'}`);
   console.log('');
 
   return { port, code, url, close: () => server.close() };

@@ -18,6 +18,8 @@ import {
   type GameConfig,
   type GameState,
   type PlayerId,
+  archipelagoBoard,
+  archipelagoOptionsFor,
   classicBoard,
   createGame,
   defaultConfig,
@@ -64,6 +66,14 @@ export interface SessionOptions {
   readonly seed: string;
   readonly playerNames: readonly string[];
   readonly config?: GameConfig;
+  /**
+   * Forme du plateau à huit joueurs et plus.
+   *
+   * L'archipel est la structure prévue par le §4 et la seule où l'exploration
+   * ait un sens. Le disque reste proposé parce qu'il raccourcit sensiblement
+   * la partie : à douze joueurs, la simulation mesure 138 cycles contre 216.
+   */
+  readonly boardKind?: 'archipelago' | 'disc';
   /** Horloge injectable — les tests n'attendent jamais réellement. */
   readonly now?: () => number;
 }
@@ -106,7 +116,11 @@ export class GameSession {
     const players = options.playerNames.map((name, i) => ({ id: `p${i + 1}`, name }));
     this.state = createGame({
       players,
-      board: usesXxlBoard(count) ? xxlBoard(boardRng, xxlOptionsFor(count)) : classicBoard(boardRng),
+      // À huit joueurs et plus, l'archipel du §4 : une île centrale disputée
+      // et deux ou trois îles majeures, que seule la voile relie.
+      board: !usesXxlBoard(count) ? classicBoard(boardRng)
+        : options.boardKind === 'disc' ? xxlBoard(boardRng, xxlOptionsFor(count))
+        : archipelagoBoard(boardRng, archipelagoOptionsFor(count)),
       config,
       seed: `${options.seed}:game`,
     });

@@ -66,6 +66,8 @@ export interface GameServerOptions {
    * bouton.
    */
   readonly autoStart?: boolean;
+  /** Forme du plateau : archipel (défaut) ou disque. */
+  readonly boardKind?: 'archipelago' | 'disc';
 }
 
 const DEFAULT_TICK_MS = 250;
@@ -87,6 +89,7 @@ export class GameServer {
       seed: options.seed ?? `partie-${Date.now()}`,
       playerNames: names,
       ...(options.config ? { config: options.config } : {}),
+      ...(options.boardKind ? { boardKind: options.boardKind } : {}),
     });
 
     const handle = options.onRequest;

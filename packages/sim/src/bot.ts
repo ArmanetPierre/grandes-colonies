@@ -16,6 +16,7 @@ import {
   canAfford,
   canPlaceRoad,
   canPlaceSettlement,
+  canPlaceMaritimeRoute,
   canRaiseMonument,
   canUpgradeToCity,
   canUpgradeToMetropolis,
@@ -43,6 +44,13 @@ export function openRoads(state: GameState, playerId: PlayerId): string[] {
   return [...state.board.graph.edges]
     .sort()
     .filter((e) => canPlaceRoad(state.board, e, playerId).ok);
+}
+
+/** Arêtes maritimes praticables — le seul chemin vers les autres îles. */
+export function openMaritime(state: GameState, playerId: PlayerId): string[] {
+  return [...state.board.graph.edges]
+    .sort()
+    .filter((e) => canPlaceMaritimeRoute(state.board, e, playerId).ok);
 }
 
 /** Colonies à soi, améliorables en ville. */
@@ -105,11 +113,27 @@ export function affordableBuilds(state: GameState, playerId: PlayerId): Command[
   if (canAfford(player.hand, COSTS.metropolis) && upgradableCities(state, playerId).length > 0) {
     options.push('BUILD_METROPOLIS');
   }
+  /**
+   * La voie maritime passe devant la route quand l'île est pleine.
+   *
+   * Sans cette bascule, les bots restaient prisonniers de l'île centrale :
+   * une route terrestre était presque toujours payable, donc toujours
+   * préférée, et aucune partie simulée n'atteignait jamais une île voisine.
+   */
+  const landlocked = openSettlements(state, playerId, false).length === 0;
+  const canSail = player.roadsLeft > 0
+    && canAfford(player.hand, COSTS.maritimeRoute)
+    && openMaritime(state, playerId).length > 0;
+
+  if (landlocked && canSail) options.push('BUILD_MARITIME_ROUTE');
+
   if (player.roadsLeft > 0
       && canAfford(player.hand, COSTS.road)
       && openRoads(state, playerId).length > 0) {
     options.push('BUILD_ROAD');
   }
+
+  if (!landlocked && canSail) options.push('BUILD_MARITIME_ROUTE');
   if (state.deck.length > 0 && canAfford(player.hand, COSTS.devCard)) {
     options.push('BUY_DEV_CARD');
   }

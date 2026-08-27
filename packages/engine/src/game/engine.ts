@@ -14,6 +14,7 @@ import { parseHexKey } from '../board/axial.js';
 import type { EdgeId, HexId, VertexId } from '../board/graph.js';
 import { vertexIdsOfHex } from '../board/graph.js';
 import { type DevCardKind, buildDeck, beginTurn, buyCard, canPlayCard, knightsPlayed, playCard } from '../devCards.js';
+import { landMasses } from '../board/islands.js';
 import { largestArmyHolder } from '../largestArmy.js';
 import { longestRouteHolder } from '../longestRoute.js';
 import {
@@ -450,10 +451,36 @@ function buildSettlement(state: GameState, playerId: string, vertex: VertexId): 
   player.settlementsLeft--;
 
   const events: DomainEvent[] = [{ type: 'SettlementPlaced', player: playerId, vertex }];
+  events.push(...claimExploration(state, playerId, vertex));
   // Une colonie neuve peut couper le réseau d'un adversaire : le titre se
   // recalcule pour tout le monde, pas seulement pour le bâtisseur.
   events.push(...refreshRouteTitle(state));
+  events.push(...checkVictory(state));
   return { ok: true, events };
+}
+
+/**
+ * Exploration majeure : le premier à poser une colonie sur une île secondaire
+ * marque un point (contrat §9).
+ *
+ * Une fois par île. La mise en place est exclue en amont, puisqu'elle ne peut
+ * avoir lieu que sur l'île centrale.
+ */
+function claimExploration(state: GameState, playerId: string, vertex: VertexId): DomainEvent[] {
+  const islands = landMasses(state.board);
+  // La première est l'île centrale : y bâtir n'est pas une découverte.
+  const secondary = islands.slice(1);
+  if (secondary.length === 0) return [];
+
+  const touched = new Set(vertex.split('|'));
+  const island = secondary.find((candidate) => candidate.hexes.some((hex) => touched.has(hex)));
+  if (!island || state.exploredIslands.has(island.id)) return [];
+
+  state.exploredIslands.add(island.id);
+  const player = playerOf(state, playerId);
+  if (player) player.explorations++;
+
+  return [{ type: 'IslandReached', player: playerId, island: island.id }];
 }
 
 function buildCity(state: GameState, playerId: string, vertex: VertexId): CommandResult {
@@ -734,6 +761,7 @@ function playFreeBuild(state: GameState, playerId: string, target: IntentTarget)
   if (state.frozenLocations.has(locationOf(target))) return reject('location-frozen');
 
   let event: DomainEvent;
+  const extra: DomainEvent[] = [];
   if (target.kind === 'road') {
     if (player.roadsLeft <= 0) return reject('no-pieces-left');
     const check = canPlaceRoad(state.board, target.edge, playerId);
@@ -748,6 +776,7 @@ function playFreeBuild(state: GameState, playerId: string, target: IntentTarget)
     state.board.setBuilding(target.vertex, { kind: 'settlement', owner: playerId });
     player.settlementsLeft--;
     event = { type: 'SettlementPlaced', player: playerId, vertex: target.vertex };
+    extra.push(...claimExploration(state, playerId, target.vertex));
   } else {
     if (player.citiesLeft <= 0) return reject('no-pieces-left');
     const check = canUpgradeToCity(state.board, target.vertex, playerId);
@@ -763,6 +792,7 @@ function playFreeBuild(state: GameState, playerId: string, target: IntentTarget)
   const events: DomainEvent[] = [
     { type: 'DevCardPlayed', player: playerId, card: 'freeBuild' },
     event,
+    ...extra,
   ];
   if (target.kind === 'road') events.push(...refreshRouteTitle(state));
   events.push(...checkVictory(state));
@@ -1049,15 +1079,20 @@ function applyIntent(state: GameState, intent: BuildIntent): DomainEvent[] {
   // Les ressources ont été prélevées à l'annonce : elles rejoignent la banque.
   state.bank = addCounts(state.bank, intent.reserved);
 
+  const discovered: DomainEvent[] = [];
+
   switch (target.kind) {
     case 'road':
       state.board.setRoad(target.edge, intent.player);
       player.roadsLeft--;
       break;
-    case 'settlement':
+    case 'settlement': {
       state.board.setBuilding(target.vertex, { kind: 'settlement', owner: intent.player });
       player.settlementsLeft--;
+      // Une île atteinte par une annonce compte comme une autre.
+      discovered.push(...claimExploration(state, intent.player, target.vertex));
       break;
+    }
     case 'city':
       state.board.setBuilding(target.vertex, { kind: 'city', owner: intent.player });
       player.citiesLeft--;
@@ -1065,7 +1100,7 @@ function applyIntent(state: GameState, intent: BuildIntent): DomainEvent[] {
       break;
   }
 
-  return [{ type: 'BuildResolved', player: intent.player, intentId: intent.id, target }];
+  return [{ type: 'BuildResolved', player: intent.player, intentId: intent.id, target }, ...discovered];
 }
 
 /**
@@ -1165,6 +1200,7 @@ export function playerPoints(state: GameState, playerId: string): VictoryBreakdo
     secretObjectivesCompleted: objectiveDone(state, player) ? 1 : 0,
     metropolises: metropolisesBuilt(state, playerId),
     monuments: player.hasMonument ? 1 : 0,
+    majorExplorations: player.explorations,
   }, state.config.victory);
 }
 

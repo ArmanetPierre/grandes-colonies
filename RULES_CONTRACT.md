@@ -261,7 +261,40 @@ rechiffrer.
 
 ---
 
-## 9. Journal des décisions
+## 9. Archipel et exploration
+
+Le §4 du game design décrit une île centrale disputée et deux à trois îles
+majeures, reliées seulement par la mer. Les plateaux étaient pourtant des
+disques pleins : les voies maritimes n'avaient nulle part où mener, et
+`majorExploration` restait inerte au barème.
+
+### Le plateau
+
+Une **île centrale** porte un peu plus de la moitié des terres, et **deux ou
+trois îles secondaires** se partagent le reste — trois à partir de onze
+joueurs, comme le prévoit le §4. Chaque île est séparée des autres par au
+moins un hexagone de mer : c'est cette séparation qui rend la voie maritime
+obligatoire plutôt qu'optionnelle.
+
+La mise en place initiale se fait sur l'île centrale. Commencer sur une île
+secondaire donnerait un point d'exploration gratuit, et priverait la partie
+de la course qui en fait l'intérêt.
+
+### L'exploration majeure
+
+**Le premier joueur à bâtir une colonie sur une île secondaire gagne
+1 point.** Une fois par île, jamais pendant la mise en place.
+
+C'est la lecture la plus économe du §13, et la seule mesurable aujourd'hui.
+Le game design y prévoit aussi des hexagones face cachée révélant ressources
+rares, villages neutres, événements ou zones dangereuses — huit natures de
+tuiles qui demandent chacune leurs propres règles. Ce système-là reste à
+concevoir ; le point d'exploration, lui, récompense déjà ce qui compte :
+avoir traversé le premier.
+
+---
+
+## 10. Journal des décisions
 
 | Date | Question | Décision |
 |---|---|---|
@@ -288,3 +321,7 @@ rechiffrer.
 | 2026-08-27 | Effet du monument | **2 PV, un seul par joueur**, bâti sur une cité |
 | 2026-08-27 | Coût du monument | **Une ressource de chaque** — oblige à commercer |
 | 2026-08-27 | Jetons de défenseur et exploration majeure | **Conservés au barème, inertes** en attendant leur système |
+| 2026-08-27 | Structure du plateau | **Île centrale + 2 ou 3 îles secondaires**, séparées par la mer |
+| 2026-08-27 | Mise en place | **Sur l'île centrale seulement** |
+| 2026-08-27 | Exploration majeure | **1 point au premier arrivé sur chaque île secondaire**, hors mise en place |
+| 2026-08-27 | Hexagones face cachée du §13 | **Repoussés** — huit natures de tuiles à concevoir |

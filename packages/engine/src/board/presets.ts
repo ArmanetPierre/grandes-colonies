@@ -8,7 +8,7 @@
 
 import type { SeededRandom } from '../rng.js';
 import type { Terrain } from '../resources.js';
-import { type Axial, hexKey, hexesWithin, distance } from './axial.js';
+import { type Axial, DIRECTIONS, hexKey, hexesWithin, distance } from './axial.js';
 import type { BoardInit, HexData, Token } from './board.js';
 import { type HexId, type VertexId, vertexIdsOfHex } from './graph.js';
 import type { Port, PortKind } from '../ports.js';
@@ -240,4 +240,160 @@ export function xxlBoard(rng: SeededRandom, options: XxlOptions): BoardInit {
   // Le §4 prévoit 6 à 8 ports ; on suit l'effectif via la taille des terres.
   const portCount = Math.min(12, Math.max(6, Math.round(options.landCount / 5)));
   return { positions, hexes, ports: placePorts(rng, landKeys, hexes, portCount) };
+}
+
+// ── archipel ───────────────────────────────────────────────────────────────
+
+export interface ArchipelagoOptions {
+  /** Hexagones de terre ferme, toutes îles confondues. */
+  readonly landCount: number;
+  /** Îles secondaires, en plus de l'île centrale. */
+  readonly islands: number;
+  readonly deserts: number;
+  readonly gold?: number;
+  /**
+   * Part des terres revenant à l'île centrale.
+   *
+   * Trois quarts, mesuré plutôt que choisi. À 55 %, les îles secondaires
+   * enferment trop de terrain derrière la mer : à douze joueurs, six parties
+   * simulées sur vingt-quatre parvenaient à se conclure. À 75 %, on remonte à
+   * vingt et une, sans que l'exploration cesse d'avoir lieu.
+   */
+  readonly mainShare?: number;
+}
+
+export function archipelagoOptionsFor(playerCount: number): ArchipelagoOptions {
+  return {
+    landCount: Math.min(52, Math.max(44, playerCount * 4)),
+    // Le §4 prévoit trois îles majeures à partir de onze joueurs.
+    islands: playerCount >= 11 ? 3 : 2,
+    deserts: playerCount >= 11 ? 4 : 3,
+    gold: playerCount >= 10 ? 3 : 2,
+  };
+}
+
+/** Le plus petit rayon dont le disque contient au moins `count` hexagones. */
+function radiusFor(count: number): number {
+  let radius = 0;
+  while (hexesWithin(CENTER, radius).length < count) radius++;
+  return radius;
+}
+
+/**
+ * Plateau en archipel : une île centrale disputée, deux ou trois îles
+ * majeures autour (§4 du game design).
+ *
+ * Les îles sont séparées par au moins un hexagone de mer. C'est cette
+ * séparation qui fait tout : sans elle, la voie maritime resterait un
+ * raccourci facultatif au lieu d'être le seul chemin vers les terres neuves.
+ */
+export function archipelagoBoard(rng: SeededRandom, options: ArchipelagoOptions): BoardInit {
+  // L'île centrale porte un peu plus de la moitié des terres : elle doit
+  // rester la région disputée, pas une île comme les autres.
+  const mainCount = Math.round(options.landCount * (options.mainShare ?? 0.75));
+  const perIsland = Math.max(4, Math.floor((options.landCount - mainCount) / options.islands));
+
+  const mainRadius = radiusFor(mainCount);
+  const islandRadius = radiusFor(perIsland);
+
+  // Deux rangs de mer séparent le bord de l'île centrale du bord d'une île
+  // secondaire : un seul les séparerait déjà, mais deux laissent la place
+  // d'un vrai trajet maritime plutôt que d'un simple saut.
+  const orbit = mainRadius + islandRadius + 3;
+
+  const land: Axial[] = spiral(mainRadius).slice(0, mainCount);
+
+  // Les centres suivent les directions axiales, pas un cercle trigonométrique :
+  // en coordonnées axiales, `cos` et `sin` donnent des distances fausses — deux
+  // îles censées être à égale distance se retrouvaient à 7 et 10 rangs.
+  const step = Math.floor(DIRECTIONS.length / options.islands);
+  for (let i = 0; i < options.islands; i++) {
+    const direction = DIRECTIONS[(i * step) % DIRECTIONS.length] as Axial;
+    const center: Axial = { q: direction.q * orbit, r: direction.r * orbit };
+    const blob = hexesWithin(center, islandRadius)
+      .sort((a, b) => distance(center, a) - distance(center, b) || hexKey(a).localeCompare(hexKey(b)))
+      .slice(0, perIsland);
+    land.push(...blob);
+  }
+
+  const landKeys = new Set(land.map(hexKey));
+
+  /**
+   * Le plateau n'est pas un disque mais le halo des terres.
+   *
+   * Un disque englobant gaspillait des centaines d'hexagones de haute mer que
+   * personne n'atteindrait jamais — 397 pour 44 terres. Deux rangs autour de
+   * chaque île suffisent, et comme les îles sont écartées de deux rangs
+   * exactement, les halos se rejoignent : la mer reste navigable d'un bout à
+   * l'autre de l'archipel.
+   */
+  const positions: Axial[] = [];
+  const seen = new Set<HexId>();
+  for (const hex of land) {
+    for (const around of hexesWithin(hex, 2)) {
+      const key = hexKey(around);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      positions.push(around);
+    }
+  }
+  positions.sort((a, b) => hexKey(a).localeCompare(hexKey(b)));
+
+  const terrains = buildTerrains(rng, landKeys.size, options.deserts, options.gold ?? 0);
+  const tokens = rng.shuffle(bellTokens(terrains.filter((t) => t !== 'desert').length));
+
+  const hexes = new Map<HexId, HexData>();
+  let terrainIndex = 0;
+  let tokenIndex = 0;
+
+  const terrainOf = new Map<HexId, Terrain>();
+  for (const key of [...landKeys].sort()) terrainOf.set(key, terrains[terrainIndex++] ?? 'desert');
+
+  for (const position of positions) {
+    const key = hexKey(position);
+    const terrain = terrainOf.get(key);
+    if (terrain === undefined) {
+      hexes.set(key, { terrain: 'sea' });
+      continue;
+    }
+    if (terrain === 'desert') {
+      hexes.set(key, { terrain });
+      continue;
+    }
+    hexes.set(key, { terrain, token: tokens[tokenIndex++] as Token });
+  }
+
+  const portCount = Math.min(12, Math.max(6, Math.round(options.landCount / 5)));
+  return { positions, hexes, ports: placePorts(rng, landKeys, hexes, portCount) };
+}
+
+/** Terrains d'un plateau, mélangés : productifs, or, puis déserts. */
+function buildTerrains(
+  rng: SeededRandom,
+  landCount: number,
+  deserts: number,
+  gold: number,
+): Terrain[] {
+  const productive: Terrain[] = ['forest', 'pasture', 'field', 'hills', 'mountain'];
+  const out: Terrain[] = [];
+  for (let i = 0; i < landCount - deserts - gold; i++) {
+    out.push(productive[i % productive.length] as Terrain);
+  }
+  for (let i = 0; i < gold; i++) out.push('gold');
+  for (let i = 0; i < deserts; i++) out.push('desert');
+  return rng.shuffle(out);
+}
+
+/** Jetons en cloche, aux fréquences de Catan. */
+function bellTokens(count: number): Token[] {
+  const weights: readonly [Token, number][] = [
+    [2, 1], [3, 2], [4, 2], [5, 2], [6, 2], [8, 2], [9, 2], [10, 2], [11, 2], [12, 1],
+  ];
+  const tokens: Token[] = [];
+  while (tokens.length < count) {
+    for (const [value, n] of weights) {
+      for (let i = 0; i < n && tokens.length < count; i++) tokens.push(value);
+    }
+  }
+  return tokens;
 }

@@ -9,6 +9,7 @@
  */
 
 import type { Board, PlayerId } from './board/board.js';
+import { mainIsland } from './board/islands.js';
 import {
   type EdgeId,
   type VertexId,
@@ -29,7 +30,8 @@ export type PlacementError =
   | 'not-a-settlement'   // on ne peut améliorer qu'une colonie
   | 'not-a-city'         // la métropole et le monument exigent une cité
   | 'unbuildable-land'   // que de la mer ou de l'inexploré autour
-  | 'needs-water';       // une route maritime doit longer la mer
+  | 'needs-water'        // une route maritime doit longer la mer
+  | 'off-main-island';   // la mise en place se fait sur l'île centrale
 
 export type Placement = { readonly ok: true } | { readonly ok: false; readonly reason: PlacementError };
 
@@ -100,6 +102,14 @@ function connectsToNetwork(board: Board, edge: EdgeId, player: PlayerId): boolea
   return false;
 }
 
+/** Le sommet touche-t-il l'île centrale ? */
+function touchesMainIsland(board: Board, vertex: VertexId): boolean {
+  const main = mainIsland(board);
+  if (!main) return true;
+  const hexes = new Set(main.hexes);
+  return vertex.split('|').some((hex) => hexes.has(hex));
+}
+
 /** Le joueur possède-t-il une route touchant ce sommet ? */
 function hasOwnRoadAtVertex(board: Board, vertex: VertexId, player: PlayerId): boolean {
   return board.graph
@@ -116,6 +126,11 @@ export function canPlaceSettlement(
   if (!board.graph.hasVertex(vertex)) return fail('off-board');
   if (board.buildingAt(vertex)) return fail('occupied');
   if (!touchesBuildableLand(board, vertex)) return fail('unbuildable-land');
+
+  // La mise en place reste sur l'île centrale (contrat §9). Commencer sur une
+  // île secondaire donnerait un point d'exploration gratuit et priverait la
+  // partie de la course qui en fait l'intérêt.
+  if (options.setupPhase && !touchesMainIsland(board, vertex)) return fail('off-main-island');
 
   // Règle de distance : jamais deux constructions sur des sommets voisins,
   // quel que soit leur propriétaire.

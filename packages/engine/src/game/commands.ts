@@ -70,6 +70,7 @@ export type DomainEvent =
   | { readonly type: 'SettlementPlaced'; readonly player: PlayerId; readonly vertex: VertexId }
   | { readonly type: 'RoadPlaced'; readonly player: PlayerId; readonly edge: EdgeId }
   | { readonly type: 'MaritimeRoutePlaced'; readonly player: PlayerId; readonly edge: EdgeId }
+  | { readonly type: 'IslandReached'; readonly player: PlayerId; readonly island: string }
   | { readonly type: 'CityBuilt'; readonly player: PlayerId; readonly vertex: VertexId }
   | { readonly type: 'MetropolisBuilt'; readonly player: PlayerId; readonly vertex: VertexId; readonly remaining: number }
   | { readonly type: 'MonumentRaised'; readonly player: PlayerId; readonly vertex: VertexId }

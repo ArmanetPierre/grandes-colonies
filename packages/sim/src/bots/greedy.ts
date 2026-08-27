@@ -28,6 +28,7 @@ import {
   type Bot,
   affordableBuilds,
   monumentSites,
+  openMaritime,
   openRoads,
   openSettlements,
   upgradableCities,
@@ -292,6 +293,10 @@ export class GreedyBot implements Bot {
         const edge = openRoads(state, playerId)[0];
         return edge === undefined ? undefined : { actionId, playerId, type: 'BUILD_ROAD', edge };
       }
+      case 'BUILD_MARITIME_ROUTE': {
+        const edge = openMaritime(state, playerId)[0];
+        return edge === undefined ? undefined : { actionId, playerId, type: 'BUILD_MARITIME_ROUTE', edge };
+      }
       case 'BUY_DEV_CARD':
         return { actionId, playerId, type: 'BUY_DEV_CARD' };
       default:
@@ -351,6 +356,11 @@ export class RandomBot implements Bot {
         const edges = openRoads(state, playerId);
         const edge = edges[this.rng.int(edges.length)];
         return edge === undefined ? undefined : { actionId, playerId, type: 'BUILD_ROAD', edge };
+      }
+      case 'BUILD_MARITIME_ROUTE': {
+        const edges = openMaritime(state, playerId);
+        const edge = edges[this.rng.int(edges.length)];
+        return edge === undefined ? undefined : { actionId, playerId, type: 'BUILD_MARITIME_ROUTE', edge };
       }
       case 'BUY_DEV_CARD':
         return { actionId, playerId, type: 'BUY_DEV_CARD' };

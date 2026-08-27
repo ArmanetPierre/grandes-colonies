@@ -11,6 +11,7 @@ import {
   type Command,
   type DomainEvent,
   type GameConfig,
+  type BoardInit,
   type GameState,
   type PlayerId,
   SeededRandom,
@@ -22,9 +23,9 @@ import {
   playerPoints,
   total,
   type VictoryBreakdown,
+  archipelagoBoard,
+  archipelagoOptionsFor,
   usesXxlBoard,
-  xxlBoard,
-  xxlOptionsFor,
 } from '@grand-colonies/engine';
 
 import type { Bot } from './bot.js';
@@ -71,6 +72,8 @@ export interface SimulationOptions {
   readonly seed: string;
   readonly makeBot: (index: number, rng: SeededRandom) => Bot;
   readonly config?: GameConfig;
+  /** Plateau imposé, pour comparer deux générations à bots égaux. */
+  readonly board?: BoardInit;
   /** Garde-fou : au-delà, la partie est déclarée non concluante. */
   readonly maxCycles?: number;
 }
@@ -88,9 +91,9 @@ export function playGame(options: SimulationOptions): GameOutcome {
 
   // En dessous de huit joueurs, le plateau XXL disperserait tellement les
   // colonies que la production s'effondrerait.
-  const board = usesXxlBoard(playerCount)
-    ? xxlBoard(setupRng, xxlOptionsFor(playerCount))
-    : classicBoard(setupRng);
+  const board = options.board ?? (usesXxlBoard(playerCount)
+    ? archipelagoBoard(setupRng, archipelagoOptionsFor(playerCount))
+    : classicBoard(setupRng));
 
   const state = createGame({ players, board, config, seed: `${seed}:game` });
 

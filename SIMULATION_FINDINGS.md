@@ -232,11 +232,61 @@ Le rapport n'est pas linéaire : passer de 15 à 10 points ne retire que 35 % de
 
 ---
 
+## Cinquième tour : l'archipel
+
+Mesuré le 2026-08-27, après avoir rendu les voies maritimes constructibles et
+introduit le plateau en archipel du §4.
+
+### Encore un jeu amputé
+
+Même erreur que pour les cartes développement, et repérée de la même façon.
+Les premiers essais sur archipel donnaient **zéro exploration** et un taux de
+conclusion effondré : les bots ne construisaient aucune voie maritime et
+restaient prisonniers de l'île centrale, plus petite que l'ancien disque.
+
+Ils savent maintenant naviguer, et préfèrent la voie maritime à la route dès
+que leur île n'offre plus d'emplacement. Sans cette bascule, une route
+terrestre était presque toujours payable, donc toujours préférée, et aucune
+partie ne quittait jamais l'île de départ.
+
+### La part de l'île centrale, mesurée
+
+Vingt-quatre parties par ligne, mêmes bots, mêmes graines.
+
+| Plateau | 8 joueurs | 12 joueurs | Explorations |
+|---|---|---|---|
+| Disque | 23/24 conclues, 170 cycles | 23/24, 138 cycles | 0 |
+| Archipel, île centrale à 55 % | 19/24, 221 cycles | **6/24**, 262 cycles | 14 et 19 |
+| Archipel, île centrale à 75 % | 22/24, 192 cycles | 21/24, 216 cycles | 11 et 15 |
+
+À 55 %, les îles secondaires enferment trop de terrain derrière la mer : à
+douze joueurs, six parties sur vingt-quatre parviennent à se conclure. La
+part est donc fixée à **75 %**, mesurée plutôt que choisie.
+
+### Le coût de l'archipel
+
+Même à 75 %, l'archipel allonge la partie : **216 cycles contre 138** à douze
+joueurs, soit environ 3 h 36 contre 2 h 18 à une minute par cycle. C'est le
+prix des traversées, et il est réel.
+
+Les deux plateaux restent donc disponibles. L'archipel est le défaut — c'est
+la structure du §4, et la seule où l'exploration ait un sens — mais
+`BOARD=disque` lance une soirée plus courte.
+
+> **La même réserve qu'aux tours précédents s'applique, et plus fortement.**
+> Les bots traversent mal : ils n'embarquent qu'une fois bloqués, et suivent
+> la première arête venue plutôt que de viser une île. Un joueur humain
+> prépare sa traversée. L'écart mesuré entre disque et archipel est donc un
+> majorant, pas une prévision.
+
+---
+
 ## Limites de ces mesures
 
 - Les bots sont volontairement simples : ils construisent par ordre de valeur en points et ne planifient rien. Un humain expanderait mieux et atteindrait probablement quelques points de plus.
 - Le commerce entre joueurs est désormais simulé, mais avec une politique de bot très fruste : deux cartes en surplus contre une carte manquante, sans marchandage. Un joueur humain négocierait bien mieux.
-- L'exploration et les barbares ne sont pas dans le moteur ; les jetons de défenseur et l'exploration majeure restent donc inertes au barème.
+- Les barbares ne sont pas dans le moteur : les jetons de défenseur restent inertes au barème. L'exploration majeure, elle, est désormais attribuée — un point au premier joueur qui pose une colonie sur une île secondaire.
+- Les hexagones face cachée du §13 — ressources rares, villages neutres, événements, zones dangereuses — ne sont pas implémentés : huit natures de tuiles restant à concevoir.
 - La construction semi-simultanée existe dans le moteur mais les bots ne l'utilisent pas : ils n'annoncent jamais hors de leur tour. C'est aujourd'hui la plus grosse mécanique absente des mesures.
 - Les bots ne choisissent pas leur objectif secret : ils gardent celui que le moteur leur attribue par défaut, sans regarder s'il colle à leur position.
 
