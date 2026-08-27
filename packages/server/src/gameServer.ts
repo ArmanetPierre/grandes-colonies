@@ -57,6 +57,14 @@ export interface GameServerOptions {
    * Renvoyer `true` signifie « je m'en suis chargé ».
    */
   readonly onRequest?: (req: IncomingMessage, res: ServerResponse) => boolean;
+  /**
+   * Démarrer sans attendre l'hôte.
+   *
+   * Par défaut la partie attend son salon d'attente. Les tests de transport
+   * et le serveur de développement, eux, n'ont personne pour appuyer sur le
+   * bouton.
+   */
+  readonly autoStart?: boolean;
 }
 
 const DEFAULT_TICK_MS = 250;
@@ -86,6 +94,8 @@ export class GameServer {
       res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
       res.end('introuvable');
     });
+    if (options.autoStart) this.session.start();
+
     this.wss = new WebSocketServer({ server: this.http });
     this.wss.on('connection', (socket) => this.onConnection(socket));
   }
@@ -100,6 +110,19 @@ export class GameServer {
         resolve(port);
       });
     });
+  }
+
+  /**
+   * Lance la partie et prévient tout le monde.
+   *
+   * Passer par la session seule ne suffirait pas : rien ne rediffuserait la
+   * vue publique, et les joueurs resteraient sur leur salon d'attente en
+   * croyant l'hôte inactif.
+   */
+  startGame(): boolean {
+    const launched = this.session.start();
+    if (launched) this.broadcastAll();
+    return launched;
   }
 
   async close(): Promise<void> {

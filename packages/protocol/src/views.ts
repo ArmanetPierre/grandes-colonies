@@ -97,6 +97,13 @@ export interface PublicGameView {
   readonly handLimit: number;
   readonly victoryTarget: number;
   /**
+   * La partie a-t-elle été lancée par l'hôte ?
+   *
+   * Faux pendant le salon d'attente : le client montre alors qui est arrivé
+   * plutôt qu'un plateau sur lequel personne ne peut encore agir.
+   */
+  readonly started: boolean;
+  /**
    * Classement final, révélé seulement quand la partie est finie.
    *
    * Les objectifs secrets y figurent : ils cessent d'être secrets au moment
@@ -156,6 +163,8 @@ export interface PrivatePlayerView {
 
 export interface Connectivity {
   isConnected(playerId: PlayerId): boolean;
+  /** Par défaut vrai : le moteur seul ne connaît pas le salon d'attente. */
+  readonly started?: boolean;
 }
 
 /** L'état vu par tout le monde. */
@@ -229,6 +238,7 @@ export function publicView(state: GameState, connectivity?: Connectivity): Publi
     winner: state.winner,
     handLimit: state.config.handLimit,
     victoryTarget: state.config.victory.target,
+    started: connectivity?.started ?? true,
     standings: finalStandings(state),
   };
 }

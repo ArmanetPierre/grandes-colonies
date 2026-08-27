@@ -24,6 +24,7 @@ import { Board, colorOf } from './ui/Board.jsx';
 import { type CardRequest, DevCards } from './ui/DevCards.jsx';
 import { Discard } from './ui/Discard.jsx';
 import { GameOver } from './ui/GameOver.jsx';
+import { Lobby } from './ui/Lobby.jsx';
 import { ObjectiveChoice } from './ui/ObjectiveChoice.jsx';
 import { Trade } from './ui/Trade.jsx';
 
@@ -246,6 +247,10 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
       </div>
     );
   }
+
+  // Avant le lancement, rien n'est jouable : montrer le plateau ferait
+  // croire à une panne plutôt qu'à une attente.
+  if (!pub.started) return <Lobby view={pub} me={priv.id} myName={name} />;
 
   const me = pub.players.find((p) => p.id === priv.id);
   const myIntents = pub.intents.filter((i) => i.player === priv.id);

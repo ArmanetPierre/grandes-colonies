@@ -13,7 +13,9 @@
  * lui fausserait sa partie bien plus que de les lui faire manquer.
  */
 
-import type { HexId } from '../board/graph.js';
+import { hexKey } from '../board/axial.js';
+import type { HexId, VertexId } from '../board/graph.js';
+import { settlementSpots } from '../placement.js';
 import {
   type Resource,
   type ResourceCounts,
@@ -87,13 +89,68 @@ function parseKey(id: HexId): { q: number; r: number } {
  * partie est alors débloquée. Renvoyer une commande à la fois plutôt qu'un
  * lot garde chaque décision visible dans le journal, et donc rejouable.
  */
+/**
+ * Poids d'un jeton : le nombre de façons de le sortir avec deux dés.
+ *
+ * Six et huit valent cinq fois deux ou douze. Un placement de mise en place
+ * engage toute la partie ; s'en remettre au premier emplacement de la liste
+ * condamnerait le joueur qui reprend le siège.
+ */
+function tokenWeight(token: number | undefined): number {
+  if (token === undefined) return 0;
+  return 6 - Math.abs(7 - token);
+}
+
+/** Valeur de production d'un sommet, tous hexagones adjacents confondus. */
+function vertexValue(state: GameState, vertex: VertexId): number {
+  let value = 0;
+  for (const hex of state.board.graph.boardHexesOfVertex(vertex)) {
+    value += tokenWeight(state.board.hexData(hexKey(hex))?.token);
+  }
+  return value;
+}
+
+/**
+ * Mise en place jouée par défaut.
+ *
+ * Contrairement au reste du module, on ne peut pas se contenter de passer :
+ * la mise en place est obligatoire et toute la partie en dépend. On place
+ * donc au mieux de ce que le plateau offre, ce qui laisse une position
+ * jouable à qui reprendra le siège.
+ */
+function defaultSetupCommand(
+  state: GameState,
+  playerId: string,
+  actionId: string,
+): Command | undefined {
+  if (state.setupQueue[0] !== playerId) return undefined;
+
+  const pending = state.setupPendingVertex;
+  if (pending === undefined) {
+    const best = settlementSpots(state.board, playerId, { setupPhase: true })
+      .reduce<{ vertex: VertexId; value: number } | undefined>((champion, vertex) => {
+        const value = vertexValue(state, vertex);
+        return champion && champion.value >= value ? champion : { vertex, value };
+      }, undefined);
+    if (!best) return undefined;
+    return { actionId, playerId, type: 'PLACE_SETUP_SETTLEMENT', vertex: best.vertex };
+  }
+
+  const edge = state.board.graph
+    .edgesOfVertexOnBoard(pending)
+    .find((candidate) => state.board.roadAt(candidate) === undefined);
+  if (edge === undefined) return undefined;
+  return { actionId, playerId, type: 'PLACE_SETUP_ROAD', edge };
+}
+
 export function nextDefaultCommand(
   state: GameState,
   playerId: string,
   actionId: string,
 ): Command | undefined {
   const player = playerOf(state, playerId);
-  if (!player || state.phase === 'ended' || state.phase === 'setup') return undefined;
+  if (!player || state.phase === 'ended') return undefined;
+  if (state.phase === 'setup') return defaultSetupCommand(state, playerId, actionId);
 
   // Une défausse due bloque tout le monde, y compris les joueurs présents.
   if (player.mustDiscard > 0) {

@@ -17,7 +17,21 @@ let counter = 0;
 const cmd = (type: string, playerId: string, extra: Record<string, unknown> = {}): Command =>
   ({ actionId: `s${counter++}`, playerId, type, ...extra }) as Command;
 
+/**
+ * Une session déjà lancée — l'état dans lequel se déroule une partie.
+ *
+ * Le salon d'attente a ses propres tests plus bas ; partout ailleurs il ne
+ * serait qu'une cérémonie à répéter.
+ */
 function newSession(playerCount = 6, time = clock()) {
+  const names = Array.from({ length: playerCount }, (_, i) => `J${i + 1}`);
+  const session = new GameSession({ seed: 'session', playerNames: names, now: time.now });
+  session.start();
+  return session;
+}
+
+/** Une session encore au salon d'attente. */
+function lobbySession(playerCount = 6, time = clock()) {
   const names = Array.from({ length: playerCount }, (_, i) => `J${i + 1}`);
   return new GameSession({ seed: 'session', playerNames: names, now: time.now });
 }
@@ -25,8 +39,8 @@ function newSession(playerCount = 6, time = clock()) {
 /**
  * Une session dont tous les sièges sont occupés — la situation normale.
  *
- * Tant que personne n'a rejoint, la session n'arme aucun chronomètre et ne
- * joue pour personne : elle attend ses joueurs.
+ * Tant que l'hôte n'a pas lancé, la session n'arme aucun chronomètre et ne
+ * joue pour personne : elle attend.
  */
 function joinedSession(playerCount = 6, time = clock()) {
   const session = newSession(playerCount, time);
@@ -349,5 +363,125 @@ describe('sièges jamais joués', () => {
     // joueur, pas celui du siège.
     expect(seat.name).toBe('Pierre');
     expect(session.publicView().players.find((p) => p.id === seat.playerId)?.name).toBe('Pierre');
+  });
+});
+
+/**
+ * Fait avancer la mise en place : les sièges occupés jouent à la main, les
+ * autres sont pris en charge par la session au battement suivant.
+ */
+function driveSetup(session: GameSession, mine: readonly (string | undefined)[]): void {
+  const state = session.state;
+  for (let guard = 0; guard < 60 && state.phase === 'setup'; guard++) {
+    const head = state.setupQueue[0];
+    if (head !== undefined && mine.includes(head)) {
+      let spot = state.setupPendingVertex;
+      if (spot === undefined) {
+        spot = settlementSpots(state.board, head, { setupPhase: true })[0] as VertexId;
+        session.submit(cmd('PLACE_SETUP_SETTLEMENT', head, { vertex: spot }));
+        spot = state.setupPendingVertex;
+      }
+      const edge = state.board.graph
+        .edgesOfVertexOnBoard(spot as VertexId)
+        .find((e) => state.board.roadAt(e) === undefined) as string;
+      session.submit(cmd('PLACE_SETUP_ROAD', head, { edge }));
+      continue;
+    }
+    if (session.tick().length === 0) break;
+  }
+}
+
+describe('salon d attente', () => {
+  /**
+   * Le cas qui motive tout : les invités d'une soirée arrivent en ordre
+   * dispersé. Sans salon, les premiers connectés dérouleraient la mise en
+   * place pendant que les autres cherchent encore l'adresse.
+   */
+  it('ne joue rien tant que l hôte n a pas lancé', () => {
+    const time = clock();
+    const session = lobbySession(4, time);
+    session.claimFreeSeat('Pierre');
+
+    expect(session.isStarted).toBe(false);
+    expect(session.remainingMs()).toBeUndefined();
+
+    time.advance(10 * 60 * 1000);
+    expect(session.tick()).toHaveLength(0);
+    expect(session.state.phase).toBe('setup');
+    expect(session.commandLog()).toHaveLength(0);
+  });
+
+  it('refuse les commandes avant le lancement', () => {
+    const session = lobbySession(4);
+    const seat = session.claimFreeSeat('Pierre');
+    if (!seat) throw new Error('siège absent');
+
+    const spot = settlementSpots(session.state.board, seat.playerId, { setupPhase: true })[0] as VertexId;
+    const outcome = session.submit(cmd('PLACE_SETUP_SETTLEMENT', seat.playerId, { vertex: spot }));
+
+    expect(outcome.result.ok).toBe(false);
+    expect(session.commandLog()).toHaveLength(0);
+  });
+
+  it('annonce le salon dans la vue publique', () => {
+    const session = lobbySession(4);
+    expect(session.publicView().started).toBe(false);
+    session.start();
+    expect(session.publicView().started).toBe(true);
+  });
+
+  it('compte les joueurs présents, pour que l hôte sache qui attendre', () => {
+    const session = lobbySession(4);
+    expect(session.connectedCount()).toBe(0);
+    session.claimFreeSeat('Pierre');
+    session.claimFreeSeat('Hélène');
+    expect(session.connectedCount()).toBe(2);
+  });
+
+  it('ne se lance qu une fois', () => {
+    const session = lobbySession(4);
+    expect(session.start()).toBe(true);
+    expect(session.start()).toBe(false);
+  });
+
+  /**
+   * L'hôte lance à trois alors que quatre sièges existent.
+   *
+   * Pendant la mise en place, la partie attend légitimement le joueur en
+   * tête de file. Le siège vide ne pose problème que lorsque *son* tour
+   * arrive : sans traitement, il n'a jamais été « quitté » et personne ne
+   * jouerait jamais pour lui.
+   */
+  it('ne se fige pas sur un siège que personne n a pris', () => {
+    const session = lobbySession(4);
+    const mine = [
+      session.claimFreeSeat('Pierre'),
+      session.claimFreeSeat('Hélène'),
+      session.claimFreeSeat('Nikos'),
+    ].map((seat) => seat?.playerId);
+    session.start();
+
+    driveSetup(session, mine);
+
+    // La mise en place est allée jusqu'au bout, siège vide compris.
+    expect(session.state.phase).not.toBe('setup');
+  });
+
+  /**
+   * Un siège joué d'office reste disponible : mieux vaut un retardataire
+   * qu'un automate jusqu'à la fin de la soirée.
+   */
+  it('laisse un retardataire prendre un siège joué d office', () => {
+    const session = lobbySession(3);
+    const mine = [session.claimFreeSeat('Pierre')?.playerId];
+    session.start();
+
+    driveSetup(session, mine);
+    // Les deux sièges vides ont bien été joués par la session.
+    expect(session.commandLog().some((c) => c.actionId.startsWith('sys-'))).toBe(true);
+
+    const late = session.claimFreeSeat('Marc');
+    expect(late).toBeDefined();
+    expect(late?.name).toBe('Marc');
   });
 });

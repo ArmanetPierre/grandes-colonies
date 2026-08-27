@@ -73,6 +73,16 @@ export function renderHostPage(data: HostPageData): string {
     background:var(--accent); margin-right:6px;
   }
   .hint { margin-top:22px; font-size:12.5px; color:var(--soft); }
+
+  /* Le lancement appartient à l'hôte : c'est lui qui voit la pièce. */
+  .start { margin-top:22px; }
+  .start button {
+    font-family:'Inter',sans-serif; font-size:16px; font-weight:700;
+    padding:13px 34px; border:1px solid transparent; cursor:pointer;
+    background:var(--accent); color:#F7F1E1;
+  }
+  .start button:disabled { background:var(--raised); color:var(--soft); border-color:var(--line); cursor:not-allowed; }
+  .start-note { margin-top:8px; font-size:12px; color:var(--soft); }
 </style>
 </head>
 <body>
@@ -97,16 +107,24 @@ export function renderHostPage(data: HostPageData): string {
       <div class="seat-grid" id="seats"></div>
     </div>
 
+    <div class="start">
+      <button id="start" disabled>Démarrer la partie</button>
+      <div class="start-note" id="start-note">En attente du premier joueur…</div>
+    </div>
+
     <p class="hint">Un joueur qui rafraîchit sa page retrouve son siège automatiquement.</p>
   </div>
 
 <script>
   // Rafraîchissement discret : l'hôte voit ses invités arriver sans rien faire.
+  let started = false;
+
   async function refresh() {
     try {
       const seats = await (await fetch('/api/seats')).json();
       const taken = seats.filter(s => s.connected);
       document.getElementById('count').textContent = String(taken.length);
+      updateStart(taken.length, seats.length);
       document.getElementById('seats').innerHTML = seats.map(seat =>
         seat.connected
           ? '<div class="seat"><span class="dot"></span>' + escapeHtml(seat.name) + '</div>'
@@ -114,6 +132,32 @@ export function renderHostPage(data: HostPageData): string {
       ).join('');
     } catch { /* le serveur redémarre : on réessaiera au prochain tour */ }
   }
+  /**
+   * Le bouton ne s'active qu'avec au moins un joueur, et l'hôte reste libre
+   * de lancer sans attendre les retardataires : leurs sièges seront joués
+   * par défaut, et restent disponibles s'ils arrivent en cours de route.
+   */
+  function updateStart(taken, total) {
+    const button = document.getElementById('start');
+    const note = document.getElementById('start-note');
+    if (started) return;
+    button.disabled = taken === 0;
+    note.textContent = taken === 0
+      ? 'En attente du premier joueur…'
+      : taken < total
+        ? taken + ' sur ' + total + ' — tu peux lancer sans attendre les autres.'
+        : 'Tout le monde est là.';
+  }
+
+  document.getElementById('start').addEventListener('click', async () => {
+    const button = document.getElementById('start');
+    button.disabled = true;
+    await fetch('/api/start', { method: 'POST' });
+    started = true;
+    button.textContent = 'Partie en cours';
+    document.getElementById('start-note').textContent = 'Bonne partie.';
+  });
+
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c =>
       ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);

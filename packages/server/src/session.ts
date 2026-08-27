@@ -86,6 +86,16 @@ export class GameSession {
   /** Échéance du chronomètre courant, en millisecondes. */
   private deadline: number | undefined;
 
+  /**
+   * La partie a-t-elle été lancée par l'hôte ?
+   *
+   * Tant que non, rien ne bouge : ni chronomètre, ni tour joué d'office. Les
+   * invités d'une soirée arrivent en ordre dispersé, et les premiers
+   * connectés dérouleraient la mise en place pendant que les autres cherchent
+   * encore l'adresse.
+   */
+  private manualStart = false;
+
   constructor(options: SessionOptions) {
     this.now = options.now ?? (() => Date.now());
 
@@ -116,6 +126,39 @@ export class GameSession {
     }
 
     this.armTimer();
+  }
+
+  // ── démarrage ────────────────────────────────────────────────────────
+
+  get isStarted(): boolean {
+    return this.manualStart;
+  }
+
+  /**
+   * Lance la partie. C'est l'hôte qui décide, quand il voit ses invités
+   * installés.
+   *
+   * Les sièges que personne n'a réclamés sont déclarés absents dès le premier
+   * cycle : sans cela la partie se figerait sur leur tour, personne n'étant
+   * là pour le jouer. Ils restent réclamables — un retardataire prend la
+   * place et le remplacement automatique s'arrête.
+   */
+  start(): boolean {
+    if (this.manualStart) return false;
+    this.manualStart = true;
+
+    for (const seat of this.seats.values()) {
+      if (seat.connected) continue;
+      seat.disconnectedAtCycle = this.state.cycle;
+    }
+
+    this.armTimer();
+    return true;
+  }
+
+  /** Sièges occupés par un humain, ici et maintenant. */
+  connectedCount(): number {
+    return [...this.seats.values()].filter((s) => s.connected).length;
   }
 
   // ── sièges ───────────────────────────────────────────────────────────
@@ -209,11 +252,21 @@ export class GameSession {
    * room — qui garantit la sérialisation.
    */
   submit(command: Command): SubmitOutcome {
+    if (!this.manualStart) {
+      return {
+        result: { ok: false, reason: 'wrong-phase', detail: 'la partie n a pas encore commencé' },
+        events: [],
+      };
+    }
+
     const result = dispatch(this.state, command);
     if (result.ok && !result.duplicate) {
       this.log.push(command);
+      // Seul un geste humain approprie un siège. Un tour joué d'office ne
+      // doit pas verrouiller la place : un retardataire peut encore la
+      // prendre, et c'est mieux qu'un bot jusqu'au bout.
       const seat = this.seats.get(command.playerId);
-      if (seat) seat.hasPlayed = true;
+      if (seat && !command.actionId.startsWith('sys-')) seat.hasPlayed = true;
       this.armTimer();
     }
     return { result, events: result.ok ? result.events : [] };
@@ -240,19 +293,14 @@ export class GameSession {
   }
 
   private armTimer(): void {
-    // Tant que personne n'a rejoint, aucun chronomètre ne court : la partie
-    // attend ses joueurs plutôt que de se dérouler sans eux.
-    if (!this.started) {
+    // Avant le lancement, aucun chronomètre ne court : la partie attend ses
+    // joueurs plutôt que de se dérouler sans eux.
+    if (!this.manualStart) {
       this.deadline = undefined;
       return;
     }
     const seconds = this.currentPhaseSeconds();
     this.deadline = seconds > 0 ? this.now() + seconds * 1000 : undefined;
-  }
-
-  /** Au moins un joueur a rejoint : la partie peut courir. */
-  private get started(): boolean {
-    return [...this.seats.values()].some((s) => s.connected || s.disconnectedAtCycle !== undefined);
   }
 
   /** Millisecondes restantes, ou `undefined` si la phase n'est pas chronométrée. */
@@ -268,6 +316,7 @@ export class GameSession {
    * Renvoie les événements produits, pour diffusion.
    */
   tick(): DomainEvent[] {
+    if (!this.manualStart) return [];
     const events: DomainEvent[] = [];
 
     // Un joueur absent ne doit jamais bloquer, même avant l'expiration.
@@ -356,7 +405,10 @@ export class GameSession {
   // ── vues ─────────────────────────────────────────────────────────────
 
   publicView(): PublicGameView {
-    return publicView(this.state, { isConnected: (id) => this.isConnected(id) });
+    return publicView(this.state, {
+      isConnected: (id) => this.isConnected(id),
+      started: this.manualStart,
+    });
   }
 
   privateView(playerId: PlayerId): PrivatePlayerView | undefined {

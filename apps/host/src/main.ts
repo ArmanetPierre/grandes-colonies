@@ -70,6 +70,12 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
         res.end(page);
         return true;
       }
+      if (req.url === '/api/start' && req.method === 'POST') {
+        const launched = server.startGame();
+        res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ started: true, launched }));
+        return true;
+      }
       if (req.url === '/api/seats') {
         const seats = server.session.allSeats().map((seat) => ({
           name: seat.name,

@@ -29,6 +29,8 @@ async function withServer<T>(run: (url: string) => Promise<T>): Promise<T> {
     playerNames: Array.from({ length: PLAYERS }, (_, i) => `J${i + 1}`),
     // Battement rapide : les tests n'attendent pas un quart de seconde.
     tickMs: 40,
+    // Ces tests éprouvent le transport, pas le salon d'attente.
+    autoStart: true,
   });
   await server.listen(port);
   try {
