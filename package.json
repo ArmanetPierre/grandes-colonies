@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
   "scripts": {
     "test": "vitest run",
@@ -12,6 +13,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.3.0",
+    "@types/ws": "^8.18.1",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   }

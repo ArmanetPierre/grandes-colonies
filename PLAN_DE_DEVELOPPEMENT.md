@@ -52,7 +52,15 @@ Le game design décrit une variante de Catan pour 8–12 joueurs dont les mécan
 
 **Ne pas forker un clone existant.** Les hypothèses « 4 joueurs, tour par tour, plateau standard » sont câblées partout dans leur code ; les étendre coûterait plus cher qu'une réécriture. Ces projets servent de références de conception, pas de base de code.
 
-**Stack retenue** : monorepo TypeScript, moteur de règles pur, [Colyseus](https://colyseus.io/) (MIT) pour le temps réel, React + SVG pour le client.
+**Stack retenue** : monorepo TypeScript, moteur de règles pur, WebSocket pour le temps réel, React + SVG pour le client.
+
+> ⚠️ **Révision du 2026-08-27 — Colyseus écarté.** Le plan le retenait pour ses salles, sa synchronisation d'état et sa reconnexion. À l'usage, aucune des trois n'a tenu.
+>
+> Sa **synchronisation d'état a été contournée délibérément** : elle diffuse à tout le monde, ce qui aurait obligé à filtrer champ par champ les mains et les objectifs secrets — une seule erreur de filtrage suffisant à révéler une main. La **reconnexion par jeton** a dû être écrite de toute façon. Ne restaient que les salles et le transport.
+>
+> Le choix a été tranché par un blocage matériel : **la version 0.16 ne s'installe pas** (une dépendance `workspace:` a été publiée par erreur) et **la 0.18 n'a pas de client JavaScript**, celui-ci s'arrêtant à 0.16. Aucune version n'offrait les deux bouts.
+>
+> Le serveur tourne donc sur `ws`, en une centaine de lignes qui ne font que transporter. Toute la logique vit dans `GameSession`, testable sans réseau.
 
 ---
 

@@ -1,0 +1,12 @@
+{
+  "name": "@grand-colonies/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "dependencies": {
+    "@grand-colonies/engine": "*",
+    "@grand-colonies/protocol": "*",
+    "ws": "^8.18.0"
+  }
+}
