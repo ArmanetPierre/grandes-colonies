@@ -11,7 +11,7 @@
 
 import type { PublicGameView } from '@grand-colonies/protocol';
 
-import { objectiveLabel } from './objectives.js';
+import { objectiveDescription, objectiveTitle } from './objectives.js';
 
 export interface GameOverProps {
   readonly view: PublicGameView;
@@ -41,7 +41,14 @@ export function GameOver({ view, me }: GameOverProps) {
                   {row.player === me && ' (toi)'}
                 </td>
                 <td className="gc-standing-obj">
-                  {row.objective ? objectiveLabel(row.objective) : '—'}
+                  {row.objective ? (
+                    <>
+                      <span className="gc-standing-title">{objectiveTitle(row.objective)}</span>
+                      {/* Repliée sur téléphone : à douze joueurs, la liste
+                          deviendrait un mur de texte. */}
+                      <span className="gc-standing-desc"> — {objectiveDescription(row.objective)}</span>
+                    </>
+                  ) : '—'}
                   {row.objective && (
                     <span className={row.objectiveDone ? 'gc-done' : 'gc-missed'}>
                       {row.objectiveDone ? ' ✓ +2' : ' manqué'}
