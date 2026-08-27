@@ -4,3 +4,6 @@ dist/
 .env
 .env.local
 Wireframes Grand Colonies — avec assets.html
+packages/client/public/assets
+dist/
+.vite/

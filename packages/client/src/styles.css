@@ -1,0 +1,201 @@
+/* Thème Céramique — les valeurs viennent de assets/theme/tokens.css.
+   Elles sont reprises ici pour que le client soit autonome ; toute
+   modification doit être répercutée dans les deux fichiers. */
+
+:root {
+  --gc-bg: #DFCFAC;
+  --gc-surface: #E9DCBE;
+  --gc-raised: #F2E9D4;
+  --gc-line: #C3AC80;
+  --gc-ink: #1B1310;
+  --gc-ink-soft: #5E4A38;
+  --gc-accent: #A63A17;
+  --gc-accent-ink: #F4E7CE;
+  --gc-second: #2E2621;
+  --gc-danger: #7E2410;
+
+  --gc-font-display: 'Marcellus', Georgia, serif;
+  --gc-font-body: 'Cormorant Garamond', Georgia, serif;
+  --gc-font-ui: 'Inter', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--gc-bg);
+  color: var(--gc-ink);
+  font-family: var(--gc-font-ui);
+  font-size: 14px;
+}
+
+.gc-splash {
+  min-height: 100vh; display: grid; place-content: center; text-align: center; gap: 10px;
+}
+.gc-splash h1 { font-family: var(--gc-font-display); font-size: 34px; letter-spacing: .05em; }
+.gc-splash p { font-family: var(--gc-font-body); font-size: 18px; color: var(--gc-ink-soft); }
+
+.gc-app { display: flex; flex-direction: column; height: 100vh; }
+
+/* ── bandeau d'ordre ─────────────────────────────────────────────────
+   Lisible à deux mètres : les joueurs sont dans la même pièce et
+   regardent l'écran du voisin. */
+.gc-order {
+  display: flex; align-items: center; gap: 18px;
+  padding: 12px 18px; background: var(--gc-surface);
+  border-bottom: 1px solid var(--gc-line);
+}
+.gc-timer {
+  font-family: var(--gc-font-display); font-size: 38px; line-height: 1;
+  color: var(--gc-accent); font-variant-numeric: tabular-nums;
+}
+.gc-order-text { flex: 1; }
+.gc-phase {
+  font-family: var(--gc-font-display); font-size: 13px;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--gc-ink-soft);
+}
+.gc-sentence { font-family: var(--gc-font-body); font-size: 21px; line-height: 1.25; }
+.gc-who { font-size: 11px; color: var(--gc-ink-soft); margin-top: 2px; }
+.gc-roll {
+  font-family: var(--gc-font-display); font-size: 15px;
+  padding: 6px 12px; background: var(--gc-raised); border: 1px solid var(--gc-line);
+}
+
+.gc-main { flex: 1; display: flex; min-height: 0; }
+
+/* ── joueurs ─────────────────────────────────────────────────────── */
+.gc-players {
+  width: 210px; flex: none; overflow-y: auto;
+  border-right: 1px solid var(--gc-line); background: var(--gc-surface);
+}
+.gc-player {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 10px; border-bottom: 1px solid var(--gc-line); font-size: 12.5px;
+}
+.gc-player.is-active { background: color-mix(in srgb, var(--gc-accent) 13%, var(--gc-surface)); }
+.gc-player.is-paired { background: color-mix(in srgb, var(--gc-second) 10%, var(--gc-surface)); }
+.gc-player.is-away { opacity: .5; }
+.gc-chip {
+  width: 17px; height: 17px; flex: none; border: 1px solid rgba(27, 19, 16, .4);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+}
+.gc-name { flex: 1; font-weight: 600; }
+.gc-role {
+  font-size: 9px; letter-spacing: .08em; text-transform: uppercase;
+  padding: 1px 5px; background: var(--gc-accent); color: var(--gc-accent-ink);
+}
+.gc-stat { font-size: 10.5px; color: var(--gc-ink-soft); font-variant-numeric: tabular-nums; }
+.gc-warn { color: var(--gc-danger); }
+
+/* ── plateau ─────────────────────────────────────────────────────── */
+/* Le plateau peut dépasser : on le centre quand il tient, on laisse
+   défiler quand il ne tient pas. */
+.gc-board-wrap {
+  flex: 1; overflow: auto; padding: 16px;
+  display: flex; align-items: center; justify-content: center;
+}
+.gc-board { position: relative; flex: none; margin: auto; }
+
+.gc-hex {
+  position: absolute; background-size: cover; background-position: center;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  display: grid; place-items: center;
+}
+/* Sans jeton opaque, les numéros disparaissent sur les images. */
+.gc-token {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #FDFAF3; border: 1px solid rgba(0, 0, 0, .25);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .45);
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 11px; color: var(--gc-ink);
+  font-variant-numeric: tabular-nums;
+}
+/* 6 et 8 sont les plus productifs : ils se signalent, comme sur un plateau. */
+.gc-token-hot { color: var(--gc-danger); }
+.gc-robber { position: absolute; inset: 0; background: rgba(20, 12, 8, .55); }
+
+.gc-road {
+  position: absolute; width: 24px; height: 5px;
+  border: 1px solid rgba(27, 19, 16, .45); border-radius: 1px;
+}
+.gc-road-sea { opacity: .85; border-style: dashed; }
+
+.gc-building {
+  position: absolute; width: 15px; height: 15px;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(27, 19, 16, .5);
+}
+.gc-settlement { clip-path: polygon(50% 0, 100% 38%, 100% 100%, 0 100%, 0 38%); }
+.gc-city { width: 21px; height: 17px; clip-path: polygon(0 40%, 32% 40%, 32% 0, 100% 0, 100% 100%, 0 100%); }
+
+.gc-port {
+  position: absolute; transform: translate(-50%, -50%);
+  font-size: 9px; font-weight: 700; padding: 1px 4px;
+  background: var(--gc-raised); border: 1px solid var(--gc-line);
+}
+
+/* Emplacements proposés : discrets tant qu'on ne les survole pas. */
+.gc-spot {
+  position: absolute; border: 2px dashed var(--gc-accent);
+  background: rgba(166, 58, 23, .18); cursor: pointer; padding: 0;
+}
+.gc-spot-vertex { width: 16px; height: 16px; border-radius: 50%; transform: translate(-50%, -50%); }
+.gc-spot-edge { width: 30px; height: 8px; }
+.gc-spot:hover { background: rgba(166, 58, 23, .4); }
+
+/* Une annonce en attente doit se voir sans encombrer le plateau. */
+.gc-intent {
+  position: absolute; width: 20px; height: 20px; border-radius: 50%;
+  border: 2px dashed; transform: translate(-50%, -50%); pointer-events: none;
+}
+.gc-intent-contested { animation: gc-pulse 1.4s ease-in-out infinite; }
+@keyframes gc-pulse { 50% { opacity: .35; } }
+
+.gc-frozen {
+  position: absolute; transform: translate(-50%, -50%);
+  color: var(--gc-ink-soft); font-weight: 700; pointer-events: none;
+}
+
+/* ── main et actions ─────────────────────────────────────────────── */
+.gc-footer {
+  border-top: 1px solid var(--gc-line); background: var(--gc-surface);
+  padding: 10px 18px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+}
+.gc-hand { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+.gc-res {
+  background: var(--gc-raised); border: 1px solid var(--gc-line);
+  padding: 4px 9px; font-size: 12px;
+}
+.gc-limit { font-size: 11px; color: var(--gc-ink-soft); font-variant-numeric: tabular-nums; }
+.gc-limit.is-over { color: var(--gc-danger); font-weight: 600; }
+
+.gc-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.gc-action {
+  font-family: var(--gc-font-ui); font-size: 13px; font-weight: 600;
+  padding: 9px 15px; cursor: pointer;
+  background: var(--gc-accent); color: var(--gc-accent-ink);
+  border: 1px solid transparent; border-radius: 0;
+}
+.gc-action:disabled {
+  background: var(--gc-raised); color: var(--gc-ink-soft);
+  border-color: var(--gc-line); cursor: not-allowed; opacity: .7;
+}
+.gc-action small { display: block; font-size: 9px; font-weight: 500; }
+
+.gc-notice {
+  position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+  background: var(--gc-danger); color: var(--gc-accent-ink);
+  padding: 9px 16px; font-size: 13px; font-weight: 600;
+}
+
+/* ── téléphone ───────────────────────────────────────────────────── */
+@media (max-width: 780px) {
+  .gc-main { flex-direction: column; }
+  .gc-players {
+    width: 100%; display: flex; overflow-x: auto;
+    border-right: none; border-bottom: 1px solid var(--gc-line);
+  }
+  .gc-player { flex: none; border-bottom: none; border-right: 1px solid var(--gc-line); }
+  .gc-name { max-width: 70px; overflow: hidden; text-overflow: ellipsis; }
+  .gc-timer { font-size: 28px; }
+  .gc-sentence { font-size: 17px; }
+}
