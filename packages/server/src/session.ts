@@ -16,6 +16,7 @@ import {
   type CommandResult,
   type DomainEvent,
   type GameConfig,
+  type BoardScale,
   type GameState,
   type PlayerId,
   archipelagoBoard,
@@ -74,6 +75,13 @@ export interface SessionOptions {
    * la partie : à douze joueurs, la simulation mesure 138 cycles contre 216.
    */
   readonly boardKind?: 'archipelago' | 'disc';
+  /**
+   * Taille des terres, au-delà de celle que l'effectif appelle.
+   *
+   * Variante et non correction : le §4 dimensionne le plateau sur le nombre
+   * de joueurs, et c'est cette taille-là qui équilibre la partie.
+   */
+  readonly boardScale?: BoardScale;
   /** Horloge injectable — les tests n'attendent jamais réellement. */
   readonly now?: () => number;
 }
@@ -119,8 +127,8 @@ export class GameSession {
       // À huit joueurs et plus, l'archipel du §4 : une île centrale disputée
       // et deux ou trois îles majeures, que seule la voile relie.
       board: !usesXxlBoard(count) ? classicBoard(boardRng)
-        : options.boardKind === 'disc' ? xxlBoard(boardRng, xxlOptionsFor(count))
-        : archipelagoBoard(boardRng, archipelagoOptionsFor(count)),
+        : options.boardKind === 'disc' ? xxlBoard(boardRng, xxlOptionsFor(count, options.boardScale))
+        : archipelagoBoard(boardRng, archipelagoOptionsFor(count, options.boardScale)),
       config,
       seed: `${options.seed}:game`,
     });
@@ -378,6 +386,21 @@ export class GameSession {
    * Chronomètre expiré : on valide ce qui peut l'être et on passe à la
    * suite (contrat §2). Le jeu ne s'arrête jamais, quitte à ce qu'un joueur
    * subisse une validation par défaut.
+   *
+   * Mais **un seul** joueur présent la subit à la fois.
+   *
+   * La boucle jouait d'office pour tout le monde jusqu'au changement de
+   * phase. Or la mise en place est une phase unique de vingt-quatre poses :
+   * une seule expiration suffisait à placer les deux colonies et les deux
+   * routes des douze joueurs, y compris ceux qui attendaient sagement leur
+   * tour et n'avaient encore rien pu choisir. C'est le premier geste de la
+   * partie, celui qui décide de tout le reste, et il leur était retiré sans
+   * qu'ils aient rien fait de mal.
+   *
+   * Le chronomètre est réarmé à chaque commande acceptée : rendre la main
+   * ici donne donc au suivant son propre délai, entier. Les joueurs absents
+   * restent traités à chaque battement par `advanceForAbsentees`, sans quoi
+   * un siège vide coûterait un délai complet à toute la table.
    */
   private forceProgress(): DomainEvent[] {
     const events: DomainEvent[] = [];
@@ -395,6 +418,13 @@ export class GameSession {
         if (!outcome.result.ok) continue;
         events.push(...outcome.events);
         acted = true;
+
+        // Le joueur qui retenait la table a joué : on lui rend la main, et
+        // au suivant son délai complet.
+        if (this.isConnected(player.id)) {
+          this.armTimer();
+          return events;
+        }
 
         // On s'arrête dès que la phase a bougé. Vérifier après chaque
         // commande et non après chaque passe : une seule passe suffit

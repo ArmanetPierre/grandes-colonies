@@ -13,6 +13,23 @@
   --gc-accent-ink: #F4E7CE;
   --gc-second: #2E2621;
   --gc-danger: #7E2410;
+  /*
+   * L'or des distinctions : monument, métropole, gain encaissé.
+   *
+   * La variable était appelée en trois endroits sans avoir jamais été
+   * définie — le monument héritait donc de la couleur du texte, et la bulle
+   * d'aide d'un cadre de la teinte de son contenu. Assez sombre pour rester
+   * lisible sur les fonds clairs de l'interface, où elle sert le plus.
+   */
+  --gc-gold: #A87C22;
+
+  /*
+   * Les ombres portées, appelées en six endroits sans avoir jamais été
+   * définies : infobulles, modales et tiroirs flottaient donc sans relief
+   * au-dessus du plateau, ce qui est précisément ce qu'une ombre évite.
+   */
+  --gc-shadow: 0 2px 8px rgba(27, 19, 16, .22);
+  --gc-shadow-lg: 0 10px 32px rgba(27, 19, 16, .38);
 
   --gc-font-display: 'Marcellus', Georgia, serif;
   --gc-font-body: 'Cormorant Garamond', Georgia, serif;
@@ -126,128 +143,38 @@ body {
    défiler quand il ne tient pas. */
 .gc-board-wrap {
   flex: 1; position: relative; overflow: hidden; padding: 16px;
-  /* Le fond est déjà la mer : sans lui, l'océan de tuiles finissait sur un
-     bord d'équerre bien visible dès qu'on reculait. */
-  background: #2F4C66;
+  /* La scène peint son propre océan ; cette teinte ne se voit que le temps
+     du premier rendu, et doit donc être celle de l'eau. */
+  background: #14384F;
 }
-.gc-board { position: relative; flex: none; transform-origin: center; }
 /*
- * Le cadre qui mesure la place offerte au plateau.
+ * Le cadre qui porte la scène.
  *
  * Détaché du flux : en flex, il grandissait avec son contenu — il mesurait
  * 941 pixels dans une zone de 326 — et rapportait donc une place qui
- * n'existait pas, ce qui annulait toute mise à l'échelle.
+ * n'existait pas. C'est lui que la scène observe pour suivre les changements
+ * de place, une rotation de téléphone comme l'ouverture d'un panneau, et
+ * c'est sur lui que la toile WebGL se dimensionne.
  */
-.gc-board-fit {
-  position: absolute; inset: 16px;
+.gc-board-fit { position: absolute; inset: 16px; }
+
+/* Sans WebGL, une phrase plutôt qu'un cadre noir. */
+.gc-board-panne {
   display: flex; align-items: center; justify-content: center;
+  padding: 24px; text-align: center; cursor: default;
+  font-family: var(--gc-font-ui); font-size: 13px; line-height: 1.6;
+  color: var(--gc-ink-soft);
 }
 
-.gc-hex {
-  position: absolute; background-size: cover; background-position: center;
-  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  display: grid; place-items: center;
-}
-/* Sans jeton opaque, les numéros disparaissent sur les images. */
-.gc-token {
-  width: 20px; height: 20px; border-radius: 50%;
-  background: #FDFAF3; border: 1px solid rgba(0, 0, 0, .25);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, .45);
-  display: grid; place-items: center;
-  font-weight: 700; font-size: 11px; color: var(--gc-ink);
-  font-variant-numeric: tabular-nums;
-}
-/* 6 et 8 sont les plus productifs : ils se signalent, comme sur un plateau. */
-.gc-token-hot { color: var(--gc-danger); }
 /*
- * Le voleur.
+ * Le plateau était dessiné ici, en boîtes découpées au `clip-path`.
  *
- * Il n'était qu'un voile sombre posé sur la tuile — invisible parmi cinquante
- * textures, et plus encore depuis que la mer alentour est bleu profond. Il a
- * maintenant une silhouette : on le repère sans lire le plateau.
+ * Il l'est désormais en volume, dans `ui/board3d/` : tuiles, jetons,
+ * routes, bâtiments, voleur, emplacements proposés et annonces sont des
+ * maillages, pas des éléments du document. Rien de ce qui les concernait
+ * n'a de sens dans une feuille de style — la couleur d'un joueur est
+ * devenue une teinte d'instance, et le survol, un lancer de rayon.
  */
-.gc-robber {
-  position: absolute; inset: 0;
-  background: rgba(18, 11, 7, .58);
-  display: grid; place-items: center;
-}
-.gc-robber::after {
-  content: ''; width: 17px; height: 23px;
-  background: #14100D;
-  border: 2px solid var(--gc-accent);
-  /* Une silhouette de pion : tête ronde, corps évasé. */
-  clip-path: polygon(34% 0, 66% 0, 74% 20%, 62% 34%, 84% 66%, 92% 100%, 8% 100%, 16% 66%, 38% 34%, 26% 20%);
-  box-shadow: 0 0 0 2px rgba(20, 12, 8, .55);
-}
-/* Cible possible pour le voleur : cliquable et signalée. */
-/*
- * Un hexagone qu'on peut viser.
- *
- * Le survol ne suffisait pas : il n'existe pas au doigt. Sur téléphone, le
- * joueur lisait « Déplace le voleur » sans le moindre indice de l'endroit où
- * appuyer. La cible se signale donc d'elle-même, comme les emplacements de
- * construction.
- */
-.gc-hex-target { cursor: pointer; position: relative; }
-/*
- * Le contour est un tracé, pas une bordure.
- *
- * Une bordure CSS suit la boîte rectangulaire ; découpée ensuite en hexagone,
- * il n'en restait que quatre arcs aux angles, éparpillés sur la carte comme
- * des traits sans rapport. Un hexagone dessiné épouse la tuile.
- */
-.gc-hex-target::before {
-  content: ''; position: absolute; inset: 0;
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 86.6 100' preserveAspectRatio='none'%3E%3Cpolygon points='43.3,3 83.6,26.5 83.6,73.5 43.3,97 3,73.5 3,26.5' fill='none' stroke='%23A63A17' stroke-width='6' stroke-dasharray='11 7'/%3E%3C/svg%3E")
-      center / 100% 100% no-repeat,
-    rgba(166, 58, 23, .18);
-  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  animation: gc-pulse 1.6s ease-in-out infinite;
-}
-.gc-hex-target:hover::before { background-color: rgba(166, 58, 23, .36); }
-
-.gc-road {
-  position: absolute; width: 24px; height: 5px;
-  border: 1px solid rgba(27, 19, 16, .45); border-radius: 1px;
-}
-.gc-road-sea { opacity: .85; border-style: dashed; }
-
-.gc-building {
-  position: absolute; width: 15px; height: 15px;
-  transform: translate(-50%, -50%);
-  border: 1px solid rgba(27, 19, 16, .5);
-}
-.gc-settlement { clip-path: polygon(50% 0, 100% 38%, 100% 100%, 0 100%, 0 38%); }
-.gc-city { width: 21px; height: 17px; clip-path: polygon(0 40%, 32% 40%, 32% 0, 100% 0, 100% 100%, 0 100%); }
-
-.gc-port {
-  position: absolute; transform: translate(-50%, -50%);
-  font-size: 9px; font-weight: 700; padding: 1px 4px;
-  background: var(--gc-raised); border: 1px solid var(--gc-line);
-}
-
-/* Emplacements proposés : discrets tant qu'on ne les survole pas. */
-.gc-spot {
-  position: absolute; border: 2px dashed var(--gc-accent);
-  background: rgba(166, 58, 23, .18); cursor: pointer; padding: 0;
-}
-.gc-spot-vertex { width: 16px; height: 16px; border-radius: 50%; transform: translate(-50%, -50%); }
-.gc-spot-edge { width: 30px; height: 8px; }
-.gc-spot:hover { background: rgba(166, 58, 23, .4); }
-
-/* Une annonce en attente doit se voir sans encombrer le plateau. */
-.gc-intent {
-  position: absolute; width: 20px; height: 20px; border-radius: 50%;
-  border: 2px dashed; transform: translate(-50%, -50%); pointer-events: none;
-}
-.gc-intent-contested { animation: gc-pulse 1.4s ease-in-out infinite; }
-@keyframes gc-pulse { 50% { opacity: .35; } }
-
-.gc-frozen {
-  position: absolute; transform: translate(-50%, -50%);
-  color: var(--gc-ink-soft); font-weight: 700; pointer-events: none;
-}
 
 /* ── main et actions ─────────────────────────────────────────────── */
 .gc-footer {
@@ -531,15 +458,10 @@ body {
 .gc-lobby-seat.is-free { opacity: .45; font-style: italic; }
 .gc-lobby-seat.is-me { border-color: var(--gc-accent); font-weight: 600; }
 
-/* ── métropole et monument ─────────────────────────────────────────────
-   La métropole se distingue de la cité : trois pour toute la partie, on
-   doit voir d'un coup d'œil qui les tient. */
-.gc-building.gc-metropolis {
-  background: var(--gc-gold); border: 2px solid var(--gc-ink);
-  width: 15px; height: 15px;
-}
-/* Le monument n'occupe aucun sommet : il se signale dans la liste des
-   joueurs, faute de quoi deux points apparaîtraient sans cause visible. */
+/* ── monument ──────────────────────────────────────────────────────────
+   Le monument se signale aussi dans la liste des joueurs : sur le plateau
+   il occupe un sommet, mais à douze on ne balaie pas la carte pour savoir
+   qui a pris ses deux points. */
 .gc-monument { color: var(--gc-gold); font-size: 11px; }
 
 /* ── choix de la victime du voleur ─────────────────────────────────────── */
@@ -774,124 +696,386 @@ body {
   .gc-market-action { grid-column: 2; grid-row: 3; }
 }
 
-/* ── téléphone en paysage ──────────────────────────────────────────────
-   Le cas que la largeur ne détecte pas : un téléphone couché fait environ
-   812 × 375, donc plus large que le seuil mobile, et recevait la mise en
-   page de bureau écrasée sur 375 pixels de haut — en-tête et pied de page
-   mangeaient tout, le plateau disparaissait.
+/* ── téléphone ─────────────────────────────────────────────────────────
+   Une autre interface, pas la même en plus petit.
 
-   C'est la **hauteur** qui manque ici, pas la largeur. On échange donc les
-   deux : ce qui s'empilait verticalement passe en colonnes, et le plateau
-   récupère toute la hauteur disponible. */
-@media (orientation: landscape) and (max-height: 540px) {
-  .gc-app {
-    display: grid;
-    grid-template-columns: 96px 1fr 186px;
-    /* Journal et commerce prennent ce qu'il leur faut ; joueurs et actions
-       occupent tout le reste. Deux rangées égales bridaient les colonnes
-       latérales à la moitié de la hauteur, pour rien. */
-    /*
-     * Le commerce et le journal vivent désormais dans un même conteneur : les
-     * placer dans deux cases distinctes revenait à viser des zones absentes
-     * de leur parent, et ils se peignaient l'un sur l'autre.
-     */
-    /* La rangée des actions est la plus lourde : neuf boutons et la main.
-       À parts égales, « Fin de cycle » tombait hors du cadre. */
-    grid-template-rows: auto 1.55fr 1fr;
-    grid-template-areas:
-      "head    head  head"
-      "players board actions"
-      "players board side";
-    height: 100vh; overflow: hidden;
+   La mise en page de bureau pose côte à côte un plateau, une colonne de
+   joueurs, une colonne de panneaux et une barre de neuf boutons. Couchée
+   dans 852 × 393, elle ne rate pas seulement l'élégance : le commerce et le
+   journal tombaient sous le bord de l'écran, et rien ne disait qu'ils
+   existaient.
+
+   On applique donc la grammaire des jeux de plateau sur téléphone : le
+   plateau occupe l'écran entier, une barre d'état flotte en haut, une barre
+   d'action en bas, et tout le reste — commerce, journal, cartes, table —
+   vit derrière quatre onglets qui ouvrent un tiroir par-dessus le plateau.
+   Un seul tiroir à la fois, refermé d'un toucher n'importe où.
+
+   Le composant sait dans quel monde il vit (`ui/compact.ts`) : ces règles ne
+   déplacent pas des boîtes existantes, elles habillent un autre arbre. */
+
+.gc-compact {
+  /* Hauteurs des deux barres, connues aussi du plateau et des tiroirs. */
+  --gc-hud-h: 46px;
+  --gc-dock-h: 60px;
+  --gc-rail-w: 84px;
+  /* L'encoche et la barre d'accueil, sur lesquelles rien ne doit tomber. */
+  --gc-safe-l: env(safe-area-inset-left, 0px);
+  --gc-safe-r: env(safe-area-inset-right, 0px);
+  --gc-safe-b: env(safe-area-inset-bottom, 0px);
+  --gc-veil: rgba(233, 220, 190, .93);
+
+  display: block; position: fixed; inset: 0;
+  /* `dvh` suit la barre d'adresse de Safari, que `vh` ignore : sans lui la
+     barre d'action se glissait sous le bord bas de l'écran. */
+  height: 100vh; height: 100dvh;
+  overflow: hidden;
+  /* Le doigt fait tourner le plateau ; il ne doit pas faire glisser la page. */
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+/* Le plateau, plein cadre, sous tout le reste. */
+.gc-compact .gc-board-wrap { position: absolute; inset: 0; padding: 0; }
+.gc-compact .gc-board-fit { inset: 0; }
+/* Recentrer se pose sous la barre d'état, du côté opposé à la table. */
+.gc-compact .gc-recentrer {
+  top: calc(var(--gc-hud-h) + 8px); bottom: auto;
+  right: calc(8px + var(--gc-safe-r)); padding: 6px 10px; font-size: 11px;
+}
+
+/* ── barre d'état ─────────────────────────────────────────────────────
+   Le minutier, la phase, et la phrase qui dit quoi faire. Rien d'autre :
+   « actif / associé » est déjà lisible dans la colonne de la table. */
+.gc-hud {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+  height: var(--gc-hud-h);
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 calc(10px + var(--gc-safe-r)) 0 calc(10px + var(--gc-safe-l));
+  background: var(--gc-veil);
+  border-bottom: 1px solid var(--gc-line);
+  backdrop-filter: blur(6px);
+}
+.gc-compact .gc-timer { font-size: 22px; }
+.gc-hud-text { flex: 1; min-width: 0; }
+.gc-compact .gc-phase { font-size: 8.5px; letter-spacing: .1em; }
+.gc-compact .gc-sentence {
+  font-size: 14px; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gc-compact .gc-dice { padding: 3px 7px; gap: 5px; }
+.gc-compact .gc-die { width: 20px; height: 20px; }
+.gc-compact .gc-dice-total { font-size: 16px; min-width: 16px; }
+
+/* ── la table, en colonne ─────────────────────────────────────────────
+   Douze joueurs qu'on ne consulte qu'en passant : la couleur, le nom, les
+   points. Un toucher ouvre la fiche complète. */
+.gc-rail {
+  position: absolute; z-index: 15;
+  top: var(--gc-hud-h); bottom: calc(var(--gc-dock-h) + var(--gc-safe-b));
+  left: 0; width: calc(var(--gc-rail-w) + var(--gc-safe-l));
+  padding-left: var(--gc-safe-l);
+  display: flex; flex-direction: column;
+  overflow-y: auto; overscroll-behavior: contain;
+  background: var(--gc-veil);
+  border-right: 1px solid var(--gc-line);
+  backdrop-filter: blur(6px);
+}
+.gc-rail-player {
+  flex: none; display: flex; align-items: center; gap: 5px;
+  padding: 0 6px; height: 26px; width: 100%;
+  font-family: var(--gc-font-ui); font-size: 10.5px; text-align: left;
+  background: transparent; border: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--gc-line) 60%, transparent);
+  color: var(--gc-ink); cursor: pointer;
+}
+.gc-rail-player.is-active { background: color-mix(in srgb, var(--gc-accent) 20%, transparent); }
+.gc-rail-player.is-paired { background: color-mix(in srgb, var(--gc-second) 13%, transparent); }
+.gc-rail-player.is-me { font-weight: 700; }
+.gc-rail-player.is-away { opacity: .45; }
+.gc-rail-player .gc-chip { width: 10px; height: 10px; }
+.gc-rail-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Les points en chiffres de l'interface, pas du titrage : dans le Marcellus
+   un 0 se lit « O » et un 1 « I », ce qui va pour un minutier qu'on lit en
+   entier, pas pour un chiffre seul dans une colonne étroite. */
+.gc-rail-pv {
+  font-family: var(--gc-font-ui); font-size: 11px; font-weight: 700;
+  font-variant-numeric: tabular-nums; color: var(--gc-accent);
+}
+
+/* ── le bandeau « le plateau t'attend » ───────────────────────────────
+   Un type armé n'agit qu'au toucher suivant, ailleurs. Sans cette ligne le
+   joueur voit son bouton s'allumer, le tiroir se fermer, et plus rien. */
+.gc-armed {
+  position: absolute; z-index: 18;
+  bottom: calc(var(--gc-dock-h) + var(--gc-safe-b) + 6px);
+  left: calc(var(--gc-rail-w) + var(--gc-safe-l) + 8px);
+  right: calc(8px + var(--gc-safe-r));
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  padding: 6px 9px; font-size: 11.5px; line-height: 1.25;
+  background: var(--gc-second); color: var(--gc-accent-ink);
+  border: 1px solid var(--gc-gold);
+  box-shadow: var(--gc-shadow-lg);
+}
+.gc-armed-text { flex: 1; min-width: 120px; }
+/* Le bandeau des cartes perd son cadre : il en a déjà un, celui-ci. */
+.gc-armed .gc-card-progress {
+  background: transparent; border: none; padding: 0; gap: 6px;
+  color: inherit; font-size: 11.5px;
+}
+
+/* ── barre d'action ───────────────────────────────────────────────────
+   La main à gauche, les onglets au milieu, l'action du moment à droite —
+   là où le pouce tombe quand on tient le téléphone à deux mains. */
+.gc-dock {
+  position: absolute; z-index: 20; left: 0; right: 0; bottom: 0;
+  height: calc(var(--gc-dock-h) + var(--gc-safe-b));
+  padding: 0 calc(8px + var(--gc-safe-r)) var(--gc-safe-b) calc(8px + var(--gc-safe-l));
+  display: flex; align-items: center; gap: 8px;
+  background: var(--gc-veil);
+  border-top: 1px solid var(--gc-line);
+  backdrop-filter: blur(6px);
+}
+.gc-compact .gc-hand {
+  flex: 0 1 auto; min-width: 0; gap: 3px; flex-wrap: nowrap;
+  overflow-x: auto; overscroll-behavior-x: contain;
+}
+.gc-compact .gc-res { padding: 3px 6px; font-size: 11px; flex: none; }
+.gc-compact .gc-limit { font-size: 9.5px; white-space: nowrap; }
+
+.gc-tabs { flex: none; margin-left: auto; display: flex; gap: 4px; }
+.gc-tab {
+  position: relative; min-width: 62px; min-height: 44px;
+  padding: 4px 8px; cursor: pointer;
+  font-family: var(--gc-font-ui); font-size: 11px; font-weight: 600;
+  background: var(--gc-raised); color: var(--gc-ink);
+  border: 1px solid var(--gc-line);
+}
+.gc-tab {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.gc-tab.is-open { background: var(--gc-second); color: var(--gc-accent-ink); border-color: var(--gc-second); }
+/* Un onglet « allumé » a quelque chose à faire maintenant : commerce
+   ouvert, construction possible, carte armée. */
+.gc-tab.is-lit { border-color: var(--gc-accent); }
+.gc-tab-badge {
+  position: absolute; top: -6px; right: -6px; min-width: 17px; height: 17px;
+  display: grid; place-items: center; padding: 0 4px;
+  font-size: 9.5px; font-weight: 700; font-variant-numeric: tabular-nums;
+  background: var(--gc-accent); color: var(--gc-accent-ink);
+  border-radius: 9px;
+}
+
+.gc-primary {
+  flex: none; min-width: 116px; min-height: 44px;
+  padding: 6px 14px; cursor: pointer;
+  font-family: var(--gc-font-ui); font-size: 13px; font-weight: 700;
+  background: var(--gc-accent); color: var(--gc-accent-ink);
+  border: 1px solid transparent;
+}
+.gc-primary:disabled {
+  background: var(--gc-raised); color: var(--gc-ink-soft);
+  border-color: var(--gc-line); cursor: not-allowed; opacity: .8;
+}
+
+/* ── tiroirs ──────────────────────────────────────────────────────────
+   Ils montent depuis la barre d'action et s'arrêtent sous la barre d'état :
+   le haut du plateau reste visible, et l'on sait qu'on n'a pas changé
+   d'écran. Un toucher hors du tiroir le referme. */
+.gc-sheet-veil {
+  position: absolute; inset: 0; z-index: 25;
+  background: rgba(27, 19, 16, .45);
+}
+.gc-sheet {
+  position: absolute; z-index: 30;
+  left: var(--gc-safe-l); right: var(--gc-safe-r);
+  bottom: calc(var(--gc-dock-h) + var(--gc-safe-b));
+  top: var(--gc-hud-h);
+  display: grid; grid-template-rows: auto minmax(0, 1fr);
+  background: var(--gc-surface);
+  border-top: 1px solid var(--gc-line);
+  box-shadow: var(--gc-shadow-lg);
+  animation: gc-sheet-up .16s ease-out;
+}
+@keyframes gc-sheet-up {
+  from { transform: translateY(14px); opacity: .4; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.gc-sheet-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px; border-bottom: 1px solid var(--gc-line);
+}
+.gc-sheet-title {
+  flex: 1; font-family: var(--gc-font-display); font-size: 15px;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--gc-ink-soft);
+}
+.gc-sheet-close {
+  min-width: 38px; min-height: 34px; cursor: pointer; font-size: 15px;
+  background: var(--gc-raised); border: 1px solid var(--gc-line); color: var(--gc-ink);
+}
+/* Une action de tête, à côté du titre : elle ne défile pas avec le corps. */
+.gc-sheet-act {
+  position: relative; min-height: 34px; padding: 4px 11px; cursor: pointer;
+  font-family: var(--gc-font-ui); font-size: 11.5px; font-weight: 600;
+  background: var(--gc-raised); border: 1px solid var(--gc-line); color: var(--gc-ink);
+}
+.gc-sheet-act .gc-tab-badge { top: -7px; right: -7px; }
+.gc-sheet-body {
+  min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  padding: 9px 10px; display: flex; flex-direction: column; gap: 9px;
+  /* Debout, l'écran est plus large que ne le demande une liste : on borne,
+     plutôt que d'étirer six boutons sur toute la largeur. */
+  width: 100%; max-width: 560px; margin-inline: auto;
+}
+/*
+ * Chaque panneau garde sa hauteur ; c'est le tiroir qui défile.
+ *
+ * En colonne flex, un enfant se rétrécit par défaut sous la taille de son
+ * contenu. Le panneau de commerce, qui porte un `min-height: 0` hérité de la
+ * colonne de bureau, se laissait donc écraser : « Banque 4:1 » débordait de
+ * sa boîte et se peignait par-dessus le bouton du marché.
+ */
+.gc-sheet-body > * { flex: none; }
+
+.gc-sheet-idle { font-size: 11.5px; line-height: 1.4; color: var(--gc-ink-soft); font-style: italic; }
+/* Deux colonnes de boutons pleine cible : à trois, « Voie maritime » se
+   coupait en deux et la cible du doigt tombait sous les quarante pixels. */
+.gc-sheet-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.gc-sheet-grid .gc-action { min-height: 46px; font-size: 12px; padding: 6px 8px; }
+.gc-sheet-grid .gc-action small { font-size: 9px; }
+.gc-sheet-wide { width: 100%; min-height: 40px; }
+
+/* Le prix, écrit sur le bouton : fond clair, donc pas d'éclaircissement des
+   pictogrammes comme dans l'infobulle sombre. */
+.gc-action-cost {
+  display: flex; gap: 8px; align-items: center; justify-content: center;
+  margin-top: 3px;
+}
+.gc-action:disabled .gc-action-cost { opacity: .75; }
+.gc-sheet-grid .gc-action { display: grid; align-content: center; gap: 1px; }
+
+/* Dans un tiroir, les panneaux n'ont plus ni cadre ni hauteur propre :
+   c'est le tiroir qui défile. */
+.gc-compact .gc-sheet .gc-trade,
+.gc-compact .gc-sheet .gc-journal {
+  width: auto; max-height: none; overflow: visible;
+  padding: 0; border: none;
+}
+.gc-compact .gc-sheet .gc-trade-head,
+.gc-compact .gc-sheet .gc-journal-head { display: none; }
+/*
+ * Le formulaire de commerce, resserré pour tenir sans défiler.
+ *
+ * Trois menus et deux boutons aux mesures du bureau dépassaient d'une
+ * quarantaine de pixels la hauteur du panneau : « Banque 4:1 » se retrouvait
+ * coupé en deux, et rien ne disait qu'il fallait faire défiler pour l'avoir
+ * en entier. Les deux boutons passent côte à côte, les intitulés maigrissent,
+ * et la cible du doigt reste au-dessus de quarante pixels.
+ */
+.gc-compact .gc-sheet .gc-trade-compose { gap: 5px; }
+.gc-compact .gc-sheet .gc-trade-compose label { font-size: 9.5px; gap: 1px; }
+.gc-compact .gc-sheet .gc-trade-compose select { padding: 7px 6px; font-size: 13px; }
+.gc-compact .gc-sheet .gc-trade-buttons {
+  grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 2px;
+}
+.gc-compact .gc-sheet .gc-trade-buttons .gc-action { min-height: 44px; }
+.gc-compact .gc-sheet .gc-players {
+  width: auto; display: block; overflow: visible; border: none; background: transparent;
+}
+.gc-compact .gc-sheet .gc-player { font-size: 13px; padding: 9px 4px; }
+.gc-compact .gc-sheet .gc-devcards {
+  flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start;
+  margin-top: 0; gap: 7px; padding-bottom: 4px;
+}
+.gc-compact .gc-sheet .gc-card { width: 92px; }
+.gc-devcards-idle { font-size: 11.5px; color: var(--gc-ink-soft); font-style: italic; }
+
+/*
+ * Couché, le tiroir s'ouvre sur le côté plutôt qu'en pleine largeur.
+ *
+ * Étalé sur 852 pixels, un formulaire de commerce ou six boutons de
+ * construction laissent les deux tiers de l'écran vides, et le plateau
+ * disparaît entièrement le temps qu'on lise trois lignes. Un panneau ancré
+ * du côté des onglets garde le plateau sous les yeux — on négocie en
+ * regardant ce dont on a besoin.
+ */
+@media (orientation: landscape) {
+  .gc-compact .gc-sheet {
+    left: auto; right: var(--gc-safe-r);
+    width: min(440px, 60vw);
+    border-left: 1px solid var(--gc-line);
   }
+  /* Le voile s'allège d'autant : il sert à fermer d'un toucher, pas à
+     cacher le plateau qu'on vient précisément de garder visible. */
+  .gc-compact .gc-sheet-veil { background: rgba(27, 19, 16, .28); }
+  /* Sept pixels d'interligne plutôt que neuf : c'est ce qui manquait au
+     commerce complet pour tenir sans défiler sur 393 pixels de haut. */
+  .gc-compact .gc-sheet-body { gap: 7px; }
+}
 
-  /* `display: contents` dissout le conteneur : ses enfants deviennent des
-     cases de la grille, ce qu'aucun `order` n'aurait permis puisqu'ils
-     doivent traverser deux colonnes différentes. */
-  .gc-main { display: contents; }
+/* ── portrait ─────────────────────────────────────────────────────────
+   Debout, la largeur manque plus que la hauteur : la table passe à
+   l'horizontale sous la barre d'état, et la barre d'action prend deux
+   rangées pour que les onglets gardent leur cible. */
+@media (max-width: 780px) and (orientation: portrait) {
+  .gc-compact { --gc-dock-h: 104px; --gc-rail-w: 0px; }
 
-  .gc-order {
-    grid-area: head; padding: 4px 10px; gap: 10px;
-    border-bottom: 1px solid var(--gc-line);
-  }
-  .gc-timer { font-size: 20px; }
-  .gc-phase { font-size: 9px; }
-  .gc-sentence { font-size: 13px; line-height: 1.15; }
-  .gc-who { font-size: 9.5px; }
-  .gc-roll { font-size: 13px; }
-
-  .gc-players {
-    grid-area: players; width: auto; display: block;
-    overflow-y: auto; border-right: 1px solid var(--gc-line); border-bottom: none;
-  }
-  /* Une seule ligne par joueur : à trois lignes, douze joueurs ne tenaient
-     pas dans la colonne. Le score passe en dessous, discret. */
-  .gc-player {
+  .gc-rail {
+    top: var(--gc-hud-h); bottom: auto;
+    left: 0; right: 0; width: auto; height: 30px;
+    flex-direction: row; overflow-x: auto; overflow-y: hidden;
     border-right: none; border-bottom: 1px solid var(--gc-line);
-    padding: 3px 5px; display: grid; grid-template-columns: auto 1fr; gap: 2px 4px;
+    padding-left: var(--gc-safe-l); padding-right: var(--gc-safe-r);
   }
-  .gc-player .gc-stat { grid-column: 1 / -1; font-size: 8px; }
-  .gc-player .gc-role { display: none; }
-  .gc-name { font-size: 10.5px; max-width: none; }
-  .gc-player .gc-chip { width: 8px; height: 8px; }
-
-  .gc-board-wrap { grid-area: board; order: 0; min-height: 0; padding: 4px; }
-  .gc-board-fit { inset: 4px; }
-
-  .gc-side {
-    grid-area: side; min-height: 0;
-    border-left: 1px solid var(--gc-line); border-top: 1px solid var(--gc-line);
-    grid-template-rows: auto minmax(0, 1fr);
+  .gc-rail-player {
+    width: auto; height: 100%; flex: none; min-width: 70px;
+    border-bottom: none;
+    border-right: 1px solid color-mix(in srgb, var(--gc-line) 60%, transparent);
   }
-  .gc-journal {
-    width: auto; max-height: none; padding: 5px 6px; overflow-y: auto;
-  }
-  .gc-journal-head { font-size: 8.5px; margin-bottom: 4px; }
-  .gc-journal-entry { font-size: 9px; }
 
-  /* La main, les cartes et les actions passent à droite, sous le pouce. */
+  .gc-compact .gc-recentrer { top: calc(var(--gc-hud-h) + 38px); }
+
   /*
-   * `flex-wrap: nowrap` est indispensable : hérité de la mise en page de
-   * bureau, l'enroulement transformait la colonne en deux colonnes, et les
-   * boutons se peignaient par-dessus la main au lieu de la suivre.
+   * Deux rangées : la main et l'action du moment, puis les onglets.
+   *
+   * Sur une seule, quatre onglets et un bouton principal réclament 380
+   * pixels quand l'écran en offre 393 marges comprises — « Commerce »
+   * passait sous son voisin. Les onglets prennent donc la rangée basse,
+   * pleine largeur, où le pouce les atteint le mieux.
    */
-  .gc-footer {
-    grid-area: actions; flex-direction: column; flex-wrap: nowrap;
-    align-items: stretch; gap: 4px; padding: 4px 5px; overflow-y: auto;
-    border-top: none; border-left: 1px solid var(--gc-line);
-  }
-  .gc-hand { gap: 3px; }
-  .gc-res { padding: 2px 5px; font-size: 10px; }
-  .gc-limit { font-size: 9px; }
-  /* `display: grid` manquait : les colonnes étaient ignorées et la rangée
-     de boutons débordait de sa colonne. */
-  .gc-actions {
-    display: grid; grid-template-columns: repeat(2, 1fr);
-    gap: 3px; width: 100%; margin-left: 0;
-  }
-  .gc-action { padding: 5px 4px; font-size: 10px; min-height: 31px; }
-  .gc-action small { font-size: 7px; line-height: 1.15; }
+  .gc-dock { flex-wrap: wrap; align-content: center; padding-top: 6px; row-gap: 6px; }
+  .gc-compact .gc-hand { order: 1; flex: 1 1 auto; }
+  .gc-primary { order: 2; flex: none; min-width: 122px; }
+  .gc-tabs { order: 3; flex: 1 0 100%; margin-left: 0; gap: 5px; }
+  .gc-tab { flex: 1; min-width: 0; }
 
-  .gc-trade {
-    width: auto; max-height: 42vh;
-    border-bottom: 1px solid var(--gc-line);
-    padding: 6px; overflow-y: auto; gap: 6px;
-  }
-  .gc-trade-head { font-size: 9px; }
+  .gc-armed { left: calc(8px + var(--gc-safe-l)); }
+  /*
+   * Un tiroir qui monte de la hauteur de son contenu, pas de tout l'écran.
+   *
+   * Debout, un panneau de commerce vide occupait sept cents pixels de beige
+   * et cachait le plateau pour trois lignes de texte. Il s'arrête donc où il
+   * n'a plus rien à montrer, et ne dépasse jamais les deux tiers de la
+   * hauteur — au-delà, c'est lui qui défile.
+   */
+  .gc-sheet { top: auto; max-height: 66%; }
+  .gc-sheet-grid { grid-template-columns: repeat(2, 1fr); }
+}
 
-  /* Les cartes développement en bande étroite : elles ne doivent pas
-     repousser les actions hors de la colonne. */
-  .gc-devcards { flex-wrap: nowrap; overflow-x: auto; gap: 4px; }
-  .gc-card { width: 62px; }
-  .gc-card-title { font-size: 8px; }
-  .gc-card-effect { display: none; }
-  .gc-card-plate { padding: 3px 4px; }
-  .gc-card-corner { display: none; }
+/* Écran très bas — un iPhone SE couché fait 320 pixels de haut. On rogne
+   les barres plutôt que le plateau. */
+@media (orientation: landscape) and (max-height: 360px) {
+  .gc-compact { --gc-hud-h: 40px; --gc-dock-h: 54px; --gc-rail-w: 76px; }
+  .gc-compact .gc-timer { font-size: 18px; }
+  .gc-compact .gc-sentence { font-size: 12.5px; }
+  .gc-rail-player { height: 23px; font-size: 9.5px; }
+  .gc-tab { min-width: 54px; min-height: 40px; font-size: 10px; }
+  .gc-primary { min-width: 100px; min-height: 40px; font-size: 12px; }
+}
 
-  /* Une modale ne doit jamais dépasser une hauteur d'écran aussi courte. */
-  .gc-modal { max-height: 92vh; overflow-y: auto; padding: 12px 14px; }
-  .gc-modal-title { font-size: 18px; }
-  .gc-objectives { grid-template-columns: 1fr 1fr; }
+/* Le tiroir qui monte peut gêner : on le respecte. */
+@media (prefers-reduced-motion: reduce) {
+  .gc-sheet { animation: none; }
 }
 
 /* Les états vides des panneaux : ils occupent la place plutôt que de la
@@ -940,30 +1124,15 @@ body {
   user-select: none; -webkit-user-select: none;
 }
 .gc-board-fit:active { cursor: grabbing; }
-.gc-board { will-change: transform; }
 
 /*
- * Le large : décor pur, jamais cliquable.
+ * Ni voile sur les bords, ni silhouettes d'îles en aplat.
  *
- * La même dalle d'eau que le plateau, pour que la mer se prolonge sans
- * couture. Ce sont les jetons et les constructions qui font ressortir la
- * carte jouable, pas une teinte différente.
+ * Le voile masquait le bord d'équerre du pavage de tuiles, les silhouettes
+ * disaient que l'archipel continuait. La scène fait les deux mieux et en
+ * profondeur : son océan est continu, sa brume efface le large, et les îles
+ * lointaines y sont des volumes que la brume mange à distance.
  */
-.gc-hex-large { pointer-events: none; }
-
-/* Les terres du large : des silhouettes, sans détail ni relief. */
-.gc-hex-lointain { background: #14100D; }
-
-/* Le monde s'efface vers les bords plutôt que de s'arrêter à l'équerre. */
-.gc-board-wrap::after {
-  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
-  background: radial-gradient(
-    ellipse 82% 82% at 50% 50%,
-    transparent 58%,
-    rgba(20, 32, 44, .42) 88%,
-    rgba(16, 26, 36, .68) 100%
-  );
-}
 
 .gc-recentrer {
   position: absolute; right: 10px; bottom: 10px; z-index: 2;
@@ -973,3 +1142,83 @@ body {
   border: 1px solid var(--gc-line); box-shadow: var(--gc-shadow);
 }
 .gc-recentrer:hover { border-color: var(--gc-accent); }
+
+/* ── les ressources gagnées ────────────────────────────────────────────
+   Une carte part de l'hexagone qui l'a produite et rejoint sa pile. Le
+   compteur seul ne disait ni qu'il avait changé, ni d'où venait le gain. */
+
+.gc-vols {
+  /*
+   * Au-dessus du plateau et de la barre du bas, sous les fenêtres modales.
+   *
+   * Une défausse à annoncer ou un objectif à choisir interrompent le jeu :
+   * des cartes qui volent par-dessus donneraient à croire qu'on peut encore
+   * agir ailleurs.
+   */
+  position: fixed; inset: 0; z-index: 45;
+  /* Pure décoration : rien ici ne doit intercepter un clic destiné au
+     plateau, qui reste jouable pendant que les cartes volent. */
+  pointer-events: none;
+}
+
+.gc-vol {
+  position: fixed; left: 0; top: 0;
+  display: grid; place-items: center;
+  width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  background: var(--gc-raised); border: 1px solid var(--gc-line);
+  border-radius: 3px; box-shadow: 0 3px 10px rgba(12, 20, 28, .45);
+  opacity: 0;
+  animation: gc-vol var(--gc-vol, 780ms) cubic-bezier(.34, .12, .28, 1) forwards;
+}
+
+/*
+ * La trajectoire.
+ *
+ * Le point intermédiaire est décalé vers le haut de soixante-dix pixels par
+ * rapport à la corde : c'est ce qui fait une cloche plutôt qu'une glissade.
+ * Une carte qui rejoint sa pile en ligne droite se lit comme un curseur qui
+ * se déplace, pas comme quelque chose qu'on reçoit.
+ */
+@keyframes gc-vol {
+  0%   { transform: translate(0, 0) scale(.55); opacity: 0; }
+  14%  { transform: translate(calc(var(--gc-dx) * .14), calc(var(--gc-dy) * .14 - 22px)) scale(1.1); opacity: 1; }
+  55%  { transform: translate(calc(var(--gc-dx) * .55), calc(var(--gc-dy) * .55 - 70px)) scale(1.1); opacity: 1; }
+  88%  { opacity: 1; }
+  100% { transform: translate(var(--gc-dx), var(--gc-dy)) scale(.5); opacity: 0; }
+}
+
+/* La pile qui encaisse : elle enfle une fois, brièvement. */
+.gc-res { position: relative; transition: transform .18s ease-out; }
+.gc-res.is-gagne {
+  animation: gc-encaisse .5s ease-out;
+  border-color: var(--gc-gold);
+}
+@keyframes gc-encaisse {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+
+/* Le montant exact, qui monte et s'efface — le vol dit « quelque chose
+   arrive », ce chiffre dit combien. */
+.gc-res-gain {
+  position: absolute; left: 50%; top: -4px;
+  font-family: var(--gc-font-ui); font-size: 12px; font-weight: 700;
+  font-style: normal; color: var(--gc-gold);
+  text-shadow: 0 1px 3px rgba(12, 20, 28, .8);
+  pointer-events: none;
+  animation: gc-montant 1.6s ease-out forwards;
+}
+@keyframes gc-montant {
+  0%   { transform: translate(-50%, 6px); opacity: 0; }
+  18%  { transform: translate(-50%, -10px); opacity: 1; }
+  70%  { transform: translate(-50%, -16px); opacity: 1; }
+  100% { transform: translate(-50%, -26px); opacity: 0; }
+}
+
+/* Un mouvement qu'on n'a pas demandé peut gêner : on le respecte. */
+@media (prefers-reduced-motion: reduce) {
+  .gc-vol { display: none; }
+  .gc-res.is-gagne { animation: none; }
+  .gc-res-gain { animation: none; opacity: 1; transform: translate(-50%, -12px); }
+}

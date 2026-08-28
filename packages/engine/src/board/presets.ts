@@ -167,14 +167,41 @@ export function usesXxlBoard(playerCount: number): boolean {
   return playerCount >= 8;
 }
 
-export function xxlOptionsFor(playerCount: number): XxlOptions {
+/**
+ * Taille du plateau, au-delà de celle que l'effectif appelle.
+ *
+ * Le §4 dimensionne les terres sur le nombre de joueurs — quarante-quatre à
+ * cinquante-deux — et c'est ce qui équilibre la partie. Ces échelles ne
+ * corrigent pas ce dimensionnement : elles ouvrent une variante, pour une
+ * table qui veut de la place à explorer plutôt qu'une course serrée. Le prix
+ * en est une partie plus longue, mesuré plutôt que supposé (voir
+ * SIMULATION_FINDINGS.md).
+ */
+export type BoardScale = 'normal' | 'grand' | 'immense';
+
+const SCALES: Record<BoardScale, number> = { normal: 1, grand: 1.6, immense: 2.4 };
+
+/** Le facteur d'une échelle. Vaut 1 pour `normal` : rien ne bouge. */
+export function scaleFactor(scale: BoardScale = 'normal'): number {
+  return SCALES[scale] ?? 1;
+}
+
+/** Les terres prévues par le §4 pour cet effectif, avant mise à l'échelle. */
+export function baseLandCount(playerCount: number): number {
+  return Math.min(52, Math.max(44, playerCount * 4));
+}
+
+export function xxlOptionsFor(playerCount: number, scale: BoardScale = 'normal'): XxlOptions {
   // Le game design prévoit 44 à 52 hexagones selon l'effectif (§4).
-  const landCount = Math.min(52, Math.max(44, playerCount * 4));
+  const factor = scaleFactor(scale);
   return {
-    landCount,
-    deserts: playerCount >= 11 ? 4 : 3,
+    landCount: Math.round(baseLandCount(playerCount) * factor),
+    // Déserts et or suivent la surface : gardés au nombre prévu pour un
+    // plateau normal, ils disparaîtraient dans un plateau deux fois plus
+    // grand, où l'or cesserait d'être une raison de naviguer.
+    deserts: Math.round((playerCount >= 11 ? 4 : 3) * factor),
     seaRing: true,
-    gold: playerCount >= 10 ? 3 : 2,
+    gold: Math.round((playerCount >= 10 ? 3 : 2) * factor),
   };
 }
 
@@ -238,7 +265,9 @@ export function xxlBoard(rng: SeededRandom, options: XxlOptions): BoardInit {
   }
 
   // Le §4 prévoit 6 à 8 ports ; on suit l'effectif via la taille des terres.
-  const portCount = Math.min(12, Math.max(6, Math.round(options.landCount / 5)));
+  // Le plafond suit lui aussi : figé à douze, il laissait un plateau de cent
+  // hexagones avec la même façade maritime qu'un plateau de cinquante.
+  const portCount = Math.max(6, Math.round(options.landCount / 5));
   return { positions, hexes, ports: placePorts(rng, landKeys, hexes, portCount) };
 }
 
@@ -262,13 +291,25 @@ export interface ArchipelagoOptions {
   readonly mainShare?: number;
 }
 
-export function archipelagoOptionsFor(playerCount: number): ArchipelagoOptions {
+export function archipelagoOptionsFor(
+  playerCount: number,
+  scale: BoardScale = 'normal',
+): ArchipelagoOptions {
+  const factor = scaleFactor(scale);
+  const islands = playerCount >= 11 ? 3 : 2;
   return {
-    landCount: Math.min(52, Math.max(44, playerCount * 4)),
-    // Le §4 prévoit trois îles majeures à partir de onze joueurs.
-    islands: playerCount >= 11 ? 3 : 2,
-    deserts: playerCount >= 11 ? 4 : 3,
-    gold: playerCount >= 10 ? 3 : 2,
+    landCount: Math.round(baseLandCount(playerCount) * factor),
+    /*
+     * Plus de terres, plus d'îles — et non des îles démesurées.
+     *
+     * Multiplier les seules surfaces aurait donné deux continents où l'on
+     * navigue une fois pour toutes ; c'est le nombre de rives qui fait
+     * l'exploration. Six au plus : les centres suivent les six directions
+     * axiales, au-delà deux îles se superposeraient.
+     */
+    islands: Math.min(DIRECTIONS.length, Math.round(islands * factor)),
+    deserts: Math.round((playerCount >= 11 ? 4 : 3) * factor),
+    gold: Math.round((playerCount >= 10 ? 3 : 2) * factor),
   };
 }
 
@@ -363,7 +404,7 @@ export function archipelagoBoard(rng: SeededRandom, options: ArchipelagoOptions)
     hexes.set(key, { terrain, token: tokens[tokenIndex++] as Token });
   }
 
-  const portCount = Math.min(12, Math.max(6, Math.round(options.landCount / 5)));
+  const portCount = Math.max(6, Math.round(options.landCount / 5));
   return { positions, hexes, ports: placePorts(rng, landKeys, hexes, portCount) };
 }
 

@@ -9,8 +9,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { BoardGraph, parseHexKey } from '@grand-colonies/engine';
-import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
+import { BoardGraph, COSTS, type ResourceCounts, type Terrain, parseHexKey, yieldOf } from '@grand-colonies/engine';
+import type { Pair, PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
 
 import {
   type ConnectionStatus,
@@ -20,12 +20,14 @@ import {
   GameConnection,
   newActionId,
 } from './net/connection.js';
-import { Board, colorOf } from './ui/Board.jsx';
+import { Board, type PoigneePlateau, colorOf } from './ui/Board.jsx';
+import { useCompact } from './ui/compact.js';
+import { Gains, type Vol, composerVols } from './ui/Gains.jsx';
 import { type CardRequest, DevCards } from './ui/DevCards.jsx';
 import { Discard } from './ui/Discard.jsx';
 import { GameOver } from './ui/GameOver.jsx';
 import { Dice } from './ui/Dice.jsx';
-import { type CostKind, Hint } from './ui/Hint.jsx';
+import { CostLine, type CostKind, Hint } from './ui/Hint.jsx';
 import { type Entry, Journal, describe } from './ui/Journal.jsx';
 import { Market } from './ui/Market.jsx';
 import { RESOURCE_LABELS, ResourceIcon } from './ui/ResourceIcon.jsx';
@@ -129,6 +131,28 @@ const JOURNAL_LENGTH = 40;
 /** Ce qu'un joueur peut s'apprêter à poser. */
 type BuildKind = 'settlement' | 'city' | 'metropolis' | 'monument' | 'road' | 'maritime' | null;
 
+const BUILD_LABELS: Record<string, string> = {
+  road: 'route', maritime: 'voie maritime', settlement: 'colonie',
+  city: 'ville', metropolis: 'métropole', monument: 'monument',
+};
+
+/**
+ * Les tiroirs de la version téléphone.
+ *
+ * Un seul à la fois, et jamais deux panneaux à l'écran : sur trois cent
+ * quatre-vingt-treize pixels de haut, deux panneaux ouverts, c'est un
+ * plateau invisible.
+ */
+type Drawer = 'build' | 'trade' | 'cards' | 'journal' | 'players' | null;
+
+const DRAWER_TITLES: Record<Exclude<Drawer, null>, string> = {
+  build: 'Construire',
+  trade: 'Commerce',
+  cards: 'Cartes développement',
+  journal: 'Journal',
+  players: 'La table',
+};
+
 export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }) {
   /**
    * Le nom est demandé avant toute connexion, et mémorisé.
@@ -151,6 +175,19 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
    * personne ne remonte au cycle trois.
    */
   const [journal, setJournal] = useState<readonly Entry[]>([]);
+  /*
+   * La dernière production annoncée par le serveur.
+   *
+   * On garde l'événement plutôt que d'agir dans le gestionnaire : ce dernier
+   * est créé une fois pour toutes avec la connexion, et ne verrait donc
+   * jamais que la vue du premier rendu. Le travail se fait dans un effet, où
+   * le plateau et la main du joueur sont ceux d'aujourd'hui.
+   */
+  const [production, setProduction] = useState<readonly Pair<ResourceCounts>[]>([]);
+  const [vols, setVols] = useState<readonly Vol[]>([]);
+  /** Ce qui vient d'entrer dans la main, le temps de le montrer. */
+  const [recolte, setRecolte] = useState<Readonly<Record<string, number>>>({});
+  const plateau = useRef<PoigneePlateau | null>(null);
   /** Le marché est ouvert : on regarde toutes les offres de la table. */
   const [market, setMarket] = useState(false);
   /**
@@ -192,6 +229,15 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
    * la production mais ne prenait rien à personne.
    */
   const [robbing, setRobbing] = useState<{ hex: string; victims: readonly string[] } | null>(null);
+  /**
+   * Le format de l'écran, et le tiroir ouvert par-dessus le plateau.
+   *
+   * Sur téléphone tout ce qui n'est pas le plateau, la main et l'action du
+   * moment vit derrière un onglet : c'est la convention des jeux de plateau
+   * mobiles, et la seule qui laisse au plateau la place de se lire.
+   */
+  const compact = useCompact();
+  const [drawer, setDrawer] = useState<Drawer>(null);
   const connection = useRef<GameConnection | undefined>(undefined);
 
   useEffect(() => {
@@ -203,6 +249,11 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
       onPrivate: setPriv,
       onTimer: setTimer,
       onEvents: (events) => {
+        // La production est la seule chose qu'on lise autrement que comme une
+        // ligne de journal : c'est un gain, et un gain se fête.
+        const gains = events.flatMap((e) => (e.type === 'ResourcesProduced' ? e.gains : []));
+        if (gains.length > 0) setProduction(gains);
+
         const fresh = events.map(describe).filter((e): e is Entry => e !== undefined);
         if (fresh.length === 0) return;
         setJournal((current) => [...fresh.reverse(), ...current].slice(0, JOURNAL_LENGTH));
@@ -245,6 +296,72 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
     () => (hexKeys === '' ? undefined : new BoardGraph(hexKeys.split(';').map(parseHexKey))),
     [hexKeys],
   );
+
+  /*
+   * La récolte : les jetons sautent, les cartes volent.
+   *
+   * Le montant vient du serveur et de nulle part ailleurs — c'est lui qui
+   * tient les règles, et une addition faite ici finirait par diverger de la
+   * sienne. Ne reste à deviner que le point de départ du vol, qui est de
+   * l'affichage : au pire une carte part du mauvais hexagone, jamais un
+   * mauvais nombre.
+   */
+  useEffect(() => {
+    if (production.length === 0 || !pub || !priv) return undefined;
+
+    /*
+     * Les hexagones qui ont produit.
+     *
+     * Le chiffre sorti et la présence du voleur suffisent, et l'un comme
+     * l'autre sont publics : on ne redit pas ici la règle de production, on
+     * lit ce que le plateau montre déjà à tout le monde.
+     */
+    const sorti = pub.lastRoll?.total;
+    const producteurs = sorti === undefined
+      ? []
+      : pub.hexes.filter((h) => h.token === sorti && !h.blocked);
+    plateau.current?.signalerProduction(producteurs.map((h) => h.id));
+
+    const miens = production.find((g) => g.player === priv.id)?.value;
+    if (!miens) return undefined;
+    setRecolte(miens as Record<string, number>);
+
+    /*
+     * D'où part chaque carte.
+     *
+     * De l'hexagone qui produit cette ressource **et** que touche l'une de
+     * mes constructions — un sommet porte dans son identifiant les trois
+     * hexagones qui s'y rejoignent, il n'y a donc rien à calculer. À défaut,
+     * la carte part du centre du plateau : mieux vaut un vol approximatif
+     * qu'un gain passé sous silence.
+     */
+    const miennes = new Set(
+      pub.buildings.filter((b) => b.owner === priv.id).flatMap((b) => b.vertex.split('|')),
+    );
+    const depart = (resource: string): { x: number; y: number } | undefined => {
+      const source = producteurs.find((h) => yieldOf(h.terrain as Terrain) === resource && miennes.has(h.id))
+        ?? producteurs.find((h) => yieldOf(h.terrain as Terrain) === resource);
+      const hex = source?.id ?? pub.hexes[Math.floor(pub.hexes.length / 2)]?.id;
+      return hex === undefined ? undefined : plateau.current?.projeterHex(hex);
+    };
+
+    const arrivee = (resource: string): { x: number; y: number } | undefined => {
+      const pile = document.querySelector(`[data-ressource="${resource}"]`);
+      if (!pile) return undefined;
+      const cadre = pile.getBoundingClientRect();
+      return { x: cadre.left + cadre.width / 2, y: cadre.top + cadre.height / 2 };
+    };
+
+    setVols(composerVols(miens as Record<string, number>, depart, arrivee, Date.now()));
+
+    // La pile cesse d'afficher son gain une fois les cartes arrivées.
+    const fin = window.setTimeout(() => setRecolte({}), 2000);
+    return () => window.clearTimeout(fin);
+    // `pub` et `priv` sont lus au passage, mais c'est l'arrivée d'une
+    // production qui déclenche : les suivre relancerait l'animation à chaque
+    // message du serveur, donc plusieurs fois par seconde.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [production]);
 
   // Pendant la mise en place, le jeu impose la suite : colonie puis route.
   // Inutile de demander au joueur de choisir ce qu'il sait déjà.
@@ -374,204 +491,181 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
   const myIntents = pub.intents.filter((i) => i.player === priv.id);
   const overLimit = (me?.handSize ?? 0) > pub.handLimit;
 
-  return (
-    <div className="gc-app">
-      <header className="gc-order">
-        <div className="gc-timer">{formatTimer(timer?.remainingMs)}</div>
-        <div className="gc-order-text">
-          <div className="gc-phase">
-            Cycle {pub.cycle} · {phaseLabel(pub.phase)}
-          </div>
-          <div className="gc-sentence">{orderSentence(pub, priv)}</div>
-          <div className="gc-who">
-            Actif : {nameOf(pub, pub.activePlayer)} · Associé : {nameOf(pub, pub.pairedPlayer)}
-            {status !== 'open' && ` · ${status === 'reconnecting' ? 'reconnexion…' : status}`}
-          </div>
-        </div>
-        {roll && <Dice a={roll.a} b={roll.b} total={roll.total} />}
-      </header>
+  /**
+   * Armer un type de construction referme le tiroir.
+   *
+   * Sur téléphone le choix se fait dans un panneau qui couvre le plateau :
+   * le garder ouvert cacherait précisément les emplacements qu'on vient de
+   * demander à voir.
+   */
+  const chooseIntent = (kind: BuildKind): void => {
+    setIntent(kind);
+    if (kind !== null) setDrawer(null);
+  };
 
-      <div className="gc-main">
-        <aside className="gc-players">
-          {pub.players.map((player) => (
-            <div
-              key={player.id}
-              className={[
-                'gc-player',
-                player.role === 'active' ? 'is-active' : '',
-                player.role === 'paired' ? 'is-paired' : '',
-                player.connected ? '' : 'is-away',
-              ].join(' ')}
-            >
-              <span className="gc-chip" style={{ background: colorOf(player.id, order) }} />
-              <span className="gc-name">{player.name}</span>
-              {player.role !== 'idle' && (
-                <span className="gc-role">{player.role === 'active' ? 'Actif' : 'Associé'}</span>
-              )}
-              {player.hasMonument && <span className="gc-monument" title="Monument élevé">▲</span>}
-              <span className="gc-stat">{player.publicPoints} PV · {player.handSize} c.</span>
-              {player.mustDiscard > 0 && <span className="gc-warn" title="Doit défausser">⚠</span>}
-            </div>
-          ))}
-        </aside>
+  const canBuildNow = caps.has('CAN_BUILD') || freeBuilding
+    || (declaring && caps.has('CAN_DECLARE_BUILD'));
 
-        {/*
-          * Le commerce garde sa colonne en permanence, même quand on ne peut
-          * rien y faire. Le faire apparaître et disparaître décalait le
-          * journal et recentrait le plateau à chaque changement de phase, et
-          * une interface qui bouge sous le doigt se lit mal.
-          */}
-        <div className="gc-side">
-          <Trade
-            pub={pub}
-            priv={priv}
-            canOffer={caps.has('CAN_TRADE_PLAYER')}
-            canBank={caps.has('CAN_TRADE_BANK')}
-            onOffer={(giveCounts, receive, to) =>
-              send('CREATE_TRADE', { give: giveCounts, receive, ...(to ? { to } : {}) })}
-            onAccept={(offerId) => send('ACCEPT_TRADE', { offerId })}
-            onCancel={(offerId) => send('CANCEL_TRADE', { offerId })}
-            onBank={(giveCounts, receive) => send('TRADE_WITH_BANK', { give: giveCounts, receive })}
-          />
-          <Journal view={pub} entries={journal} />
-        </div>
+  /** Tous les emplacements ouverts, types confondus : la pastille de l'onglet. */
+  const spotCount = priv.spots.settlements.length + priv.spots.cities.length
+    + priv.spots.roads.length + priv.spots.maritime.length
+    + priv.spots.metropolises.length + priv.spots.monuments.length;
 
-        <main className="gc-board-wrap">
-          <Board
-            view={pub}
-            highlightVertices={shownVertices ?? []}
-            highlightEdges={shownEdges ?? []}
-            onVertexClick={(vertex) => place(active, vertex)}
-            onEdgeClick={(edge) => (roadCard ? pickRoad(edge) : place(active, edge))}
-            onHexClick={clickHex}
-            robberTargets={
-              caps.has('CAN_MOVE_ROBBER') || knightArmed ? priv.spots.robber : []
-            }
-          />
-        </main>
-      </div>
+  const cardCount = priv.playableDevCards.length + priv.pendingDevCards.length;
 
-      <footer className="gc-footer">
-        <div className="gc-hand">
-          {Object.entries(priv.hand).map(([resource, count]) => (
-            <span key={resource} className="gc-res" title={RESOURCE_LABELS[resource] ?? resource}>
-              <ResourceIcon resource={resource} />
-              <strong>{count}</strong>
-            </span>
-          ))}
-          <span className={`gc-limit${overLimit ? ' is-over' : ''}`}>
-            {me?.handSize ?? 0} / {pub.handLimit}
-            {overLimit && ' — un 7 te ferait défausser'}
-          </span>
-        </div>
+  /* ── les morceaux, communs aux deux mises en page ─────────────────── */
 
-        {myIntents.length > 0 && (
-          <div className="gc-my-intents">
-            <span className="gc-my-intents-label">Annonces</span>
-            {myIntents.map((declared) => (
-              <button
-                key={declared.id}
-                className="gc-action gc-action-mini gc-action-quiet"
-                onClick={() => send('CANCEL_BUILD', { intentId: declared.id })}
-                title="Retirer l'annonce et récupérer les ressources"
-              >
-                {declared.contested ? 'contestée' : 'en attente'} ✕
-              </button>
-            ))}
-          </div>
-        )}
+  const board = (
+    <Board
+      ref={plateau}
+      view={pub}
+      highlightVertices={shownVertices ?? []}
+      highlightEdges={shownEdges ?? []}
+      onVertexClick={(vertex) => place(active, vertex)}
+      onEdgeClick={(edge) => (roadCard ? pickRoad(edge) : place(active, edge))}
+      onHexClick={clickHex}
+      robberTargets={
+        caps.has('CAN_MOVE_ROBBER') || knightArmed ? priv.spots.robber : []
+      }
+    />
+  );
 
-        {roadCard && (
-          <div className="gc-card-progress">
-            <span>
-              {roadCard.edges.length === 0
-                ? 'Construction de routes : choisis ta première route.'
-                : 'Choisis la seconde, ou pose-en une seule.'}
-            </span>
-            {roadCard.edges[0] !== undefined && (
-              <button
-                className="gc-action gc-action-mini"
-                onClick={() => { send('PLAY_ROAD_BUILDING', { edges: roadCard.edges }); setCard(null); }}
-              >
-                Une seule suffit
-              </button>
-            )}
-            <button className="gc-action gc-action-mini gc-action-quiet" onClick={() => setCard(null)}>
-              Annuler
-            </button>
-          </div>
-        )}
-
-        {freeBuilding && (
-          <div className="gc-card-progress">
-            <span>Bâtisseur : choisis ce que tu construis, puis l'emplacement.</span>
-            <button className="gc-action gc-action-mini gc-action-quiet" onClick={() => setCard(null)}>
-              Annuler
-            </button>
-          </div>
-        )}
-
-        <div className="gc-actions">
-          <Build label="Route" kind="road" count={priv.spots.roads.length}
-                 active={intent} setActive={setIntent}
-                 enabled={caps.has('CAN_BUILD') || freeBuilding || (declaring && caps.has('CAN_DECLARE_BUILD'))} />
-          <Build label="Colonie" kind="settlement" count={priv.spots.settlements.length}
-                 active={intent} setActive={setIntent}
-                 enabled={caps.has('CAN_BUILD') || freeBuilding || (declaring && caps.has('CAN_DECLARE_BUILD'))} />
-          <Build label="Ville" kind="city" count={priv.spots.cities.length}
-                 active={intent} setActive={setIntent}
-                 enabled={caps.has('CAN_BUILD') || freeBuilding || (declaring && caps.has('CAN_DECLARE_BUILD'))} />
-          {/* La voie maritime n'apparaît que là où il y a de la mer à longer. */}
-          {priv.spots.maritime.length > 0 && (
-            <Build label="Voie maritime" kind="maritime" count={priv.spots.maritime.length}
-                   active={intent} setActive={setIntent} enabled={caps.has('CAN_BUILD')} />
+  const playerList = (
+    <aside className="gc-players">
+      {pub.players.map((player) => (
+        <div
+          key={player.id}
+          className={[
+            'gc-player',
+            player.role === 'active' ? 'is-active' : '',
+            player.role === 'paired' ? 'is-paired' : '',
+            player.connected ? '' : 'is-away',
+            player.id === priv.id ? 'is-me' : '',
+          ].join(' ')}
+        >
+          <span className="gc-chip" style={{ background: colorOf(player.id, order) }} />
+          <span className="gc-name">{player.name}</span>
+          {player.role !== 'idle' && (
+            <span className="gc-role">{player.role === 'active' ? 'Actif' : 'Associé'}</span>
           )}
-          {/* Rareté oblige : on ne montre la métropole que s'il en reste une. */}
-          {priv.spots.metropolises.length > 0 && (
-            <Build label="Métropole" kind="metropolis" count={priv.spots.metropolises.length}
-                   active={intent} setActive={setIntent} enabled={caps.has('CAN_BUILD')} />
-          )}
-          {priv.spots.monuments.length > 0 && (
-            <Build label="Monument" kind="monument" count={priv.spots.monuments.length}
-                   active={intent} setActive={setIntent} enabled={caps.has('CAN_BUILD')} />
-          )}
-          {caps.has('CAN_DECLARE_BUILD') && !caps.has('CAN_BUILD') && (
-            <Hint text={HINTS['declare']?.text ?? ''} note={HINTS['declare']?.note ?? ''}>
-              <button
-                className={`gc-action gc-action-quiet${declaring ? ' is-armed' : ''}`}
-                onClick={() => { setDeclaring((on) => !on); setIntent(null); }}
-              >
-                {declaring ? 'Annonce armée' : 'Annoncer'}
-                <small>{declaring ? 'choisis un emplacement' : 'hors de ton tour'}</small>
-              </button>
-            </Hint>
-          )}
-          <DevCards
-            priv={priv}
-            armed={card?.kind}
-            onCancel={() => setCard(null)}
-            onBoardCard={(request) => { setCard({ kind: request.kind, edges: [] }); setIntent(null); }}
-            onInvention={(resources) => send('PLAY_INVENTION', { resources })}
-            onMonopoly={(resource) => send('PLAY_MONOPOLY', { resource })}
-          />
-          <Hint text={HINTS['market']?.text ?? ''} note={HINTS['market']?.note ?? ''}>
-            <button className="gc-action gc-action-quiet" onClick={() => setMarket(true)}>
-              Marché
-              <small>{pub.offers.length} offre{pub.offers.length > 1 ? 's' : ''}</small>
-            </button>
-          </Hint>
-          <Action label="Lancer les dés" hint="roll"
-                  enabled={caps.has('CAN_ROLL_DICE')} onClick={() => send('ROLL_DICE')} />
-          <Action label="Carte dév." hint="devCard"
-                  enabled={caps.has('CAN_BUY_DEV_CARD')} onClick={() => send('BUY_DEV_CARD')}
-                  reason="pas assez de ressources" />
-          <Action label="Fin d'action" hint="endTurn"
-                  enabled={caps.has('CAN_END_TURN')} onClick={() => send('END_TURN')} />
-          <Action label="Fin de cycle" hint="endCycle"
-                  enabled={caps.has('CAN_END_CYCLE')} onClick={() => send('END_CYCLE')} />
+          {player.hasMonument && <span className="gc-monument" title="Monument élevé">▲</span>}
+          <span className="gc-stat">{player.publicPoints} PV · {player.handSize} c.</span>
+          {player.mustDiscard > 0 && <span className="gc-warn" title="Doit défausser">⚠</span>}
         </div>
-      </footer>
+      ))}
+    </aside>
+  );
 
+  const hand = (
+    <div className="gc-hand">
+      {Object.entries(priv.hand).map(([resource, count]) => (
+        <span
+          key={resource}
+          // Visé par les cartes en vol : c'est par cet attribut que
+          // l'animation retrouve la pile où atterrir.
+          data-ressource={resource}
+          className={`gc-res${recolte[resource] ? ' is-gagne' : ''}`}
+          title={RESOURCE_LABELS[resource] ?? resource}
+        >
+          <ResourceIcon resource={resource} />
+          <strong>{count}</strong>
+          {recolte[resource] ? <em className="gc-res-gain">+{recolte[resource]}</em> : null}
+        </span>
+      ))}
+      <span className={`gc-limit${overLimit ? ' is-over' : ''}`}>
+        {me?.handSize ?? 0} / {pub.handLimit}
+        {overLimit && ' — un 7 te ferait défausser'}
+      </span>
+    </div>
+  );
+
+  /** Les annonces en cours, qu'on peut retirer tant que le cycle n'est pas clos. */
+  const intentChips = myIntents.length > 0 && (
+    <div className="gc-my-intents">
+      <span className="gc-my-intents-label">Annonces</span>
+      {myIntents.map((declared) => (
+        <button
+          key={declared.id}
+          className="gc-action gc-action-mini gc-action-quiet"
+          onClick={() => send('CANCEL_BUILD', { intentId: declared.id })}
+          title="Retirer l'annonce et récupérer les ressources"
+        >
+          {declared.contested ? 'contestée' : 'en attente'} ✕
+        </button>
+      ))}
+    </div>
+  );
+
+  const buildButtons = (
+    <>
+      <Build label="Route" kind="road" count={priv.spots.roads.length}
+             active={intent} setActive={chooseIntent} enabled={canBuildNow} priced={compact} />
+      <Build label="Colonie" kind="settlement" count={priv.spots.settlements.length}
+             active={intent} setActive={chooseIntent} enabled={canBuildNow} priced={compact} />
+      <Build label="Ville" kind="city" count={priv.spots.cities.length}
+             active={intent} setActive={chooseIntent} enabled={canBuildNow} priced={compact} />
+      {/* La voie maritime n'apparaît que là où il y a de la mer à longer. */}
+      {priv.spots.maritime.length > 0 && (
+        <Build label="Voie maritime" kind="maritime" count={priv.spots.maritime.length}
+               active={intent} setActive={chooseIntent} enabled={caps.has('CAN_BUILD')} priced={compact} />
+      )}
+      {/* Rareté oblige : on ne montre la métropole que s'il en reste une. */}
+      {priv.spots.metropolises.length > 0 && (
+        <Build label="Métropole" kind="metropolis" count={priv.spots.metropolises.length}
+               active={intent} setActive={chooseIntent} enabled={caps.has('CAN_BUILD')} priced={compact} />
+      )}
+      {priv.spots.monuments.length > 0 && (
+        <Build label="Monument" kind="monument" count={priv.spots.monuments.length}
+               active={intent} setActive={chooseIntent} enabled={caps.has('CAN_BUILD')} priced={compact} />
+      )}
+      {caps.has('CAN_DECLARE_BUILD') && !caps.has('CAN_BUILD') && (
+        <Hint text={HINTS['declare']?.text ?? ''} note={HINTS['declare']?.note ?? ''}>
+          <button
+            className={`gc-action gc-action-quiet${declaring ? ' is-armed' : ''}`}
+            onClick={() => { setDeclaring((on) => !on); setIntent(null); }}
+          >
+            {declaring ? 'Annonce armée' : 'Annoncer'}
+            <small>{declaring ? 'choisis un emplacement' : 'hors de ton tour'}</small>
+          </button>
+        </Hint>
+      )}
+    </>
+  );
+
+  const devCards = (inline: boolean) => (
+    <DevCards
+      priv={priv}
+      inline={inline}
+      armed={card?.kind}
+      onCancel={() => setCard(null)}
+      onBoardCard={(request) => { setCard({ kind: request.kind, edges: [] }); setIntent(null); setDrawer(null); }}
+      onInvention={(resources) => send('PLAY_INVENTION', { resources })}
+      onMonopoly={(resource) => send('PLAY_MONOPOLY', { resource })}
+    />
+  );
+
+  const buyCard = (
+    <Action label="Carte dév." hint="devCard" priced={compact}
+            enabled={caps.has('CAN_BUY_DEV_CARD')} onClick={() => send('BUY_DEV_CARD')}
+            reason="pas assez de ressources" />
+  );
+
+  const tradePanel = (
+    <Trade
+      pub={pub}
+      priv={priv}
+      canOffer={caps.has('CAN_TRADE_PLAYER')}
+      canBank={caps.has('CAN_TRADE_BANK')}
+      onOffer={(giveCounts, receive, to) =>
+        send('CREATE_TRADE', { give: giveCounts, receive, ...(to ? { to } : {}) })}
+      onAccept={(offerId) => send('ACCEPT_TRADE', { offerId })}
+      onCancel={(offerId) => send('CANCEL_TRADE', { offerId })}
+      onBank={(giveCounts, receive) => send('TRADE_WITH_BANK', { give: giveCounts, receive })}
+    />
+  );
+
+  const overlays = (
+    <>
       {market && (
         <Market
           view={pub}
@@ -633,7 +727,321 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
       )}
 
       {notice && <div className="gc-notice">{notice}</div>}
+    </>
+  );
+
+  /*
+   * Les bandeaux d'accompagnement d'une carte en cours.
+   *
+   * Ils disent l'étape suivante, et sur téléphone ils flottent au-dessus de
+   * la barre du bas : une carte armée sans consigne visible est la première
+   * cause de clics perdus sur le plateau.
+   */
+  const cardBanner = (
+    <>
+      {roadCard && (
+        <div className="gc-card-progress">
+          <span>
+            {roadCard.edges.length === 0
+              ? 'Construction de routes : choisis ta première route.'
+              : 'Choisis la seconde, ou pose-en une seule.'}
+          </span>
+          {roadCard.edges[0] !== undefined && (
+            <button
+              className="gc-action gc-action-mini"
+              onClick={() => { send('PLAY_ROAD_BUILDING', { edges: roadCard.edges }); setCard(null); }}
+            >
+              Une seule suffit
+            </button>
+          )}
+          <button className="gc-action gc-action-mini gc-action-quiet" onClick={() => setCard(null)}>
+            Annuler
+          </button>
+        </div>
+      )}
+
+      {freeBuilding && (
+        <div className="gc-card-progress">
+          <span>Bâtisseur : choisis ce que tu construis, puis l'emplacement.</span>
+          <button className="gc-action gc-action-mini gc-action-quiet" onClick={() => setCard(null)}>
+            Annuler
+          </button>
+        </div>
+      )}
+    </>
+  );
+
+  /* ── téléphone ────────────────────────────────────────────────────── */
+
+  if (compact) {
+    /*
+     * L'action qui fait avancer la partie, et elle seule, sous le pouce.
+     *
+     * Les jeux de plateau mobiles ne montrent jamais neuf boutons de même
+     * poids : ils en montrent un, gros, à droite — celui qu'on cherche neuf
+     * fois sur dix — et rangent le reste derrière des onglets. L'ordre suit
+     * celui du tour, si bien qu'un seul est jamais disponible à la fois.
+     */
+    const primary = caps.has('CAN_ROLL_DICE')
+      ? { label: 'Lancer les dés', hint: 'roll', run: () => send('ROLL_DICE') }
+      : caps.has('CAN_END_TURN')
+        ? { label: 'Fin d’action', hint: 'endTurn', run: () => send('END_TURN') }
+        : caps.has('CAN_END_CYCLE')
+          ? { label: 'Fin de cycle', hint: 'endCycle', run: () => send('END_CYCLE') }
+          : undefined;
+
+    /*
+     * Ce que le plateau attend, quand il attend quelque chose.
+     *
+     * Un type armé n'a d'effet qu'au toucher suivant, ailleurs : sans cette
+     * ligne, le joueur voit son bouton s'allumer, le tiroir se fermer, et
+     * plus rien — il rappuie, et désarme ce qu'il venait d'armer.
+     */
+    const armed = knightArmed
+      ? { text: 'Chevalier : touche l’hexagone où poser le voleur.', undo: () => setCard(null) }
+      : setupIntent !== null
+        ? { text: `Mise en place : pose ta ${BUILD_LABELS[setupIntent] ?? 'pièce'} sur le plateau.` }
+        : intent !== null
+          ? {
+            text: `Touche l’emplacement — ${BUILD_LABELS[intent] ?? intent}${declaring ? ' (annonce)' : ''}.`,
+            undo: () => setIntent(null),
+          }
+          : caps.has('CAN_MOVE_ROBBER')
+            ? { text: 'Touche l’hexagone où poser le voleur.' }
+            : undefined;
+
+    const sheet = drawer === null ? undefined
+      : drawer === 'build' ? (
+        <>
+          {!canBuildNow && (
+            <p className="gc-sheet-idle">
+              Tu ne peux rien poser pour l’instant : attends ton tour, ou annonce
+              une construction quand la fenêtre s’ouvre.
+            </p>
+          )}
+          <div className="gc-sheet-grid">{buildButtons}</div>
+          {intentChips}
+        </>
+      ) : drawer === 'trade' ? tradePanel
+      : drawer === 'cards' ? (
+        <>
+          {devCards(true)}
+          <div className="gc-sheet-grid">{buyCard}</div>
+        </>
+      ) : drawer === 'journal' ? (
+        <Journal view={pub} entries={journal} />
+      ) : playerList;
+
+    return (
+      <div className="gc-app gc-compact">
+        {/* Le plateau occupe l'écran entier ; tout le reste flotte dessus. */}
+        <main className="gc-board-wrap">{board}</main>
+
+        <header className="gc-hud">
+          <div className="gc-timer">{formatTimer(timer?.remainingMs)}</div>
+          <div className="gc-hud-text">
+            <div className="gc-phase">
+              Cycle {pub.cycle} · {phaseLabel(pub.phase)}
+              {status !== 'open' && ` · ${status === 'reconnecting' ? 'reconnexion…' : status}`}
+            </div>
+            <div className="gc-sentence">{orderSentence(pub, priv)}</div>
+          </div>
+          {roll && <Dice a={roll.a} b={roll.b} total={roll.total} />}
+        </header>
+
+        {/*
+          * La table, réduite à ce qu'on en consulte en jouant : qui est actif,
+          * qui mène, qui a trop de cartes. Le détail est à un doigt de là.
+          */}
+        <aside className="gc-rail">
+          {pub.players.map((player) => (
+            <button
+              key={player.id}
+              className={[
+                'gc-rail-player',
+                player.role === 'active' ? 'is-active' : '',
+                player.role === 'paired' ? 'is-paired' : '',
+                player.connected ? '' : 'is-away',
+                player.id === priv.id ? 'is-me' : '',
+              ].join(' ')}
+              onClick={() => setDrawer('players')}
+              title={`${player.name} — ${player.publicPoints} PV, ${player.handSize} cartes`}
+            >
+              <span className="gc-chip" style={{ background: colorOf(player.id, order) }} />
+              <span className="gc-rail-name">{player.name}</span>
+              {player.mustDiscard > 0
+                ? <span className="gc-warn">⚠</span>
+                : <span className="gc-rail-pv">{player.publicPoints}</span>}
+            </button>
+          ))}
+        </aside>
+
+        <Gains vols={vols} />
+
+        {(armed || roadCard || freeBuilding) && (
+          <div className="gc-armed">
+            {armed && (
+              <>
+                <span className="gc-armed-text">{armed.text}</span>
+                {armed.undo && (
+                  <button className="gc-action gc-action-mini gc-action-quiet" onClick={armed.undo}>
+                    Annuler
+                  </button>
+                )}
+              </>
+            )}
+            {cardBanner}
+          </div>
+        )}
+
+        <footer className="gc-dock">
+          {hand}
+          <nav className="gc-tabs">
+            <Tab label="Bâtir" drawer="build" open={drawer} onOpen={setDrawer}
+                 badge={canBuildNow ? spotCount : undefined} lit={intent !== null} />
+            <Tab label="Commerce" drawer="trade" open={drawer} onOpen={setDrawer}
+                 badge={pub.offers.length || undefined}
+                 lit={caps.has('CAN_TRADE_PLAYER') || caps.has('CAN_TRADE_BANK')} />
+            <Tab label="Cartes" drawer="cards" open={drawer} onOpen={setDrawer}
+                 badge={cardCount || undefined} lit={card !== null} />
+            <Tab label="Journal" drawer="journal" open={drawer} onOpen={setDrawer} />
+          </nav>
+          {/* Toujours là, jamais ailleurs : le pouce le retrouve sans regarder. */}
+          <button
+            className="gc-primary"
+            disabled={primary === undefined}
+            onClick={() => primary?.run()}
+          >
+            {primary?.label ?? 'En attente'}
+          </button>
+        </footer>
+
+        {drawer !== null && (
+          <>
+            <div className="gc-sheet-veil" onClick={() => setDrawer(null)} />
+            <section className="gc-sheet" role="dialog" aria-label={DRAWER_TITLES[drawer]}>
+              <header className="gc-sheet-head">
+                <span className="gc-sheet-title">{DRAWER_TITLES[drawer]}</span>
+                {/*
+                  * Le marché s'ouvre depuis l'en-tête, pas depuis le corps.
+                  *
+                  * Placé sous le formulaire, il passait sous le bord du
+                  * panneau dès que les trois menus étaient affichés : il
+                  * fallait deviner qu'on pouvait faire défiler pour l'avoir.
+                  */}
+                {drawer === 'trade' && (
+                  <button
+                    className="gc-sheet-act"
+                    onClick={() => { setMarket(true); setDrawer(null); }}
+                  >
+                    Marché
+                    {pub.offers.length > 0 && <span className="gc-tab-badge">{pub.offers.length}</span>}
+                  </button>
+                )}
+                <button className="gc-sheet-close" onClick={() => setDrawer(null)} aria-label="Fermer">
+                  ✕
+                </button>
+              </header>
+              <div className="gc-sheet-body">{sheet}</div>
+            </section>
+          </>
+        )}
+
+        {overlays}
+      </div>
+    );
+  }
+
+  /* ── grand écran ──────────────────────────────────────────────────── */
+
+  return (
+    <div className="gc-app">
+      <header className="gc-order">
+        <div className="gc-timer">{formatTimer(timer?.remainingMs)}</div>
+        <div className="gc-order-text">
+          <div className="gc-phase">
+            Cycle {pub.cycle} · {phaseLabel(pub.phase)}
+          </div>
+          <div className="gc-sentence">{orderSentence(pub, priv)}</div>
+          <div className="gc-who">
+            Actif : {nameOf(pub, pub.activePlayer)} · Associé : {nameOf(pub, pub.pairedPlayer)}
+            {status !== 'open' && ` · ${status === 'reconnecting' ? 'reconnexion…' : status}`}
+          </div>
+        </div>
+        {roll && <Dice a={roll.a} b={roll.b} total={roll.total} />}
+      </header>
+
+      <div className="gc-main">
+        {playerList}
+
+        {/*
+          * Le commerce garde sa colonne en permanence, même quand on ne peut
+          * rien y faire. Le faire apparaître et disparaître décalait le
+          * journal et recentrait le plateau à chaque changement de phase, et
+          * une interface qui bouge sous le doigt se lit mal.
+          */}
+        <div className="gc-side">
+          {tradePanel}
+          <Journal view={pub} entries={journal} />
+        </div>
+
+        <main className="gc-board-wrap">{board}</main>
+      </div>
+
+      <Gains vols={vols} />
+
+      <footer className="gc-footer">
+        {hand}
+        {intentChips}
+        {cardBanner}
+
+        <div className="gc-actions">
+          {buildButtons}
+          {devCards(false)}
+          <Hint text={HINTS['market']?.text ?? ''} note={HINTS['market']?.note ?? ''}>
+            <button className="gc-action gc-action-quiet" onClick={() => setMarket(true)}>
+              Marché
+              <small>{pub.offers.length} offre{pub.offers.length > 1 ? 's' : ''}</small>
+            </button>
+          </Hint>
+          <Action label="Lancer les dés" hint="roll"
+                  enabled={caps.has('CAN_ROLL_DICE')} onClick={() => send('ROLL_DICE')} />
+          {buyCard}
+          <Action label="Fin d'action" hint="endTurn"
+                  enabled={caps.has('CAN_END_TURN')} onClick={() => send('END_TURN')} />
+          <Action label="Fin de cycle" hint="endCycle"
+                  enabled={caps.has('CAN_END_CYCLE')} onClick={() => send('END_CYCLE')} />
+        </div>
+      </footer>
+
+      {overlays}
     </div>
+  );
+}
+
+/**
+ * Un onglet de la barre du bas.
+ *
+ * La pastille porte le nombre qui décide d'y aller — emplacements ouverts,
+ * offres sur la table, cartes en main. Sans elle, il faudrait ouvrir chaque
+ * tiroir à chaque tour pour savoir s'il a quelque chose à dire.
+ */
+function Tab({ label, drawer, open, onOpen, badge, lit = false }: {
+  label: string;
+  drawer: Exclude<Drawer, null>;
+  open: Drawer;
+  onOpen: (drawer: Drawer) => void;
+  badge?: number | undefined;
+  lit?: boolean;
+}) {
+  return (
+    <button
+      className={`gc-tab${open === drawer ? ' is-open' : ''}${lit ? ' is-lit' : ''}`}
+      onClick={() => onOpen(open === drawer ? null : drawer)}
+    >
+      {label}
+      {badge !== undefined && badge > 0 && <span className="gc-tab-badge">{badge}</span>}
+    </button>
   );
 }
 
@@ -674,44 +1082,70 @@ function NameEntry({ onChoose }: { onChoose: (name: string) => void }) {
  * Le nombre d'emplacements disponibles est affiché : un joueur qui a les
  * ressources mais aucun endroit où bâtir doit le comprendre sans essayer.
  */
-function Build({ label, kind, count, active, setActive, enabled }: {
+function Build({ label, kind, count, active, setActive, enabled, priced = false }: {
   label: string;
   kind: Exclude<BuildKind, null>;
   count: number;
   active: BuildKind;
   setActive: (kind: BuildKind) => void;
   enabled: boolean;
+  /** Le prix écrit sur le bouton, au lieu d'une infobulle au survol. */
+  priced?: boolean;
 }) {
   const usable = enabled && count > 0;
   const hint = HINTS[kind];
+  const button = (
+    <button
+      className={`gc-action${active === kind ? ' is-armed' : ''}`}
+      disabled={!usable}
+      onClick={() => setActive(active === kind ? null : kind)}
+    >
+      {label}
+      {priced && hint?.cost && <CostLine cost={COSTS[hint.cost]} className="gc-action-cost" />}
+      {enabled && count === 0 && <small>aucun emplacement</small>}
+      {usable && <small>{count} emplacement{count > 1 ? 's' : ''}</small>}
+    </button>
+  );
+
+  /*
+   * Sur téléphone, pas d'infobulle.
+   *
+   * Elle s'ouvre au survol, geste qui n'existe pas au doigt ; le toucher qui
+   * la déclenchait était le même que celui qui arme le bouton, si bien
+   * qu'elle apparaissait pour disparaître aussitôt — après avoir recouvert
+   * les boutons voisins et débordé du panneau, qui défile et donc rogne.
+   * Le prix vaut mieux dit sur le bouton, où il reste.
+   */
+  if (priced) return button;
+
   return (
     <Hint text={hint?.text ?? ''} {...(hint?.cost ? { cost: hint.cost } : {})}
           {...(hint?.note ? { note: hint.note } : {})}>
-      <button
-        className={`gc-action${active === kind ? ' is-armed' : ''}`}
-        disabled={!usable}
-        onClick={() => setActive(active === kind ? null : kind)}
-      >
-        {label}
-        {enabled && count === 0 && <small>aucun emplacement</small>}
-        {usable && <small>{count} emplacement{count > 1 ? 's' : ''}</small>}
-      </button>
+      {button}
     </Hint>
   );
 }
 
 /** Un bouton qui dit pourquoi il est grisé — exigence du brief d'interface. */
-function Action({ label, enabled, onClick, reason, hint }: {
-  label: string; enabled: boolean; onClick: () => void; reason?: string; hint?: string;
+function Action({ label, enabled, onClick, reason, hint, priced = false }: {
+  label: string; enabled: boolean; onClick: () => void;
+  reason?: string; hint?: string; priced?: boolean;
 }) {
   const help = hint === undefined ? undefined : HINTS[hint];
+  const button = (
+    <button className="gc-action" disabled={!enabled} onClick={onClick}>
+      {label}
+      {priced && help?.cost && <CostLine cost={COSTS[help.cost]} className="gc-action-cost" />}
+      {!enabled && reason && <small>{reason}</small>}
+    </button>
+  );
+
+  if (priced) return button;
+
   return (
     <Hint text={help?.text ?? ''} {...(help?.cost ? { cost: help.cost } : {})}
           {...(help?.note ? { note: help.note } : {})}>
-      <button className="gc-action" disabled={!enabled} onClick={onClick}>
-        {label}
-        {!enabled && reason && <small>{reason}</small>}
-      </button>
+      {button}
     </Hint>
   );
 }

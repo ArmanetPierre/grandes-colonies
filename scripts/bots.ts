@@ -188,7 +188,10 @@ function connect(name: string): void {
   let pub: PublicView | undefined;
   let last = '';
 
-  socket.on('open', () => socket.send(JSON.stringify({ type: 'join', name })));
+  // `bot: true` ne donne aucun droit — mêmes vues, mêmes refus. Il sert à ce
+  // que le serveur sache à qui retirer un siège quand l'hôte réduit
+  // l'effectif : à un bot, jamais à quelqu'un qui vient de s'installer.
+  socket.on('open', () => socket.send(JSON.stringify({ type: 'join', name, bot: true })));
   socket.on('error', (error) => console.error(`  ${name} : ${error.message}`));
 
   socket.on('message', (raw) => {

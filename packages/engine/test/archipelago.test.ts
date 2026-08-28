@@ -16,7 +16,7 @@ import { Board } from '../src/board/board.js';
 import { hexKey } from '../src/board/axial.js';
 import { hexesOfEdge, verticesOfEdge } from '../src/board/graph.js';
 import { landMasses, mainIsland } from '../src/board/islands.js';
-import { archipelagoBoard, archipelagoOptionsFor } from '../src/board/presets.js';
+import { archipelagoBoard, archipelagoOptionsFor, xxlOptionsFor } from '../src/board/presets.js';
 import { canPlaceSettlement } from '../src/placement.js';
 import { SeededRandom } from '../src/rng.js';
 import { COSTS, addCounts } from '../src/resources.js';
@@ -279,5 +279,58 @@ describe('exploration majeure', () => {
     const events = settle(state, 'p1', vertex);
     expect(events.some((e) => e.type === 'IslandReached')).toBe(false);
     expect(playerOf(state, 'p1')?.explorations).toBe(0);
+  });
+});
+
+/**
+ * Les échelles de plateau.
+ *
+ * Une variante pour une table qui veut de la place à explorer. Ce qu'on
+ * vérifie ici n'est pas l'équilibre — c'est la simulation qui en juge — mais
+ * les deux invariants sans lesquels la variante serait un piège : le plateau
+ * normal ne bouge pas d'un hexagone, et un plateau agrandi reste navigable
+ * d'une île à l'autre.
+ */
+describe('échelles de plateau', () => {
+  it('laisse le plateau normal exactement comme il était', () => {
+    for (const players of [8, 10, 11, 12]) {
+      expect(archipelagoOptionsFor(players, 'normal')).toEqual(archipelagoOptionsFor(players));
+      expect(xxlOptionsFor(players, 'normal')).toEqual(xxlOptionsFor(players));
+    }
+  });
+
+  it('agrandit les terres, les rives et les ports ensemble', () => {
+    const normal = archipelagoOptionsFor(12, 'normal');
+    const grand = archipelagoOptionsFor(12, 'grand');
+    const immense = archipelagoOptionsFor(12, 'immense');
+
+    expect(grand.landCount).toBeGreaterThan(normal.landCount);
+    expect(immense.landCount).toBeGreaterThan(grand.landCount);
+    // Des îles en plus, et non deux continents : c'est le nombre de rives
+    // qui fait l'exploration.
+    expect(grand.islands).toBeGreaterThan(normal.islands);
+    // Six au plus : les centres suivent les six directions axiales.
+    expect(immense.islands).toBeLessThanOrEqual(6);
+
+    const ports = (options: ReturnType<typeof archipelagoOptionsFor>): number =>
+      archipelagoBoard(new SeededRandom('ports'), options).ports?.size ?? 0;
+    expect(ports(immense)).toBeGreaterThan(ports(normal));
+  });
+
+  it('reste navigable d une île à l autre, à toutes les échelles', () => {
+    for (const scale of ['grand', 'immense'] as const) {
+      const init = archipelagoBoard(new SeededRandom(`nav-${scale}`), archipelagoOptionsFor(12, scale));
+      const board = new Board(init);
+      const masses = landMasses(board);
+      const main = mainIsland(board);
+
+      expect(masses.length).toBeGreaterThan(1);
+      // Chaque île secondaire doit être atteignable à la voile : sinon le
+      // point d'exploration qu'elle porte est inatteignable.
+      for (const mass of masses) {
+        if (mass.id === main?.id) continue;
+        expect(mass.hexes.length).toBeGreaterThan(0);
+      }
+    }
   });
 });

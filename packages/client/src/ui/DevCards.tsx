@@ -39,10 +39,18 @@ export interface DevCardsProps {
   /** Ce qui est déjà armé sur le plateau, pour le montrer comme tel. */
   readonly armed: string | undefined;
   readonly onCancel: () => void;
+  /**
+   * Les cartes à découvert, sans le bouton qui les cache.
+   *
+   * Sur téléphone le panneau vit déjà dans un tiroir qu'on a ouvert
+   * exprès : y remettre un bouton « Mes cartes » demanderait un second
+   * geste pour voir ce qu'on venait justement chercher.
+   */
+  readonly inline?: boolean;
 }
 
 export function DevCards({
-  priv, onBoardCard, onInvention, onMonopoly, armed, onCancel,
+  priv, onBoardCard, onInvention, onMonopoly, armed, onCancel, inline = false,
 }: DevCardsProps) {
   const [choosing, setChoosing] = useState<'invention' | 'monopoly' | null>(null);
   const [open, setOpen] = useState(false);
@@ -60,6 +68,33 @@ export function DevCards({
     else onBoardCard({ kind: card as CardRequest['kind'] });
   };
 
+  /** La main elle-même : les mêmes cartes dans la modale et dans le tiroir. */
+  const main = (
+    <div className="gc-devcards">
+      {playable.map((card, index) => (
+        <button
+          key={`${card}-${index}`}
+          className="gc-card-button"
+          disabled={!playableFor(card)}
+          title={CARD_TITLES[card] ?? card}
+          onClick={() => (armed === card ? onCancel() : start(card))}
+        >
+          <DevCardArt card={card} armed={armed === card} />
+        </button>
+      ))}
+      {/* Face cachée : on la montre quand même, la cacher ferait croire à
+          l'achat perdu. */}
+      {pending.map((card, index) => (
+        <button key={`p-${card}-${index}`} className="gc-card-button" disabled>
+          <DevCardArt card={card} facedown />
+        </button>
+      ))}
+      {playable.length + pending.length === 0 && (
+        <p className="gc-devcards-idle">Aucune carte en main.</p>
+      )}
+    </div>
+  );
+
   return (
     <>
       {/*
@@ -70,6 +105,7 @@ export function DevCards({
         */}
       {/* Toujours présent, même à main vide : un bouton qui apparaît et
           disparaît décale toute la rangée d'actions en pleine partie. */}
+      {inline ? main : (
       <button
         className={`gc-action gc-action-quiet${armed !== undefined ? ' is-armed' : ''}`}
         disabled={playable.length + pending.length === 0}
@@ -82,6 +118,7 @@ export function DevCards({
             : `${playable.length + pending.length} en main`}
         </small>
       </button>
+      )}
 
       {open && (
         <div className="gc-modal-backdrop" onClick={() => setOpen(false)}>
@@ -94,26 +131,7 @@ export function DevCards({
               Une seule carte par tour, et jamais celle achetée le tour même.
             </p>
 
-            <div className="gc-devcards">
-        {playable.map((card, index) => (
-          <button
-            key={`${card}-${index}`}
-            className="gc-card-button"
-            disabled={!playableFor(card)}
-            title={CARD_TITLES[card] ?? card}
-            onClick={() => (armed === card ? onCancel() : start(card))}
-          >
-            <DevCardArt card={card} armed={armed === card} />
-          </button>
-        ))}
-        {/* Face cachée : on la montre quand même, la cacher ferait croire à
-            l'achat perdu. */}
-        {pending.map((card, index) => (
-          <button key={`p-${card}-${index}`} className="gc-card-button" disabled>
-            <DevCardArt card={card} facedown />
-          </button>
-        ))}
-            </div>
+            {main}
 
             <div className="gc-modal-actions">
               <button className="gc-action gc-action-quiet" onClick={() => setOpen(false)}>Fermer</button>
