@@ -40,6 +40,13 @@ joués au minimum, et ils reprendront leur place en arrivant.
 |---|---|
 | `PLAYERS=8 npm run play` | Huit joueurs au lieu de douze |
 | `BOARD=disque npm run play` | Plateau en disque : soirée plus courte (≈ 2 h 20 au lieu de 3 h 30 à douze) |
+| `BOTS=11 npm run play` | Onze adversaires automatiques, une place pour toi |
+
+Les bots passent par le même WebSocket que les joueurs et ne voient que ce
+qu'un joueur voit : ils ne peuvent pas tricher. Ils construisent par ordre de
+valeur en points et convertissent leur surplus, mais ne planifient pas et ne
+marchandent pas — un humain les bat sans peine, et c'est le but : ils sont là
+pour que la partie tourne.
 
 ---
 

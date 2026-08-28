@@ -8,6 +8,7 @@
  *   npm run play                    douze joueurs, plateau en archipel
  *   PLAYERS=8 npm run play          huit joueurs
  *   BOARD=disque npm run play       plateau en disque, soirée plus courte
+ *   BOTS=11 npm run play            onze adversaires automatiques
  */
 
 import { spawn } from 'node:child_process';
@@ -46,3 +47,23 @@ process.on('SIGTERM', () => stop(0));
 
 children.push(start('le client', ['vite', '--config', 'packages/client/vite.config.ts', 'packages/client']));
 children.push(start('le serveur', ['tsx', 'apps/host/src/main.ts']));
+
+/**
+ * Les adversaires automatiques, s'ils sont demandés.
+ *
+ * Ils attendent que le serveur écoute : lancés trop tôt, ils échoueraient à
+ * se connecter et abandonneraient la table au joueur seul.
+ */
+const bots = Number(process.env.BOTS ?? 0);
+if (bots > 0) {
+  const wait = setInterval(() => {
+    fetch('http://localhost:2567/api/seats')
+      .then(() => {
+        clearInterval(wait);
+        if (!stopping) children.push(start('les bots', ['tsx', 'scripts/bots.ts', String(bots)]));
+      })
+      .catch(() => { /* le serveur n'écoute pas encore */ });
+  }, 700);
+  // Sans quoi un serveur qui ne démarre jamais laisserait un minuteur derrière.
+  setTimeout(() => clearInterval(wait), 30000);
+}
