@@ -61,8 +61,11 @@ qui se résout en fin de cycle.
 Un joueur qui rafraîchit sa page **retrouve son siège**. Un joueur absent voit
 son tour joué au minimum plutôt que de bloquer la table.
 
-Les règles exactes, et surtout les décisions prises là où le jeu d'origine
-était ambigu, sont dans [RULES_CONTRACT.md](RULES_CONTRACT.md).
+**Les règles complètes, pour les joueurs :** [docs/regles.html](docs/regles.html)
+— à ouvrir dans un navigateur, ou à envoyer à tes invités avant la soirée.
+
+Les décisions prises là où le jeu d'origine était ambigu sont consignées dans
+[RULES_CONTRACT.md](RULES_CONTRACT.md), qui fait foi sur le code.
 
 ---
 

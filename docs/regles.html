@@ -1,0 +1,934 @@
+<title>Grand Colonies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+/* ──────────────────────────────────────────────────────────────────────
+   Céramique attique.
+
+   Le thème clair reprend les figures rouges sur argile ; le sombre, les
+   figures noires. Ce ne sont pas deux inversions d'un même dessin mais les
+   deux registres réels de la poterie grecque, et la page bascule de l'un à
+   l'autre comme un vase se retourne.
+   ────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --argile:      #DFCFAC;
+  --engobe:      #E9DCBE;
+  --creme:       #F2E9D4;
+  --trait:       #C3AC80;
+  --encre:       #1B1310;
+  --encre-pale:  #5E4A38;
+  --terre:       #A63A17;
+  --noir-attique:#2E2621;
+  --or:          #8A6420;
+
+  --bois:   #4A6B3A;
+  --brique: #A63A17;
+  --laine:  #8C9A86;
+  --ble:    #C8912B;
+  --minerai:#5A6470;
+  --metal:  #8A6420;
+  --poisson:#3E6C7A;
+
+  --fond:      var(--argile);
+  --panneau:   var(--engobe);
+  --releve:    var(--creme);
+  --bordure:   var(--trait);
+  --texte:     var(--encre);
+  --texte-pale:var(--encre-pale);
+  --accent:    var(--terre);
+  --contraste: var(--noir-attique);
+  --sur-accent:#F4E7CE;
+
+  --serif:   'Marcellus', 'Palatino Linotype', Georgia, serif;
+  --lettre:  'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --donnee:  'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fond:      #17120F;
+    --panneau:   #201A15;
+    --releve:    #2A221C;
+    --bordure:   #4A3B2C;
+    --texte:     #EFE2C6;
+    --texte-pale:#B49F7E;
+    --accent:    #D0632F;
+    --contraste: #E9DCBE;
+    --sur-accent:#1B1310;
+
+    --bois:   #7CA164;
+    --brique: #D0632F;
+    --laine:  #A9B79F;
+    --ble:    #E0AC4A;
+    --minerai:#8E99A8;
+    --metal:  #C9A227;
+    --poisson:#5E9DB0;
+  }
+}
+
+:root[data-theme="dark"] {
+  --fond:      #17120F;
+  --panneau:   #201A15;
+  --releve:    #2A221C;
+  --bordure:   #4A3B2C;
+  --texte:     #EFE2C6;
+  --texte-pale:#B49F7E;
+  --accent:    #D0632F;
+  --contraste: #E9DCBE;
+  --sur-accent:#1B1310;
+
+  --bois:   #7CA164;
+  --brique: #D0632F;
+  --laine:  #A9B79F;
+  --ble:    #E0AC4A;
+  --minerai:#8E99A8;
+  --metal:  #C9A227;
+  --poisson:#5E9DB0;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: var(--lettre);
+  font-size: 19px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── bandeau ───────────────────────────────────────────────────────── */
+.bandeau {
+  border-bottom: 1px solid var(--bordure);
+  background: var(--panneau);
+}
+.bandeau-inner {
+  max-width: 1180px; margin: 0 auto; padding: 64px 28px 52px;
+  display: grid; gap: 22px;
+}
+.eyebrow {
+  font-family: var(--donnee); font-size: 11px; font-weight: 600;
+  letter-spacing: .2em; text-transform: uppercase; color: var(--accent);
+}
+h1 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(2.6rem, 7vw, 4.6rem); line-height: 1.02;
+  letter-spacing: .01em; margin: 0; text-wrap: balance;
+}
+.chapeau {
+  font-size: clamp(1.12rem, 2.2vw, 1.4rem); line-height: 1.5;
+  max-width: 46ch; color: var(--texte); margin: 0;
+}
+.chapeau em { color: var(--accent); font-style: italic; }
+
+.faits { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.fait {
+  font-family: var(--donnee); font-size: 12px; font-weight: 500;
+  padding: 7px 13px; background: var(--releve);
+  border: 1px solid var(--bordure); color: var(--texte-pale);
+}
+.fait b { color: var(--texte); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ── charpente ─────────────────────────────────────────────────────── */
+.page {
+  max-width: 1180px; margin: 0 auto; padding: 0 28px 96px;
+  display: grid; grid-template-columns: 224px minmax(0, 1fr); gap: 56px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .page { grid-template-columns: 1fr; gap: 0; }
+}
+
+.sommaire {
+  position: sticky; top: 24px; padding-top: 44px;
+  font-family: var(--donnee); font-size: 13px;
+}
+@media (max-width: 900px) {
+  .sommaire { position: static; padding: 32px 0 0; }
+}
+.sommaire-titre {
+  font-size: 10.5px; font-weight: 600; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--texte-pale); margin-bottom: 12px;
+}
+.sommaire ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.sommaire a {
+  display: block; padding: 5px 10px; color: var(--texte-pale);
+  text-decoration: none; border-left: 2px solid transparent;
+  transition: color .14s ease, border-color .14s ease;
+}
+.sommaire a:hover, .sommaire a:focus-visible { color: var(--texte); }
+.sommaire a[aria-current="true"] {
+  color: var(--accent); border-left-color: var(--accent); background: var(--releve);
+}
+
+main { padding-top: 44px; max-width: 68ch; }
+
+section { padding: 44px 0; border-top: 1px solid var(--bordure); }
+section:first-of-type { border-top: none; padding-top: 8px; }
+
+h2 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(1.7rem, 3.6vw, 2.3rem); line-height: 1.12;
+  margin: 0 0 6px; text-wrap: balance;
+}
+h3 {
+  font-family: var(--donnee); font-weight: 600; font-size: 1rem;
+  letter-spacing: .01em; margin: 30px 0 8px;
+}
+p { margin: 0 0 16px; }
+p:last-child { margin-bottom: 0; }
+strong { font-weight: 600; }
+em { font-style: italic; }
+
+.intro {
+  font-size: 1.1em; color: var(--texte-pale); margin-bottom: 22px;
+  max-width: 54ch;
+}
+
+ul.liste { margin: 0 0 16px; padding-left: 1.15em; }
+ul.liste li { margin-bottom: 7px; }
+ul.liste li::marker { color: var(--accent); }
+
+/* ── encadré ───────────────────────────────────────────────────────── */
+.note {
+  background: var(--panneau); border: 1px solid var(--bordure);
+  border-left: 3px solid var(--accent);
+  padding: 16px 20px; margin: 24px 0; font-size: .97em;
+}
+.note-titre {
+  font-family: var(--donnee); font-size: 10.5px; font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 6px;
+}
+
+/* ── coûts ─────────────────────────────────────────────────────────── */
+.constructions { display: grid; gap: 12px; margin: 26px 0; }
+.construction {
+  background: var(--panneau); border: 1px solid var(--bordure);
+  padding: 15px 18px;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 18px;
+  align-items: baseline;
+}
+.construction-nom {
+  font-family: var(--serif); font-size: 1.25rem; color: var(--accent);
+}
+.construction-gain {
+  font-family: var(--donnee); font-size: 12px; font-weight: 600;
+  color: var(--texte-pale); text-align: right; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.construction-texte { grid-column: 1 / -1; font-size: .95em; margin: 0; }
+.cout {
+  grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 12px;
+  padding-top: 10px; margin-top: 4px; border-top: 1px solid var(--bordure);
+}
+.piece {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--donnee); font-size: 13px; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ico { display: block; flex: none; }
+
+/* ── ressources ────────────────────────────────────────────────────── */
+.ressources {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 10px; margin: 24px 0;
+}
+.ressource {
+  background: var(--panneau); border: 1px solid var(--bordure);
+  padding: 13px 14px; display: grid; gap: 3px; justify-items: start;
+}
+.ressource-nom {
+  font-family: var(--donnee); font-size: 13px; font-weight: 600; margin-top: 4px;
+}
+.ressource-ou { font-size: .86em; color: var(--texte-pale); line-height: 1.35; }
+
+/* ── cycle ─────────────────────────────────────────────────────────── */
+.cycle { display: grid; gap: 10px; margin: 26px 0; }
+.temps {
+  display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 16px;
+  background: var(--panneau); border: 1px solid var(--bordure); padding: 15px 18px;
+}
+.temps-num {
+  font-family: var(--serif); font-size: 1.9rem; line-height: 1;
+  color: var(--accent); text-align: center;
+}
+.temps-nom {
+  font-family: var(--donnee); font-size: 13px; font-weight: 600;
+  letter-spacing: .04em; margin-bottom: 3px;
+}
+.temps-duree {
+  font-family: var(--donnee); font-size: 11px; color: var(--texte-pale);
+  font-variant-numeric: tabular-nums;
+}
+.temps p { font-size: .95em; margin: 6px 0 0; }
+
+/* ── tableau ───────────────────────────────────────────────────────── */
+.tableau-cadre { overflow-x: auto; margin: 24px 0; }
+table { border-collapse: collapse; width: 100%; font-family: var(--donnee); font-size: 14px; }
+caption {
+  text-align: left; font-size: 10.5px; font-weight: 600; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--texte-pale); padding-bottom: 10px;
+}
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--bordure); }
+th {
+  font-weight: 600; font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--texte-pale);
+}
+td.pts { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+tr.inerte td { color: var(--texte-pale); font-style: italic; }
+
+/* ── cartes développement ──────────────────────────────────────────── */
+.cartes { display: grid; gap: 10px; margin: 24px 0; }
+.carte {
+  background: var(--panneau); border: 1px solid var(--bordure); padding: 14px 18px;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px;
+  align-items: baseline;
+}
+.carte-nom { font-family: var(--serif); font-size: 1.15rem; color: var(--accent); }
+.carte-nb {
+  font-family: var(--donnee); font-size: 11px; color: var(--texte-pale);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.carte p { grid-column: 1 / -1; font-size: .95em; margin: 0; }
+
+/* ── pied ──────────────────────────────────────────────────────────── */
+.pied {
+  border-top: 1px solid var(--bordure); background: var(--panneau);
+  font-family: var(--donnee); font-size: 13px; color: var(--texte-pale);
+}
+.pied-inner { max-width: 1180px; margin: 0 auto; padding: 34px 28px 44px; }
+.pied p { max-width: 62ch; }
+.pied strong { color: var(--texte); }
+
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+
+<header class="bandeau">
+  <div class="bandeau-inner">
+    <div class="eyebrow">Manuel du joueur</div>
+    <h1>Grand&nbsp;Colonies</h1>
+    <p class="chapeau">
+      Un archipel, douze colons, et jamais assez de brique. Vous produisez,
+      vous négociez, vous bâtissez — et surtout, <em>vous n'attendez pas votre
+      tour pour exister</em>.
+    </p>
+    <div class="faits">
+      <span class="fait"><b>8 à 12</b> joueurs</span>
+      <span class="fait"><b>2 h</b> à <b>3 h</b></span>
+      <span class="fait"><b>15</b> points pour gagner</span>
+      <span class="fait">Sur vos téléphones, en réseau local</span>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+  <nav class="sommaire" aria-label="Sommaire">
+    <div class="sommaire-titre">Sommaire</div>
+    <ol>
+      <li><a href="#idee">L'idée</a></li>
+      <li><a href="#rejoindre">Rejoindre</a></li>
+      <li><a href="#cycle">Le cycle</a></li>
+      <li><a href="#plateau">Le plateau</a></li>
+      <li><a href="#ressources">Les ressources</a></li>
+      <li><a href="#batir">Bâtir</a></li>
+      <li><a href="#commerce">Commercer</a></li>
+      <li><a href="#cartes">Les cartes</a></li>
+      <li><a href="#voleur">Le voleur</a></li>
+      <li><a href="#objectif">L'objectif secret</a></li>
+      <li><a href="#annoncer">Annoncer</a></li>
+      <li><a href="#gagner">Gagner</a></li>
+      <li><a href="#absences">Absences</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section id="idee">
+      <h2>L'idée, en trente secondes</h2>
+      <p class="intro">
+        Vous connaissez peut-être déjà le principe : des hexagones qui
+        produisent, des colonies qui rapportent, des routes qui s'étirent.
+        Grand Colonies garde ce cœur et règle le problème qui rend ces jeux
+        pénibles à douze — l'attente.
+      </p>
+      <p>
+        Ici, <strong>personne ne reste spectateur</strong>. À chaque lancer de
+        dés, tout le monde produit. Pendant le tour d'un autre, vous pouvez
+        réserver un emplacement, répondre à une offre, et une fois par tour de
+        table vous jouez en même temps que le joueur actif.
+      </p>
+      <p>
+        Le premier à <strong>15 points</strong> l'emporte. Il y a dix façons
+        d'en gagner, et vous n'en connaîtrez jamais toutes celles de vos
+        voisins : chacun garde un objectif secret jusqu'à la fin.
+      </p>
+    </section>
+
+    <section id="rejoindre">
+      <h2>Rejoindre une partie</h2>
+      <p>
+        Une personne héberge la partie sur son ordinateur. Son écran affiche un
+        <strong>QR code</strong> et une adresse. Scannez, ou tapez l'adresse
+        dans votre navigateur — il n'y a rien à installer.
+      </p>
+      <p>
+        Donnez votre prénom, puis patientez : vous verrez les autres arriver.
+        Quand tout le monde est là, l'hôte lance la partie.
+      </p>
+      <div class="note">
+        <div class="note-titre">Si votre page se recharge</div>
+        <p>
+          Vous retrouvez votre siège, vos ressources et vos cartes. Rien n'est
+          perdu, même si votre téléphone se met en veille ou que vous fermez
+          l'onglet par mégarde.
+        </p>
+      </div>
+    </section>
+
+    <section id="cycle">
+      <h2>Le cycle</h2>
+      <p class="intro">
+        La partie avance par cycles. Un cycle, c'est le tour d'un joueur — et
+        trois temps qui vous concernent tous.
+      </p>
+
+      <div class="cycle">
+        <div class="temps">
+          <div class="temps-num">I</div>
+          <div>
+            <div class="temps-nom">Production</div>
+            <div class="temps-duree">Le joueur actif lance les deux dés</div>
+            <p>
+              Chaque hexagone portant le numéro sorti produit. Vous récoltez
+              une ressource par colonie adjacente, deux par cité —
+              <strong>même si ce n'est pas votre tour</strong>. C'est le moment
+              où toute la table regarde le même écran.
+            </p>
+          </div>
+        </div>
+        <div class="temps">
+          <div class="temps-num">II</div>
+          <div>
+            <div class="temps-nom">Le tour</div>
+            <div class="temps-duree">90 secondes au plus</div>
+            <p>
+              Le joueur actif bâtit, achète, échange. Il n'est pas seul : le
+              joueur assis <strong>trois places plus loin</strong> — son
+              associé — joue en même temps que lui. Vous serez actif une fois
+              par tour de table, et associé une autre fois.
+            </p>
+          </div>
+        </div>
+        <div class="temps">
+          <div class="temps-num">III</div>
+          <div>
+            <div class="temps-nom">Commerce libre</div>
+            <div class="temps-duree">30 secondes</div>
+            <p>
+              La table entière négocie. C'est court, c'est bruyant, et c'est là
+              que se jouent les parties : proposez, acceptez, retirez. À la
+              fermeture, les offres non conclues disparaissent.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <div class="note-titre">Le chronomètre</div>
+        <p>
+          Il ne sert pas à vous presser mais à empêcher que douze personnes
+          attendent celle qui est partie chercher à boire. À zéro, le minimum
+          est joué à votre place et la partie continue.
+        </p>
+      </div>
+    </section>
+
+    <section id="plateau">
+      <h2>Le plateau</h2>
+      <p class="intro">
+        Une grande île centrale, disputée par tout le monde, et deux ou trois
+        îles autour — trois à partir de onze joueurs.
+      </p>
+      <p>
+        Les îles secondaires ne se rejoignent qu'<strong>à la voile</strong>.
+        C'est tout l'intérêt : la terre de départ sera trop étroite bien avant
+        la fin, et celui qui traverse le premier trouve de la place quand les
+        autres se marchent dessus.
+      </p>
+      <p>
+        Chaque hexagone porte un <strong>jeton numéroté</strong>. Les 6 et les
+        8 sortent le plus souvent, les 2 et les 12 presque jamais — placez-vous
+        en conséquence. Le désert ne produit rien.
+      </p>
+      <h3>Les ports</h3>
+      <p>
+        Semés sur la côte, ils améliorent votre taux d'échange avec la banque
+        dès qu'une de vos colonies les touche. Un port générique donne
+        <strong>3 contre 1</strong> ; un port spécialisé,
+        <strong>2 contre 1</strong> sur sa ressource ; le port marchand,
+        2 contre 1 sur n'importe laquelle.
+      </p>
+    </section>
+
+    <section id="ressources">
+      <h2>Les ressources</h2>
+      <p class="intro">
+        Cinq ressources de base, et deux que seuls certains terrains donnent.
+      </p>
+
+      <div class="ressources">
+        <div class="ressource">
+          <svg class="ico" width="30" height="30" viewBox="0 0 24 24" style="color: var(--bois)" role="img" aria-label="Bois">
+            <rect x="6" y="7.2" width="15" height="9.6" rx="1" fill="currentColor"/>
+            <ellipse cx="6" cy="12" rx="3.1" ry="4.8" fill="currentColor"/>
+            <ellipse cx="6" cy="12" rx="1.9" ry="3" fill="none" stroke="var(--panneau)" stroke-width="1.1" opacity=".6"/>
+            <ellipse cx="6" cy="12" rx=".7" ry="1.1" fill="var(--panneau)" opacity=".7"/>
+          </svg>
+          <div class="ressource-nom">Bois</div>
+          <div class="ressource-ou">Forêts</div>
+        </div>
+        <div class="ressource">
+          <svg class="ico" width="30" height="30" viewBox="0 0 24 24" style="color: var(--brique)" role="img" aria-label="Brique">
+            <rect x="3" y="6.5" width="18" height="4.6" rx=".4" fill="currentColor"/>
+            <rect x="3" y="12.9" width="18" height="4.6" rx=".4" fill="currentColor"/>
+            <rect x="10.9" y="6.5" width="1.5" height="4.6" fill="var(--panneau)" opacity=".6"/>
+            <rect x="6.4" y="12.9" width="1.5" height="4.6" fill="var(--panneau)" opacity=".6"/>
+            <rect x="15.4" y="12.9" width="1.5" height="4.6" fill="var(--panneau)" opacity=".6"/>
+          </svg>
+          <div class="ressource-nom">Brique</div>
+          <div class="ressource-ou">Collines</div>
+        </div>
+        <div class="ressource">
+          <svg class="ico" width="30" height="30" viewBox="0 0 24 24" style="color: var(--laine)" role="img" aria-label="Laine">
+            <path d="M8.6 18.4v2.4M12.4 18.6v2.2M16 18.2v2.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M9 6.6c1.3 0 2.1.6 2.6 1.3.6-.5 1.4-.8 2.3-.8 1.2 0 2.2.6 2.8 1.4.4-.2.9-.3 1.4-.3 1.7 0 3 1.3 3 3 0 .8-.3 1.5-.8 2 .5.5.8 1.2.8 2 0 1.7-1.3 3-3 3H9.5C7.6 18.2 6 16.7 6 14.8c0-.7.2-1.3.6-1.9-.5-.5-.8-1.3-.8-2.1 0-1.7 1.4-3.1 3.2-3.1z" fill="currentColor"/>
+            <ellipse cx="5.2" cy="9.4" rx="3.1" ry="3.5" fill="currentColor"/>
+            <ellipse cx="5.2" cy="9.4" rx="3.1" ry="3.5" fill="#1B1310" opacity=".35"/>
+            <circle cx="4.3" cy="8.9" r=".85" fill="var(--panneau)"/>
+          </svg>
+          <div class="ressource-nom">Laine</div>
+          <div class="ressource-ou">Pâturages</div>
+        </div>
+        <div class="ressource">
+          <svg class="ico" width="30" height="30" viewBox="0 0 24 24" style="color: var(--ble)" role="img" aria-label="Blé">
+            <path d="M12 22v-9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M12 17.6c-2.6 0-4.3-1.2-4.9-2.9 2.4-.7 4.2.3 4.9 1.6zM12 17.6c2.6 0 4.3-1.2 4.9-2.9-2.4-.7-4.2.3-4.9 1.6z" fill="currentColor" opacity=".85"/>
+            <path d="M12 12.4c-2.6-.4-3.9-1.9-4.1-3.7 2.3-.2 3.8 1.1 4.1 2.6zM12 12.4c2.6-.4 3.9-1.9 4.1-3.7-2.3-.2-3.8 1.1-4.1 2.6z" fill="currentColor"/>
+            <path d="M12 9.3c-2.6-.4-3.9-1.9-4.1-3.7 2.3-.2 3.8 1.1 4.1 2.6zM12 9.3c2.6-.4 3.9-1.9 4.1-3.7-2.3-.2-3.8 1.1-4.1 2.6z" fill="currentColor"/>
+            <path d="M12 4.2c-1.3 1-1.9 2.3-1.9 3.6h3.8c0-1.3-.6-2.6-1.9-3.6z" fill="currentColor"/>
+          </svg>
+          <div class="ressource-nom">Blé</div>
+          <div class="ressource-ou">Champs</div>
+        </div>
+        <div class="ressource">
+          <svg class="ico" width="30" height="30" viewBox="0 0 24 24" style="color: var(--minerai)" role="img" aria-label="Minerai">
+            <path d="M12 3.4l8 5.2-3 10.4H7L4 8.6z" fill="currentColor"/>
+            <path d="M12 3.4l-3 5.6 3 9.9 3-9.9zM4 8.6h16" stroke="var(--panneau)" stroke-width="1.15" fill="none" opacity=".55"/>
+          </svg>
+          <div class="ressource-nom">Minerai</div>
+          <div class="ressource-ou">Montagnes</div>
+        </div>
+        <div class="ressource">
+          <svg class="ico" width="30" height="30" viewBox="0 0 24 24" style="color: var(--metal)" role="img" aria-label="Or">
+            <ellipse cx="12" cy="17.4" rx="7.4" ry="2.9" fill="currentColor"/>
+            <ellipse cx="12" cy="13.4" rx="7.4" ry="2.9" fill="currentColor"/>
+            <ellipse cx="12" cy="9.4" rx="7.4" ry="2.9" fill="currentColor"/>
+            <ellipse cx="12" cy="9.4" rx="3.6" ry="1.3" fill="var(--panneau)" opacity=".4"/>
+            <path d="M20.2 3.4l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z" fill="currentColor"/>
+          </svg>
+          <div class="ressource-nom">Or</div>
+          <div class="ressource-ou">Tuiles d'or — rares</div>
+        </div>
+        <div class="ressource">
+          <svg class="ico" width="30" height="30" viewBox="0 0 24 24" style="color: var(--poisson)" role="img" aria-label="Poisson">
+            <path d="M3.6 12c3-4.2 6.6-6.3 10-6.3 2.6 0 4.8 1.2 6.3 2.8-.9 1.2-1.4 2.4-1.4 3.5s.5 2.3 1.4 3.5c-1.5 1.6-3.7 2.8-6.3 2.8-3.4 0-7-2.1-10-6.3z" fill="currentColor"/>
+            <circle cx="8.4" cy="10.6" r="1.15" fill="var(--panneau)"/>
+          </svg>
+          <div class="ressource-nom">Poisson</div>
+          <div class="ressource-ou">Bancs de pêche</div>
+        </div>
+      </div>
+
+      <div class="note">
+        <div class="note-titre">L'or n'est pas décoratif</div>
+        <p>
+          Une seule construction en réclame — la métropole — mais c'est la plus
+          prestigieuse du jeu. Une tuile d'or près de chez vous vaut cher.
+        </p>
+      </div>
+    </section>
+
+    <section id="batir">
+      <h2>Bâtir</h2>
+      <p class="intro">
+        Six constructions. Les trois premières sont votre pain quotidien ; les
+        trois autres décident souvent de la partie.
+      </p>
+
+      <div class="constructions">
+        <div class="construction">
+          <span class="construction-nom">Route</span>
+          <span class="construction-gain">0 point</span>
+          <p class="construction-texte">
+            Prolonge votre réseau vers de nouveaux emplacements. Elle ne
+            rapporte rien en elle-même, mais le plus long réseau vaut 2 points.
+          </p>
+          <div class="cout">
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--bois)" aria-hidden="true"><rect x="6" y="7.2" width="15" height="9.6" rx="1" fill="currentColor"/><ellipse cx="6" cy="12" rx="3.1" ry="4.8" fill="currentColor"/></svg>1</span>
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--brique)" aria-hidden="true"><rect x="3" y="6.5" width="18" height="4.6" rx=".4" fill="currentColor"/><rect x="3" y="12.9" width="18" height="4.6" rx=".4" fill="currentColor"/></svg>1</span>
+          </div>
+        </div>
+
+        <div class="construction">
+          <span class="construction-nom">Voie maritime</span>
+          <span class="construction-gain">0 point</span>
+          <p class="construction-texte">
+            Une route qui longe la mer. Elle compte dans le même réseau que vos
+            routes terrestres, et c'est le seul chemin vers les autres îles.
+          </p>
+          <div class="cout">
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--bois)" aria-hidden="true"><rect x="6" y="7.2" width="15" height="9.6" rx="1" fill="currentColor"/><ellipse cx="6" cy="12" rx="3.1" ry="4.8" fill="currentColor"/></svg>1</span>
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--laine)" aria-hidden="true"><ellipse cx="12" cy="12" rx="8" ry="6" fill="currentColor"/></svg>1</span>
+          </div>
+        </div>
+
+        <div class="construction">
+          <span class="construction-nom">Colonie</span>
+          <span class="construction-gain">1 point</span>
+          <p class="construction-texte">
+            Votre unité de base. Elle produit une ressource par hexagone voisin
+            à chaque lancer. Deux colonies ne peuvent jamais se toucher : il
+            faut au moins un carrefour d'écart.
+          </p>
+          <div class="cout">
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--bois)" aria-hidden="true"><rect x="6" y="7.2" width="15" height="9.6" rx="1" fill="currentColor"/><ellipse cx="6" cy="12" rx="3.1" ry="4.8" fill="currentColor"/></svg>1</span>
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--brique)" aria-hidden="true"><rect x="3" y="6.5" width="18" height="4.6" rx=".4" fill="currentColor"/><rect x="3" y="12.9" width="18" height="4.6" rx=".4" fill="currentColor"/></svg>1</span>
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--laine)" aria-hidden="true"><ellipse cx="12" cy="12" rx="8" ry="6" fill="currentColor"/></svg>1</span>
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--ble)" aria-hidden="true"><path d="M12 22v-9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 12.4c-2.6-.4-3.9-1.9-4.1-3.7 2.3-.2 3.8 1.1 4.1 2.6zM12 12.4c2.6-.4 3.9-1.9 4.1-3.7-2.3-.2-3.8 1.1-4.1 2.6z" fill="currentColor"/></svg>1</span>
+          </div>
+        </div>
+
+        <div class="construction">
+          <span class="construction-nom">Cité</span>
+          <span class="construction-gain">2 points</span>
+          <p class="construction-texte">
+            Améliore une de vos colonies, qui retourne dans votre réserve. Elle
+            produit le double. C'est la façon la plus sûre de monter au score.
+          </p>
+          <div class="cout">
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--minerai)" aria-hidden="true"><path d="M12 3.4l8 5.2-3 10.4H7L4 8.6z" fill="currentColor"/></svg>3</span>
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--ble)" aria-hidden="true"><path d="M12 22v-9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 12.4c-2.6-.4-3.9-1.9-4.1-3.7 2.3-.2 3.8 1.1 4.1 2.6zM12 12.4c2.6-.4 3.9-1.9 4.1-3.7-2.3-.2-3.8 1.1-4.1 2.6z" fill="currentColor"/></svg>2</span>
+          </div>
+        </div>
+
+        <div class="construction">
+          <span class="construction-nom">Métropole</span>
+          <span class="construction-gain">3 points</span>
+          <p class="construction-texte">
+            Améliore une cité — ses 3 points remplacent les 2 de la cité.
+            <strong>Il n'y en a que trois pour toute la partie.</strong>
+            Premier arrivé, premier servi : c'est une course, pas un palier.
+          </p>
+          <div class="cout">
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--minerai)" aria-hidden="true"><path d="M12 3.4l8 5.2-3 10.4H7L4 8.6z" fill="currentColor"/></svg>3</span>
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--ble)" aria-hidden="true"><path d="M12 22v-9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 12.4c-2.6-.4-3.9-1.9-4.1-3.7 2.3-.2 3.8 1.1 4.1 2.6zM12 12.4c2.6-.4 3.9-1.9 4.1-3.7-2.3-.2-3.8 1.1-4.1 2.6z" fill="currentColor"/></svg>2</span>
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--metal)" aria-hidden="true"><ellipse cx="12" cy="16" rx="7.4" ry="2.9" fill="currentColor"/><ellipse cx="12" cy="11" rx="7.4" ry="2.9" fill="currentColor"/></svg>2</span>
+          </div>
+        </div>
+
+        <div class="construction">
+          <span class="construction-nom">Monument</span>
+          <span class="construction-gain">2 points</span>
+          <p class="construction-texte">
+            S'élève sur une de vos cités et <strong>n'occupe aucun emplacement
+            nouveau</strong>. Un seul par joueur. C'est la sortie de celui qui a
+            des ressources et plus aucun endroit où bâtir — et son coût, une
+            ressource de chaque, vous oblige à passer par le commerce.
+          </p>
+          <div class="cout">
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--bois)" aria-hidden="true"><rect x="6" y="7.2" width="15" height="9.6" rx="1" fill="currentColor"/><ellipse cx="6" cy="12" rx="3.1" ry="4.8" fill="currentColor"/></svg>1</span>
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--brique)" aria-hidden="true"><rect x="3" y="6.5" width="18" height="4.6" rx=".4" fill="currentColor"/><rect x="3" y="12.9" width="18" height="4.6" rx=".4" fill="currentColor"/></svg>1</span>
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--laine)" aria-hidden="true"><ellipse cx="12" cy="12" rx="8" ry="6" fill="currentColor"/></svg>1</span>
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--ble)" aria-hidden="true"><path d="M12 22v-9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 12.4c-2.6-.4-3.9-1.9-4.1-3.7 2.3-.2 3.8 1.1 4.1 2.6zM12 12.4c2.6-.4 3.9-1.9 4.1-3.7-2.3-.2-3.8 1.1-4.1 2.6z" fill="currentColor"/></svg>1</span>
+            <span class="piece"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" style="color:var(--minerai)" aria-hidden="true"><path d="M12 3.4l8 5.2-3 10.4H7L4 8.6z" fill="currentColor"/></svg>1</span>
+          </div>
+        </div>
+      </div>
+
+      <p>
+        Vous disposez de <strong>20 routes</strong>, <strong>5 colonies</strong>
+        et <strong>4 cités</strong>. Une réserve vide vous bloque : gardez un
+        œil dessus.
+      </p>
+    </section>
+
+    <section id="commerce">
+      <h2>Commercer</h2>
+      <p class="intro">
+        C'est le cœur du jeu à douze. Vous n'aurez jamais tout ce qu'il vous
+        faut, et quelqu'un autour de la table a toujours trop de laine.
+      </p>
+
+      <h3>Avec la banque</h3>
+      <p>
+        Quatre ressources identiques contre une de votre choix. Un port abaisse
+        ce taux à trois, ou à deux s'il est spécialisé. C'est cher : gardez-le
+        pour vous débloquer, pas pour bâtir votre économie.
+      </p>
+
+      <h3>Entre joueurs</h3>
+      <p>
+        Proposez ce que vous donnez contre ce que vous voulez, à une personne
+        précise ou à toute la table. Pendant la fenêtre de commerce, tout le
+        monde peut proposer et accepter. Pendant un tour, seul le joueur actif
+        peut lancer une offre — mais <strong>n'importe qui peut lui
+        répondre</strong>.
+      </p>
+
+      <div class="note">
+        <div class="note-titre">Le marché</div>
+        <p>
+          Un bouton ouvre la liste de <em>toutes</em> les offres en cours, y
+          compris celles échangées entre deux autres joueurs. Savoir que trois
+          personnes réclament du minerai vaut mieux que de proposer le vôtre au
+          premier venu.
+        </p>
+      </div>
+    </section>
+
+    <section id="cartes">
+      <h2>Les cartes développement</h2>
+      <p class="intro">
+        Elles coûtent 1 minerai, 1 laine et 1 blé, et vous ne savez pas ce que
+        vous tirez. Deux règles : jamais le tour de l'achat, et une seule par
+        tour.
+      </p>
+
+      <div class="cartes">
+        <div class="carte">
+          <span class="carte-nom">Chevalier</span>
+          <span class="carte-nb">la moitié du paquet</span>
+          <p>
+            Déplace le voleur et vous laisse dépouiller un voisin. Trois
+            chevaliers joués vous donnent la plus grande puissance militaire —
+            2 points, jusqu'à ce qu'on vous dépasse.
+          </p>
+        </div>
+        <div class="carte">
+          <span class="carte-nom">Construction de routes</span>
+          <span class="carte-nb"></span>
+          <p>
+            Une ou deux routes gratuites. Deux, si vous avez la place ; une
+            seule suffit si vous êtes enfermé.
+          </p>
+        </div>
+        <div class="carte">
+          <span class="carte-nom">Invention</span>
+          <span class="carte-nb"></span>
+          <p>Deux ressources de votre choix, prises à la banque.</p>
+        </div>
+        <div class="carte">
+          <span class="carte-nom">Monopole</span>
+          <span class="carte-nb">rare</span>
+          <p>
+            Vous nommez une ressource : <strong>tous</strong> les autres joueurs
+            vous cèdent la totalité de ce qu'ils en ont. À douze, c'est
+            dévastateur.
+          </p>
+        </div>
+        <div class="carte">
+          <span class="carte-nom">Bâtisseur</span>
+          <span class="carte-nb"></span>
+          <p>
+            Une construction offerte, au choix : route, colonie ou cité. Les
+            règles de placement s'appliquent normalement, seul le coût
+            disparaît.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="voleur">
+      <h2>Le voleur, et le 7</h2>
+      <p>
+        Quand un 7 sort, personne ne produit et deux choses arrivent.
+      </p>
+      <p>
+        D'abord, <strong>toute main trop garnie est amputée de moitié</strong>.
+        La limite dépend du nombre de joueurs : 9 cartes à huit joueurs,
+        jusqu'à 13 à douze. Surveillez le compteur sous votre main — il vous
+        prévient.
+      </p>
+      <p>
+        Ensuite, le joueur actif déplace le voleur sur l'hexagone de son choix.
+        Cet hexagone <strong>cesse de produire</strong> pour tout le monde, et
+        le joueur pioche une carte au hasard chez quelqu'un qui y a bâti.
+      </p>
+      <div class="note">
+        <div class="note-titre">À onze joueurs et plus</div>
+        <p>
+          Il y a <strong>deux voleurs</strong> sur le plateau. Poser le second
+          ne libère pas le premier : c'est le plus anciennement placé qui bouge.
+        </p>
+      </div>
+    </section>
+
+    <section id="objectif">
+      <h2>Votre objectif secret</h2>
+      <p>
+        Au début de la partie, on vous propose deux objectifs. Vous en gardez
+        un, et personne ne saura lequel avant la fin. Rempli, il vaut
+        <strong>2 points</strong>.
+      </p>
+      <ul class="liste">
+        <li><strong>Architecte</strong> — posséder 8 bâtiments</li>
+        <li><strong>Bâtisseur de cités</strong> — posséder 4 cités</li>
+        <li><strong>Colonisateur</strong> — posséder 5 colonies en même temps</li>
+        <li><strong>Grand bâtisseur</strong> — poser 12 routes</li>
+        <li><strong>Seigneur militaire</strong> — jouer 3 chevaliers</li>
+      </ul>
+      <p>
+        Ce choix oriente toute votre partie. Et il explique bien des
+        comportements : si un voisin s'obstine à poser des routes sans raison
+        apparente, vous saurez pourquoi à la révélation finale.
+      </p>
+    </section>
+
+    <section id="annoncer">
+      <h2>Annoncer hors de son tour</h2>
+      <p class="intro">
+        La mécanique qui distingue vraiment ce jeu. Elle demande une minute
+        pour être comprise, et change tout le reste.
+      </p>
+      <p>
+        À n'importe quel moment — même quand ce n'est pas votre tour — vous
+        pouvez <strong>annoncer</strong> une construction sur un emplacement.
+        Vos ressources sont mises de côté immédiatement, et la construction se
+        résout à la fin du cycle.
+      </p>
+      <p>
+        Si deux joueurs visent le même emplacement, <strong>le joueur actif
+        l'emporte</strong> ; à défaut, la première annonce. Le perdant récupère
+        ses ressources.
+      </p>
+      <div class="note">
+        <div class="note-titre">Pourquoi c'est important</div>
+        <p>
+          Sans cela, vous passeriez onze douzièmes de la partie à regarder. Avec,
+          le bon emplacement se prend quand on le voit — pas quand vient votre
+          tour, où il aura disparu.
+        </p>
+      </div>
+    </section>
+
+    <section id="gagner">
+      <h2>Gagner</h2>
+      <p class="intro">
+        Quinze points. La victoire est vérifiée à la fin de chaque cycle, pas
+        au moment où le point est marqué.
+      </p>
+
+      <div class="tableau-cadre">
+        <table>
+          <caption>Les sources de points</caption>
+          <thead>
+            <tr><th scope="col">Source</th><th scope="col">Comment</th><th scope="col" class="pts">Points</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Colonie</td><td>Chacune</td><td class="pts">1</td></tr>
+            <tr><td>Cité</td><td>Chacune</td><td class="pts">2</td></tr>
+            <tr><td>Métropole</td><td>Trois pour la partie</td><td class="pts">3</td></tr>
+            <tr><td>Monument</td><td>Un par joueur</td><td class="pts">2</td></tr>
+            <tr><td>Objectif secret</td><td>S'il est rempli</td><td class="pts">2</td></tr>
+            <tr><td>Plus long réseau</td><td>5 segments au moins</td><td class="pts">2</td></tr>
+            <tr><td>Plus grande armée</td><td>3 chevaliers au moins</td><td class="pts">2</td></tr>
+            <tr><td>Exploration majeure</td><td>Premier sur une île</td><td class="pts">1</td></tr>
+            <tr class="inerte"><td>Défenseur</td><td>Attend les barbares</td><td class="pts">1</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Les deux titres — plus long réseau et plus grande armée — se
+        <strong>volent</strong>. Ils changent de main dès que quelqu'un fait
+        strictement mieux, et valent 2 points chacun : à eux seuls, ils
+        renversent une fin de partie.
+      </p>
+      <p>
+        À la révélation finale, tous les objectifs secrets sont retournés. C'est
+        le moment où l'on comprend enfin ce que chacun poursuivait.
+      </p>
+    </section>
+
+    <section id="absences">
+      <h2>Absences et imprévus</h2>
+      <p>
+        À douze, quelqu'un s'absentera. Le jeu est fait pour ça.
+      </p>
+      <ul class="liste">
+        <li>
+          <strong>Vous rechargez votre page</strong> — vous retrouvez votre
+          siège, votre main et vos cartes.
+        </li>
+        <li>
+          <strong>Vous ne jouez pas à temps</strong> — le minimum est joué à
+          votre place : les dés sont lancés, le tour est passé. Vous ne perdez
+          rien d'autre que l'occasion.
+        </li>
+        <li>
+          <strong>Vous partez un moment</strong> — vos tours sont joués au
+          minimum jusqu'à votre retour, et la table n'attend pas.
+        </li>
+        <li>
+          <strong>Vous arrivez en retard</strong> — un siège encore libre vous
+          accueille en cours de partie.
+        </li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer class="pied">
+  <div class="pied-inner">
+    <p>
+      <strong>Grand Colonies</strong> — variante pour 8 à 12 joueurs, inspirée
+      de Catan, Seafarers et Cities&nbsp;&amp;&nbsp;Knights. Projet personnel,
+      sans affiliation avec les éditeurs de ces jeux.
+    </p>
+    <p style="margin-top:10px">
+      Deux systèmes du manuel d'origine ne sont pas encore en jeu : les
+      barbares, et les hexagones d'exploration face cachée. Le jeton de
+      défenseur reste donc inatteignable — il figure au barème pour le jour où.
+    </p>
+  </div>
+</footer>
+
+<script>
+  /* Le sommaire suit la lecture : la section visible se marque d'elle-même.
+     Aucune animation, seulement un repère — on lit un manuel, on ne regarde
+     pas une démonstration. */
+  const liens = new Map();
+  for (const a of document.querySelectorAll('.sommaire a')) {
+    liens.set(a.getAttribute('href').slice(1), a);
+  }
+  const observateur = new IntersectionObserver((entrees) => {
+    for (const entree of entrees) {
+      const lien = liens.get(entree.target.id);
+      if (!lien) continue;
+      if (entree.isIntersecting) {
+        for (const autre of liens.values()) autre.removeAttribute('aria-current');
+        lien.setAttribute('aria-current', 'true');
+      }
+    }
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  for (const section of document.querySelectorAll('section[id]')) observateur.observe(section);
+</script>
