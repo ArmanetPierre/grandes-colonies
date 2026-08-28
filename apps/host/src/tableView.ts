@@ -50,6 +50,9 @@ export function tableViewMarkup(): string {
       <div class="table-phase"><span id="t-cycle"></span> · <span id="t-phase"></span></div>
       <div class="table-turn"><span id="t-active"></span></div>
       <div class="table-roll" id="t-roll"></div>
+      <!-- Le retour aux réglages : discret pendant la partie, franc une fois
+           qu'elle est finie, parce que c'est là qu'on veut en relancer une. -->
+      <button class="table-again" id="t-again">Nouvelle partie</button>
     </header>
 
     <div class="table-body">
@@ -73,6 +76,16 @@ export function tableViewStyles(): string {
   .table-roll {
     font-family:'Marcellus',Georgia,serif; font-size:22px; color:var(--accent);
     min-width:96px; text-align:right;
+  }
+  .table-again {
+    font-family:'Inter',sans-serif; font-size:12px; font-weight:600; cursor:pointer;
+    padding:7px 13px; background:var(--raised); border:1px solid var(--line); color:var(--soft);
+  }
+  .table-again:hover { border-color:var(--accent); color:var(--ink); }
+  /* Partie terminée : ce n'est plus une sortie de secours, c'est la suite. */
+  .table-again.is-done {
+    background:var(--accent); color:#F7F1E1; border-color:transparent; font-size:14px;
+    padding:10px 20px;
   }
 
   .table-body { display:flex; gap:18px; align-items:flex-start; }
@@ -245,10 +258,30 @@ export function tableViewScript(): string {
       document.getElementById('t-roll').textContent = view.lastRoll
         ? view.lastRoll.a + ' + ' + view.lastRoll.b + ' = ' + view.lastRoll.total : '';
 
+      const again = document.getElementById('t-again');
+      again.classList.toggle('is-done', Boolean(view.winner));
+      again.textContent = view.winner ? 'Nouvelle partie' : 'Abandonner et refaire';
+
       drawBoard(view);
       drawPlayers(view);
     } catch { /* le serveur redémarre : on réessaiera */ }
   }
+
+  /*
+   * Une partie en cours ne se jette pas par mégarde.
+   *
+   * Terminée, la confirmation n'aurait aucun sens — il n'y a plus rien à
+   * perdre et c'est le geste qu'on attend.
+   */
+  document.getElementById('t-again').addEventListener('click', async () => {
+    const done = document.getElementById('t-again').classList.contains('is-done');
+    if (!done && !confirm('Abandonner la partie en cours et revenir aux réglages ?')) return;
+    await fetch('/api/new', { method: 'POST' });
+    // Le basculement suit l'indicateur de lancement : le rafraîchissement
+    // suivant ramène l'écran des réglages tout seul.
+    refreshTable();
+  });
+
   refreshTable();
   setInterval(refreshTable, 1500);`;
 }

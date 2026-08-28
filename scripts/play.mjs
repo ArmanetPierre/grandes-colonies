@@ -5,10 +5,14 @@
  * page que les invités ouvrent — et personne n'a envie de jongler avec deux
  * terminaux au moment où douze personnes attendent. Ctrl+C arrête les deux.
  *
- *   npm run play                    douze joueurs, plateau en archipel
- *   PLAYERS=8 npm run play          huit joueurs
+ * Tout se règle ensuite depuis l'écran de l'hôte — nombre de joueurs, forme
+ * du plateau, durées, adversaires automatiques. Les variables ci-dessous ne
+ * font que fixer le point de départ, pour ouvrir une soirée sans un clic.
+ *
+ *   npm run play                    huit joueurs, plateau en archipel
+ *   PLAYERS=12 npm run play         douze sièges au départ
  *   BOARD=disque npm run play       plateau en disque, soirée plus courte
- *   BOTS=11 npm run play            onze adversaires automatiques
+ *   BOTS=10 npm run play            dix adversaires automatiques au départ
  */
 
 import { spawn } from 'node:child_process';
@@ -59,22 +63,12 @@ process.on('SIGTERM', () => stop(0));
 children.push(start('le client', ['vite', '--config', 'packages/client/vite.config.ts', 'packages/client']));
 children.push(start('le serveur', ['tsx', 'apps/host/src/main.ts']));
 
-/**
- * Les adversaires automatiques, s'ils sont demandés.
+/*
+ * Les adversaires automatiques ne sont plus lancés ici.
  *
- * Ils attendent que le serveur écoute : lancés trop tôt, ils échoueraient à
- * se connecter et abandonneraient la table au joueur seul.
+ * C'est l'écran de l'hôte qui les tient désormais, parce que leur nombre se
+ * décide en regardant la pièce se remplir et non trente secondes avant, dans
+ * une variable d'environnement. `BOTS=10` reste lu — par le serveur, au
+ * démarrage — et la molette de l'écran prend le relais ensuite. Les lancer
+ * des deux côtés aurait simplement doublé la table.
  */
-const bots = Number(process.env.BOTS ?? 0);
-if (bots > 0) {
-  const wait = setInterval(() => {
-    fetch('http://localhost:2567/api/seats')
-      .then(() => {
-        clearInterval(wait);
-        if (!stopping) children.push(start('les bots', ['tsx', 'scripts/bots.ts', String(bots)]));
-      })
-      .catch(() => { /* le serveur n'écoute pas encore */ });
-  }, 700);
-  // Sans quoi un serveur qui ne démarre jamais laisserait un minuteur derrière.
-  setTimeout(() => clearInterval(wait), 30000);
-}

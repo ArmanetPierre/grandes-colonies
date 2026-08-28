@@ -7,14 +7,16 @@
  * chercher une adresse IP dans les réglages système.
  */
 
+import { type ChildProcess, spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { networkInterfaces } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import QRCode from 'qrcode';
 
-import { GameServer } from '@grand-colonies/server';
+import { type GameSettings, GameServer, SETTINGS_LIMITS } from '@grand-colonies/server';
 
 import { renderHostPage } from './hostPage.js';
 
@@ -51,6 +53,99 @@ export function readableCode(seed: string): string {
   return `${word}-${(hash % 90) + 10}`;
 }
 
+/** La racine du dépôt, d'où se lancent les adversaires automatiques. */
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+
+/**
+ * Les adversaires automatiques, pilotés depuis l'écran de l'hôte.
+ *
+ * Ils vivaient dans une variable d'environnement lue au démarrage : pour
+ * passer de sept à dix bots il fallait tout relancer, et les joueurs déjà
+ * connectés perdaient leur siège. Le programme les tient donc lui-même, dans
+ * un processus qu'il sait arrêter et rouvrir.
+ *
+ * C'est délibérément un processus séparé et non un module importé : ces bots
+ * passent par le même WebSocket que tout le monde, et rien ne doit leur
+ * ouvrir un raccourci vers l'état de la partie.
+ */
+class BotTable {
+  private child: ChildProcess | undefined;
+  private wanted = 0;
+  private failure: string | undefined;
+
+  constructor(private readonly port: number) {}
+
+  get status(): { count: number; running: boolean; error?: string } {
+    return {
+      count: this.wanted,
+      running: this.child !== undefined && this.child.exitCode === null,
+      ...(this.failure ? { error: this.failure } : {}),
+    };
+  }
+
+  stop(): void {
+    this.child?.kill('SIGTERM');
+    this.child = undefined;
+    this.wanted = 0;
+  }
+
+  /** Remplace la table de bots par une neuve, du nombre demandé. */
+  set(count: number): void {
+    this.child?.kill('SIGTERM');
+    this.child = undefined;
+    this.failure = undefined;
+    this.wanted = Math.max(0, Math.round(count));
+    if (this.wanted === 0) return;
+
+    const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+    const child = spawn(npx, ['tsx', 'scripts/bots.ts', String(this.wanted)], {
+      cwd: ROOT,
+      stdio: 'inherit',
+      env: { ...process.env, BOT_URL: `ws://localhost:${this.port}` },
+    });
+    // Un échec de lancement doit se lire à l'écran, pas seulement dans la
+    // console : l'hôte regarde sa page, pas son terminal.
+    child.on('error', (error) => {
+      if (this.child !== child) return;
+      this.failure = error.message;
+      this.child = undefined;
+    });
+    child.on('exit', (code, signal) => {
+      /*
+       * La fin d'un processus déjà remplacé n'est pas une panne.
+       *
+       * Chaque changement de nombre relance la table : sans ce garde, le
+       * SIGTERM qu'on vient d'envoyer revenait à l'écran en « les bots se
+       * sont arrêtés (code 143) », juste après que dix bots neufs se
+       * soient connectés sans encombre.
+       */
+      if (this.child !== child) return;
+      this.child = undefined;
+      if (signal !== null) return;
+      if (code !== 0 && code !== null) this.failure = `les bots se sont arrêtés (code ${code})`;
+    });
+    this.child = child;
+  }
+}
+
+/** Lit un corps de requête JSON, borné pour qu'aucun envoi ne puisse gonfler. */
+async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const chunk of req) {
+    size += (chunk as Buffer).length;
+    if (size > 8192) throw new Error('corps trop volumineux');
+    chunks.push(chunk as Buffer);
+  }
+  if (chunks.length === 0) return {};
+  return JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>;
+}
+
+function sendJson(res: ServerResponse, status: number, body: unknown): void {
+  res.writeHead(status, { 'content-type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify(body));
+}
+
 export interface HostHandle {
   readonly port: number;
   readonly code: string;
@@ -68,11 +163,15 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
   const clientPort = Number(process.env['CLIENT_PORT'] ?? 5173);
   const url = `http://${host}:${clientPort}`;
   const qrDataUrl = await QRCode.toDataURL(url, { width: 420, margin: 1 });
-  const page = renderHostPage({ url, code, qrDataUrl, playerCount });
+  // La page ne connaît plus les réglages : ils changent en cours de salon,
+  // et elle les lit désormais au fil de l'eau comme la liste des sièges.
+  const page = renderHostPage({ url, code, qrDataUrl, limits: SETTINGS_LIMITS });
 
   // `BOARD=disque` pour une soirée plus courte : la simulation mesure 138
   // cycles à douze joueurs sur le disque, contre 216 sur l'archipel.
   const boardKind = process.env['BOARD'] === 'disque' ? 'disc' as const : 'archipelago' as const;
+
+  const bots = new BotTable(port);
 
   const server: GameServer = new GameServer({
     seed,
@@ -103,6 +202,64 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
         res.end(JSON.stringify({ started: true, launched }));
         return true;
       }
+      /*
+       * Rouvrir le salon après une partie.
+       *
+       * Le basculement de l'écran suit `started` : remettre la session à
+       * neuf ramène donc l'hôte à ses réglages sans qu'il ait à recharger
+       * quoi que ce soit, et les joueurs restent connectés.
+       */
+      if (req.url === '/api/new' && req.method === 'POST') {
+        const outcome = server.newGame();
+        // Les bots repartent avec la partie : leurs sockets survivent au
+        // changement de session, mais ils ne rejouent la mise en place que
+        // si on les remet en face d'un plateau neuf.
+        if (outcome.ok) bots.set(Math.min(bots.status.count, outcome.settings.playerCount));
+        sendJson(res, outcome.ok ? 200 : 409, outcome);
+        return true;
+      }
+      /*
+       * Les réglages, en lecture et en écriture.
+       *
+       * Une seule et même forme dans les deux sens : ce que la page reçoit
+       * est ce qu'elle peut renvoyer, et le serveur borne. Elle n'a donc
+       * jamais à deviner ce qui est acceptable.
+       */
+      if (req.url === '/api/settings') {
+        if (req.method === 'POST') {
+          void readJson(req)
+            .then((body) => {
+              const outcome = server.reconfigure(body as Partial<GameSettings>);
+              if (!outcome.ok) { sendJson(res, 409, { error: outcome.reason }); return; }
+              /*
+               * Les bots suivent l'effectif.
+               *
+               * Sans quoi ramener douze sièges à six laisse dix bots pour
+               * six places : cinq perdent la leur et leur processus continue
+               * de tourner pour rien. On relance donc la table dès que le
+               * nombre demandé dépasse ce que l'effectif peut tenir, même
+               * quand la requête ne parle pas des bots.
+               */
+              const asked = typeof body['bots'] === 'number' ? Number(body['bots']) : bots.status.count;
+              const fitted = Math.min(asked, outcome.settings.playerCount);
+              if (fitted !== bots.status.count || typeof body['bots'] === 'number') bots.set(fitted);
+              sendJson(res, 200, {
+                settings: outcome.settings, started: server.session.isStarted, bots: bots.status,
+              });
+            })
+            .catch((error: unknown) => sendJson(res, 400, {
+              error: error instanceof Error ? error.message : 'requête illisible',
+            }));
+          return true;
+        }
+        sendJson(res, 200, {
+          settings: server.settings,
+          started: server.session.isStarted,
+          bots: bots.status,
+          limits: SETTINGS_LIMITS,
+        });
+        return true;
+      }
       // La vue publique complète, pour l'écran de table : plateau, joueurs,
       // scores. Rien de privé n'y transite — c'est la même vue que reçoivent
       // tous les clients.
@@ -112,9 +269,13 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
         return true;
       }
       if (req.url === '/api/seats') {
+        const automatic = server.botSeats();
         const seats = server.session.allSeats().map((seat) => ({
           name: seat.name,
           connected: seat.connected,
+          // L'hôte doit voir d'un coup combien de vraies personnes sont là :
+          // dix sièges pleins dont neuf de bots ne se lisent pas autrement.
+          bot: automatic.has(seat.playerId),
         }));
         res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify(seats));
@@ -135,7 +296,17 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
   console.log(`  Plateau      ${boardKind === 'disc' ? 'disque' : 'archipel'}`);
   console.log('');
 
-  return { port, code, url, close: () => server.close() };
+  // Le nombre de bots demandé au lancement, s'il y en a un : la ligne de
+  // commande reste utilisable, l'écran de l'hôte prend le relais ensuite.
+  const asked = Number(process.env['BOTS'] ?? 0);
+  if (asked > 0) bots.set(Math.min(asked, playerCount));
+
+  return {
+    port,
+    code,
+    url,
+    close: async () => { bots.stop(); await server.close(); },
+  };
 }
 
 // Lancement direct : `npm run host`.

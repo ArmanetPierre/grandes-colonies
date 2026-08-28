@@ -291,3 +291,50 @@ la structure du §4, et la seule où l'exploration ait un sens — mais
 - Les bots ne choisissent pas leur objectif secret : ils gardent celui que le moteur leur attribue par défaut, sans regarder s'il colle à leur position.
 
 Ces mesures disent donc où se situe le **plancher**, pas le plafond réel du jeu fini.
+
+## Échelles de plateau — la place raccourcit la partie
+
+`scripts/echelles.ts`, 16 parties par ligne, bots gourmands, archipel, 600 cycles
+de garde-fou.
+
+| Effectif | Échelle | Terres | Hexagones | Îles | Conclues | Cycles (médiane) | Points du gagnant |
+|---|---|---|---|---|---|---|---|
+| 12 | normale | 48 | 168 | 3 | 13/16 | 185 | 14,9 |
+| 12 | grande | 77 | 254 | 5 | **16/16** | **130** | 15,3 |
+| 12 | immense | 115 | 335 | 6 | **16/16** | **124** | 15,1 |
+| 8 | normale | 44 | 143 | 2 | 15/16 | 211 | 15,3 |
+| 8 | grande | 70 | 207 | 3 | 16/16 | 146 | 15,2 |
+| 8 | immense | 106 | 310 | 5 | 16/16 | 121 | 15,7 |
+
+On attendait l'inverse : plus de terres, plus de trajet, donc des parties plus
+longues. C'est le contraire, et nettement. À douze joueurs sur quarante-huit
+terres, la table est **engorgée** — les emplacements légaux se raréfient, les
+colonies se bloquent mutuellement, et trois parties sur seize n'aboutissent
+pas dans les six cents cycles. Donnez de la place et chacun construit : les
+constructions par joueur passent de 12,1 à 16,6, et la partie se conclut.
+
+Le point de victoire reste gagné, pas concédé : le gagnant finit autour de 15
+points à toutes les échelles, jamais sur épuisement du garde-fou.
+
+Le disque suit la même pente, en plus sage — il n'a pas d'îles à relier, donc
+moins de trajet à gagner : 143 cycles en normale, 119 en grande, 135 en
+immense, seize parties sur seize partout.
+
+### La dotation de routes ne suit pas la taille du plateau
+
+On l'avait mise à l'échelle par anticipation, sur l'idée qu'un plateau plus
+vaste demanderait plus de routes. La mesure a dit non :
+
+| Échelle | 20 routes | 30 routes |
+|---|---|---|
+| normale | 13/16, 185 cycles | 16/16, 155 cycles |
+| grande | 16/16, 130 cycles | 16/16, 136 cycles |
+| immense | 16/16, 124 cycles | 16/16, 148 cycles |
+
+Sur un grand plateau, plus de routes ne rapproche de rien : elle disperse, et
+la partie s'allonge. La mise à l'échelle a donc été retirée.
+
+En revanche la première colonne se lit dans l'autre sens : **sur le plateau
+normal, vingt routes bride encore** — trente feraient passer douze joueurs de
+13/16 à 16/16 et gagneraient trente cycles. C'est un réglage de l'équilibre de
+base, laissé en l'état faute d'avoir été demandé, mais il mérite d'être repris.

@@ -7,17 +7,29 @@
  * reste, parce que le premier obstacle d'une soirée n'est pas le jeu mais
  * « comment je me connecte ».
  *
- * La liste des sièges se rafraîchit seule, pour que l'hôte voie ses invités
- * arriver sans toucher à rien.
+ * Vient ensuite le pupitre de réglages. Le nombre de joueurs, la forme du
+ * plateau et les durées étaient jusqu'ici des variables d'environnement lues
+ * au démarrage : changer d'avis obligeait à tout relancer, donc à faire
+ * rejoindre la tablée une seconde fois. Or ce sont exactement les décisions
+ * qu'on prend en regardant la pièce se remplir — « on sera dix, finalement »,
+ * « la dernière a duré trop longtemps ». Elles se règlent donc ici, et la
+ * partie se reconstruit sans que personne ne perde sa place.
+ *
+ * La page ne connaît aucun réglage à l'avance : elle les lit du serveur et
+ * les lui renvoie tels quels. C'est lui qui borne, et deux tables de bornes
+ * finiraient par diverger.
  */
 
 import { tableViewMarkup, tableViewScript, tableViewStyles } from './tableView.js';
+
+export interface Bounds { readonly min: number; readonly max: number }
 
 export interface HostPageData {
   readonly url: string;
   readonly code: string;
   readonly qrDataUrl: string;
-  readonly playerCount: number;
+  /** Bornes des réglages, telles que le serveur les applique. */
+  readonly limits: Readonly<Record<string, Bounds>>;
 }
 
 export interface SeatSummary {
@@ -37,7 +49,7 @@ export function renderHostPage(data: HostPageData): string {
 <style>
   :root {
     --bg:#DFCFAC; --surface:#E9DCBE; --raised:#F2E9D4; --line:#C3AC80;
-    --ink:#1B1310; --soft:#5E4A38; --accent:#A63A17;
+    --ink:#1B1310; --soft:#5E4A38; --accent:#A63A17; --gold:#A87C22;
   }
   * { box-sizing:border-box; margin:0; padding:0; }
   body {
@@ -75,16 +87,75 @@ export function renderHostPage(data: HostPageData): string {
     font-family:'Marcellus',Georgia,serif; font-size:26px; color:var(--accent); letter-spacing:.06em;
   }
 
-  .seats { margin-top:30px; border-top:1px solid var(--line); padding-top:18px; }
-  .seats-head {
-    font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--soft); margin-bottom:10px;
+  /* ── pupitre de réglages ─────────────────────────────────────────────
+     Une section par bloc, séparée d'un filet : c'est la même respiration
+     que la liste des sièges, et la carte garde une seule colonne. */
+  .block { margin-top:26px; border-top:1px solid var(--line); padding-top:18px; }
+  .block-head {
+    display:flex; align-items:baseline; gap:12px; margin-bottom:14px;
+    font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--soft);
   }
+  .block-head .title { flex:1; text-align:left; }
+
+  .rows { display:grid; grid-template-columns:1fr 1fr; gap:10px 22px; text-align:left; }
+  @media (max-width:620px) { .rows { grid-template-columns:1fr; } }
+  .row { display:flex; align-items:center; gap:10px; min-height:34px; }
+  .row > .label { flex:1; font-size:13px; }
+  .row > .label small { display:block; font-size:10.5px; color:var(--soft); }
+  /* Une ligne qui prend les deux colonnes : les durées, alignées ensemble. */
+  .row.wide { grid-column:1 / -1; }
+
+  /* Le pas-à-pas : deux cibles franches et un nombre qu'on lit de loin. */
+  .step { display:flex; align-items:center; border:1px solid var(--line); background:var(--raised); }
+  .step button {
+    width:32px; height:32px; font-size:17px; line-height:1; cursor:pointer;
+    background:none; border:none; color:var(--ink); font-family:inherit;
+  }
+  .step button:disabled { opacity:.3; cursor:not-allowed; }
+  /* Le nombre en fonte d'interface, pas en titrage : dans le Marcellus un 1
+     se lit « I » et un 0 « O », ce qui va pour un code dicté à voix haute et
+     pas pour un chiffre seul entre deux boutons. */
+  .step .value {
+    min-width:38px; text-align:center; font-family:'Inter',system-ui,sans-serif;
+    font-size:17px; font-weight:700; font-variant-numeric:tabular-nums;
+  }
+
+  /* Le choix entre deux ou quatre valeurs : des segments, pas un menu —
+     l'hôte doit voir d'un coup ce qui est possible. */
+  .seg { display:flex; border:1px solid var(--line); background:var(--raised); }
+  .seg button {
+    padding:7px 13px; font-size:12.5px; font-family:inherit; cursor:pointer;
+    background:none; border:none; border-right:1px solid var(--line); color:var(--ink);
+  }
+  .seg button:last-child { border-right:none; }
+  .seg button.on { background:var(--accent); color:#F7F1E1; font-weight:600; }
+
+  .ghost {
+    padding:6px 12px; font-size:11.5px; font-family:inherit; cursor:pointer;
+    background:var(--raised); border:1px solid var(--line); color:var(--ink);
+  }
+  .ghost:hover { border-color:var(--accent); }
+  .ghost:disabled { opacity:.4; cursor:not-allowed; }
+
+  /* Ce que les réglages impliquent, dit en clair sous le pupitre : à douze
+     joueurs la limite de main et le second voleur changent tout seuls, et
+     personne ne devrait avoir à lire les règles pour s'en apercevoir. */
+  .consequence {
+    margin-top:12px; font-size:12px; line-height:1.5; color:var(--soft); text-align:left;
+  }
+  .consequence b { color:var(--ink); font-weight:600; }
+  .locked { font-size:12.5px; color:var(--soft); text-align:left; line-height:1.6; }
+  .warn { color:var(--accent); font-weight:600; }
+
   .seat-grid { display:flex; flex-wrap:wrap; gap:7px; justify-content:center; }
   .seat {
     background:var(--raised); border:1px solid var(--line);
     padding:6px 12px; font-size:13px; min-width:104px;
   }
   .seat.free { opacity:.45; font-style:italic; }
+  .seat.bot { border-style:dashed; color:var(--soft); }
+  .seat.bot .dot { background:var(--soft); }
+  .seat small { font-size:10.5px; color:var(--soft); }
   .seat .dot {
     display:inline-block; width:7px; height:7px; border-radius:50%;
     background:var(--accent); margin-right:6px;
@@ -120,10 +191,22 @@ ${tableViewStyles()}
       </div>
     </div>
 
-    <div class="seats">
-      <div class="seats-head">Joueurs — <span id="count">0</span> / ${data.playerCount}</div>
+    <section class="block" id="settings-block">
+      <div class="block-head">
+        <span class="title">Réglages de la partie</span>
+        <button class="ghost" id="reroll" title="Tirer un autre plateau avec les mêmes réglages">
+          Nouveau plateau
+        </button>
+      </div>
+      <div class="rows" id="rows"></div>
+      <p class="consequence" id="consequence"></p>
+      <p class="locked" id="locked" hidden></p>
+    </section>
+
+    <section class="block">
+      <div class="block-head"><span class="title">Joueurs — <span id="count">0</span> / <span id="total">—</span></span></div>
       <div class="seat-grid" id="seats"></div>
-    </div>
+    </section>
 
     <div class="start">
       <button id="start" disabled>Démarrer la partie</button>
@@ -136,22 +219,210 @@ ${tableViewStyles()}
 ${tableViewMarkup()}
 
 <script>
-  // Rafraîchissement discret : l'hôte voit ses invités arriver sans rien faire.
-  let started = false;
+  var LIMITS = ${JSON.stringify(data.limits)};
+  var settings = null;
+  var bots = { count: 0, running: false };
+  var started = false;
+  /**
+   * Une écriture est en vol.
+   *
+   * Le rafraîchissement périodique et la réponse d'un réglage arrivent par
+   * deux chemins : sans ce drapeau, un sondage parti avant l'envoi revenait
+   * après lui et remettait l'ancienne valeur sous le doigt de l'hôte.
+   */
+  var pending = 0;
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+
+  // ── réglages ────────────────────────────────────────────────────────
+
+  /** Envoie ce qui change, et n'affiche que ce que le serveur a retenu. */
+  async function apply(patch) {
+    if (started) return;
+    pending++;
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      const body = await response.json();
+      if (body.settings) { settings = body.settings; bots = body.bots || bots; }
+      renderSettings();
+    } catch { /* le serveur redémarre : le prochain sondage rattrapera */ }
+    finally { pending--; }
+  }
+
+  function step(label, note, value, bounds, onChange) {
+    return '<div class="row">'
+      + '<span class="label">' + label + (note ? '<small>' + note + '</small>' : '') + '</span>'
+      + '<span class="step" data-step="' + onChange + '">'
+      +   '<button data-delta="-1"' + (value <= bounds.min ? ' disabled' : '') + '>−</button>'
+      +   '<span class="value">' + value + '</span>'
+      +   '<button data-delta="1"' + (value >= bounds.max ? ' disabled' : '') + '>+</button>'
+      + '</span></div>';
+  }
+
+  function seg(label, note, choices, value, key, wide) {
+    return '<div class="row' + (wide ? ' wide' : '') + '">'
+      + '<span class="label">' + label + (note ? '<small>' + note + '</small>' : '') + '</span>'
+      + '<span class="seg" data-seg="' + key + '">'
+      + choices.map(function (c) {
+          return '<button data-value="' + c[0] + '"'
+            + (String(c[0]) === String(value) ? ' class="on"' : '') + '>' + c[1] + '</button>';
+        }).join('')
+      + '</span></div>';
+  }
+
+  /**
+   * Ce que les réglages impliquent, dit en clair.
+   *
+   * La limite de main et le second voleur suivent l'effectif sans qu'on les
+   * demande (§24, §25) : les taire ferait passer pour un bug ce qui est une
+   * règle. Les places humaines restantes sont le chiffre qu'on cherche
+   * vraiment en posant des bots.
+   */
+  function consequences() {
+    const humans = settings.playerCount - bots.count;
+    const handLimit = settings.playerCount <= 7 ? 7 : Math.min(13, settings.playerCount + 1);
+    const parts = [];
+    // Plus une seule place humaine, c'est presque toujours une main qui a
+    // glissé : autant de bots que de sièges se lit mal dans deux molettes
+    // côte à côte, et se voit tout de suite ici.
+    parts.push(humans === 0
+      ? '<span class="warn">aucune place pour un joueur réel</span>'
+      : '<b>' + humans + '</b> place' + (humans > 1 ? 's' : '') + ' pour des joueurs réels');
+    parts.push('limite de main <b>' + handLimit + '</b>');
+    if (settings.playerCount >= 11) parts.push('<b>deux voleurs</b>');
+    if (settings.playerCount < 8) parts.push('plateau classique — l’archipel demande huit joueurs');
+    else if (settings.boardKind === 'disc') parts.push('partie plus courte qu’en archipel');
+    /*
+     * Ce que l'échelle change vraiment, mesuré en simulation.
+     *
+     * On s'attendait à des parties plus longues ; c'est l'inverse. À douze
+     * joueurs sur quarante-huit terres, la table est engorgée — on se bloque
+     * les emplacements. De la place, et chacun construit.
+     */
+    if (settings.playerCount >= 8 && settings.boardScale !== 'normal') {
+      parts.push(settings.boardScale === 'immense'
+        ? 'terres <b>doublées</b> — parties nettement plus courtes, plus de routes en réserve'
+        : 'terres <b>agrandies</b> — plus de place, moins d’emplacements disputés');
+    }
+    if (bots.error) parts.push('<span class="warn">' + escapeHtml(bots.error) + '</span>');
+    return parts.join(' · ') + '.';
+  }
+
+  function renderSettings() {
+    if (!settings) return;
+    document.getElementById('total').textContent = settings.playerCount;
+
+    if (started) {
+      document.getElementById('rows').hidden = true;
+      document.getElementById('consequence').hidden = true;
+      document.getElementById('reroll').disabled = true;
+      const locked = document.getElementById('locked');
+      locked.hidden = false;
+      const TAILLES = { normal: '', grand: ' agrandi', immense: ' immense' };
+      locked.innerHTML = settings.playerCount + ' joueurs · '
+        + (settings.boardKind === 'disc' ? 'disque' : 'archipel')
+        + (TAILLES[settings.boardScale] || '') + ' · '
+        + settings.victoryTarget + ' points · tour de ' + settings.activeTurnSeconds + ' s'
+        + (bots.count ? ' · ' + bots.count + ' adversaires automatiques' : '')
+        + '<br>Les réglages sont figés une fois la partie lancée.';
+      return;
+    }
+
+    document.getElementById('rows').innerHTML =
+        step('Joueurs', 'sièges à la table', settings.playerCount, LIMITS.playerCount, 'playerCount')
+      + step('Adversaires automatiques', 'ils prennent les sièges libres', bots.count,
+             { min: 0, max: settings.playerCount }, 'bots')
+      + seg('Plateau', 'huit joueurs et plus', [['archipelago','Archipel'],['disc','Disque']],
+            settings.boardKind, 'boardKind')
+      + seg('Taille', 'terres à explorer', [['normal','Normale'],['grand','Grande'],['immense','Immense']],
+            settings.boardScale, 'boardScale')
+      + seg('Victoire', 'points à atteindre', [[10,'10'],[12,'12'],[15,'15'],[18,'18']],
+            settings.victoryTarget, 'victoryTarget')
+      + seg('Mise en place', 'secondes par pose', [[20,'20 s'],[30,'30 s'],[45,'45 s'],[60,'60 s']],
+            settings.setupSeconds, 'setupSeconds', true)
+      + seg('Tour', 'secondes par joueur actif', [[45,'45 s'],[60,'60 s'],[90,'90 s'],[120,'120 s']],
+            settings.activeTurnSeconds, 'activeTurnSeconds', true)
+      + seg('Commerce', 'fenêtre après chaque tour', [[0,'aucune'],[20,'20 s'],[30,'30 s'],[45,'45 s']],
+            settings.tradingWindowSeconds, 'tradingWindowSeconds', true);
+    document.getElementById('consequence').innerHTML = consequences();
+  }
+
+  document.getElementById('rows').addEventListener('click', function (event) {
+    const button = event.target.closest('button');
+    if (!button || button.disabled || !settings) return;
+
+    const stepper = button.closest('[data-step]');
+    if (stepper) {
+      const key = stepper.dataset.step;
+      const delta = Number(button.dataset.delta);
+      if (key === 'bots') apply({ bots: bots.count + delta });
+      else {
+        const next = {};
+        next[key] = settings[key] + delta;
+        // Réduire l'effectif sous le nombre de bots les laisserait tout
+        // occuper : ils descendent avec lui.
+        if (key === 'playerCount') next.bots = Math.min(bots.count, next[key]);
+        apply(next);
+      }
+      return;
+    }
+
+    const segment = button.closest('[data-seg]');
+    if (segment) {
+      const key = segment.dataset.seg;
+      const raw = button.dataset.value;
+      const next = {};
+      next[key] = isNaN(Number(raw)) ? raw : Number(raw);
+      apply(next);
+    }
+  });
+
+  document.getElementById('reroll').addEventListener('click', function () {
+    apply({ newBoard: true });
+  });
+
+  // ── sièges et lancement ─────────────────────────────────────────────
 
   async function refresh() {
     try {
-      const seats = await (await fetch('/api/seats')).json();
-      const taken = seats.filter(s => s.connected);
+      const [seats, state] = await Promise.all([
+        (await fetch('/api/seats')).json(),
+        (await fetch('/api/settings')).json(),
+      ]);
+      if (pending === 0) {
+        settings = state.settings;
+        bots = state.bots || bots;
+        // Dans les deux sens : une partie rouverte doit rendre au bouton
+        // son libellé et aux réglages leurs molettes, sans recharger.
+        if (state.started !== started) {
+          started = state.started;
+          if (started) markStarted(); else reopen();
+        }
+        renderSettings();
+      }
+      const taken = seats.filter(function (s) { return s.connected; });
       document.getElementById('count').textContent = String(taken.length);
       updateStart(taken.length, seats.length);
-      document.getElementById('seats').innerHTML = seats.map(seat =>
-        seat.connected
-          ? '<div class="seat"><span class="dot"></span>' + escapeHtml(seat.name) + '</div>'
-          : '<div class="seat free">libre</div>'
-      ).join('');
+      document.getElementById('seats').innerHTML = seats.map(function (seat) {
+        if (!seat.connected) return '<div class="seat free">libre</div>';
+        // Le trait pointillé distingue un adversaire automatique : dix
+        // sièges pleins dont neuf de bots ne se lisent pas autrement, et
+        // c'est pourtant ce que l'hôte cherche à savoir avant de lancer.
+        return '<div class="seat' + (seat.bot ? ' bot' : '') + '">'
+          + '<span class="dot"></span>' + escapeHtml(seat.name)
+          + (seat.bot ? '<small> · auto</small>' : '') + '</div>';
+      }).join('');
     } catch { /* le serveur redémarre : on réessaiera au prochain tour */ }
   }
+
   /**
    * Le bouton ne s'active qu'avec au moins un joueur, et l'hôte reste libre
    * de lancer sans attendre les retardataires : leurs sièges seront joués
@@ -169,19 +440,31 @@ ${tableViewMarkup()}
         : 'Tout le monde est là.';
   }
 
-  document.getElementById('start').addEventListener('click', async () => {
+  /** Retour au salon : le bouton redevient un départ, les réglages s'ouvrent. */
+  function reopen() {
+    const button = document.getElementById('start');
+    button.textContent = 'Démarrer la partie';
+    document.getElementById('rows').hidden = false;
+    document.getElementById('consequence').hidden = false;
+    document.getElementById('locked').hidden = true;
+    document.getElementById('reroll').disabled = false;
+  }
+
+  function markStarted() {
     const button = document.getElementById('start');
     button.disabled = true;
-    await fetch('/api/start', { method: 'POST' });
-    started = true;
     button.textContent = 'Partie en cours';
     document.getElementById('start-note').textContent = 'Bonne partie.';
+  }
+
+  document.getElementById('start').addEventListener('click', async function () {
+    document.getElementById('start').disabled = true;
+    await fetch('/api/start', { method: 'POST' });
+    started = true;
+    markStarted();
+    renderSettings();
   });
 
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, c =>
-      ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
-  }
   refresh();
   setInterval(refresh, 1500);
 ${tableViewScript()}

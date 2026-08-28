@@ -29,7 +29,16 @@ export interface HintProps {
   readonly children: ReactNode;
 }
 
-function CostLine({ cost }: { cost: ResourceCounts }) {
+/**
+ * Le prix, en pictogrammes.
+ *
+ * Exporté parce qu'il sert aussi hors infobulle : sur téléphone le coût est
+ * écrit à même le bouton, faute de survol à quoi le suspendre.
+ */
+export function CostLine({ cost, className = 'gc-hint-cost' }: {
+  cost: ResourceCounts;
+  className?: string;
+}) {
   const entries = RESOURCES
     .map((resource) => [resource, amount(cost, resource)] as const)
     .filter(([, n]) => n > 0);
@@ -37,7 +46,7 @@ function CostLine({ cost }: { cost: ResourceCounts }) {
   if (entries.length === 0) return null;
 
   return (
-    <span className="gc-hint-cost">
+    <span className={className}>
       {entries.map(([resource, n]) => (
         <span key={resource} className="gc-hint-cost-item">
           <ResourceIcon resource={resource} size={15} />
