@@ -7,7 +7,10 @@
  * chercher une adresse IP dans les réglages système.
  */
 
+import { readFileSync } from 'node:fs';
 import { networkInterfaces } from 'node:os';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import QRCode from 'qrcode';
 
@@ -16,6 +19,12 @@ import { GameServer } from '@grand-colonies/server';
 import { renderHostPage } from './hostPage.js';
 
 const PORT = Number(process.env['PORT'] ?? 2567);
+
+/** L'illustration de fond, partagée avec le client. */
+const BACKGROUND = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../../../packages/client/public/assets/backgrounds/bg_host.jpg',
+);
 
 /**
  * L'adresse IPv4 de la machine sur le réseau local.
@@ -73,6 +82,19 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
       if (req.url === '/' || req.url === '/hote') {
         res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
         res.end(page);
+        return true;
+      }
+      // L'écran de l'hôte vit sur le port du serveur de jeu, pas sur celui
+      // du client : il sert donc lui-même son illustration de fond.
+      if (req.url === '/fond.jpg') {
+        try {
+          const image = readFileSync(BACKGROUND);
+          res.writeHead(200, { 'content-type': 'image/jpeg', 'cache-control': 'max-age=3600' });
+          res.end(image);
+        } catch {
+          // Sans illustration la page reste parfaitement utilisable.
+          res.writeHead(404).end();
+        }
         return true;
       }
       if (req.url === '/api/start' && req.method === 'POST') {

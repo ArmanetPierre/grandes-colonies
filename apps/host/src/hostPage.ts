@@ -42,7 +42,21 @@ export function renderHostPage(data: HostPageData): string {
     background:var(--bg); color:var(--ink); font-family:'Inter',system-ui,sans-serif;
     min-height:100vh; display:grid; place-items:center; padding:28px;
   }
-  .card { width:min(760px,100%); text-align:center; }
+  /* La table de navigation, en fond. L'illustration est chargée en son
+     centre — une carte marine, des cordages, un astrolabe — et le QR code
+     s'y perdrait : le contenu se pose donc sur un panneau opaque plutôt que
+     directement sur l'image. */
+  body::before {
+    content:''; position:fixed; inset:0; z-index:0;
+    background:
+      linear-gradient(rgba(223,207,172,.34), rgba(223,207,172,.34)),
+      url('/fond.jpg') center / cover no-repeat;
+  }
+  .card {
+    position:relative; z-index:1; width:min(760px,100%); text-align:center;
+    background:rgba(233,220,190,.94); border:1px solid var(--line);
+    padding:30px 26px; box-shadow:0 4px 24px rgba(30,20,10,.28);
+  }
   h1 { font-family:'Marcellus',Georgia,serif; font-size:40px; letter-spacing:.05em; margin-bottom:6px; }
   .sub { color:var(--soft); font-size:14px; margin-bottom:26px; }
 

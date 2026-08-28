@@ -23,7 +23,7 @@ export function GameOver({ view, me }: GameOverProps) {
   const winner = view.winner;
 
   return (
-    <div className="gc-modal-backdrop">
+    <div className="gc-modal-backdrop is-endgame">
       <div className="gc-modal gc-modal-wide">
         <header className="gc-modal-head">
           <span className="gc-modal-title">

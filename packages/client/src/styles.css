@@ -30,6 +30,7 @@ body {
 
 .gc-splash {
   min-height: 100vh; display: grid; place-content: center; text-align: center; gap: 10px;
+  padding: 24px 18px;
 }
 .gc-splash h1 { font-family: var(--gc-font-display); font-size: 34px; letter-spacing: .05em; }
 .gc-splash p { font-family: var(--gc-font-body); font-size: 18px; color: var(--gc-ink-soft); }
@@ -550,4 +551,33 @@ body {
   .gc-card-effect { font-size: 7.5px; }
   .gc-card-plate { padding: 5px 6px 6px; }
   .gc-card-corner { width: 10px; height: 10px; }
+}
+
+/* ── fonds d'écran ─────────────────────────────────────────────────────
+   Trois illustrations dormaient dans `public/assets/backgrounds`, générées
+   puis oubliées. Chacune est chargée : posée nue, elle mangerait le texte.
+   Un voile aux teintes du thème s'intercale donc systématiquement — c'est
+   lui qui garantit le contraste, pas la chance du cadrage. */
+
+/* Avant la partie : la mer Égée au petit matin, pâle et brumeuse. */
+.gc-splash {
+  position: relative;
+  background: url('/assets/backgrounds/bg_lobby.jpg') center / cover no-repeat;
+}
+.gc-splash::before {
+  content: ''; position: absolute; inset: 0;
+  /* Plus dense au centre, où se trouve le texte ; transparent sur les bords,
+     où l'image peut respirer. */
+  background:
+    radial-gradient(ellipse 46% 38% at 50% 46%, rgba(223, 207, 172, .92), rgba(223, 207, 172, .5) 68%, rgba(223, 207, 172, 0)),
+    linear-gradient(rgba(223, 207, 172, .1), rgba(223, 207, 172, .1));
+}
+.gc-splash > * { position: relative; z-index: 1; }
+.gc-splash h1 { text-shadow: 0 1px 0 rgba(242, 233, 212, .8); }
+
+/* Fin de partie : les navires rentrent au port, au couchant. */
+.gc-modal-backdrop.is-endgame {
+  background:
+    linear-gradient(rgba(27, 19, 16, .62), rgba(27, 19, 16, .62)),
+    url('/assets/backgrounds/bg_endgame.jpg') center / cover no-repeat;
 }
