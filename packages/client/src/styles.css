@@ -625,3 +625,41 @@ body {
 @media (max-width: 780px) {
   .gc-hint { max-width: min(260px, 78vw); font-size: 11px; }
 }
+
+/* ── le marché ─────────────────────────────────────────────────────────
+   Toutes les offres de la table. Le panneau de commerce ne montre que ce
+   qui concerne le joueur ; à douze, cela cache l'essentiel. */
+.gc-market-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 5px; }
+.gc-market-row {
+  display: grid; grid-template-columns: minmax(80px, 1fr) auto minmax(74px, auto) auto;
+  align-items: center; gap: 10px;
+  padding: 7px 9px; background: var(--gc-raised); border: 1px solid var(--gc-line);
+}
+.gc-market-row.is-mine { border-color: var(--gc-accent); }
+.gc-market-who {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12.5px; font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.gc-market-terms { display: flex; align-items: center; gap: 8px; }
+.gc-market-counts { display: flex; align-items: center; gap: 6px; }
+.gc-market-count {
+  display: flex; align-items: center; gap: 3px;
+  font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.gc-market-arrow { color: var(--gc-ink-soft); }
+.gc-market-target { font-size: 10.5px; color: var(--gc-ink-soft); font-style: italic; }
+.gc-market-none { color: var(--gc-ink-soft); font-size: 11px; }
+.gc-market-action { justify-self: end; }
+.gc-market-empty {
+  margin-top: 14px; text-align: center; font-style: italic;
+  color: var(--gc-ink-soft); font-size: 13px;
+}
+
+@media (max-width: 620px) {
+  /* Deux lignes par offre : les colonnes ne tiennent pas côte à côte. */
+  .gc-market-row { grid-template-columns: 1fr auto; gap: 4px 8px; }
+  .gc-market-terms { grid-column: 1 / -1; }
+  .gc-market-target { grid-column: 1; }
+  .gc-market-action { grid-column: 2; grid-row: 3; }
+}

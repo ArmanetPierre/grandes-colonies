@@ -26,6 +26,7 @@ import { Discard } from './ui/Discard.jsx';
 import { GameOver } from './ui/GameOver.jsx';
 import { type CostKind, Hint } from './ui/Hint.jsx';
 import { type Entry, Journal, describe } from './ui/Journal.jsx';
+import { Market } from './ui/Market.jsx';
 import { RESOURCE_LABELS, ResourceIcon } from './ui/ResourceIcon.jsx';
 import { Lobby } from './ui/Lobby.jsx';
 import { ObjectiveChoice } from './ui/ObjectiveChoice.jsx';
@@ -115,6 +116,10 @@ const HINTS: Record<string, { text: string; cost?: CostKind; note?: string }> = 
   endCycle: {
     text: 'Résout les annonces de construction et donne la main au joueur suivant.',
   },
+  market: {
+    text: 'Toutes les offres de la table, y compris celles qui ne te sont pas adressées.',
+    note: 'Savoir qui réclame quoi vaut mieux que de proposer au hasard.',
+  },
 };
 
 /** Lignes de journal conservées. Au-delà, personne ne remonte. */
@@ -145,6 +150,8 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
    * personne ne remonte au cycle trois.
    */
   const [journal, setJournal] = useState<readonly Entry[]>([]);
+  /** Le marché est ouvert : on regarde toutes les offres de la table. */
+  const [market, setMarket] = useState(false);
   /**
    * Ce que le joueur s'apprête à poser. Rien n'est cliquable tant qu'il n'a
    * pas choisi : sur un plateau de cinquante tuiles, afficher tous les
@@ -538,6 +545,12 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
               </button>
             </Hint>
           )}
+          <Hint text={HINTS['market']?.text ?? ''} note={HINTS['market']?.note ?? ''}>
+            <button className="gc-action gc-action-quiet" onClick={() => setMarket(true)}>
+              Marché
+              <small>{pub.offers.length} offre{pub.offers.length > 1 ? 's' : ''}</small>
+            </button>
+          </Hint>
           <Action label="Lancer les dés" hint="roll"
                   enabled={caps.has('CAN_ROLL_DICE')} onClick={() => send('ROLL_DICE')} />
           <Action label="Carte dév." hint="devCard"
@@ -549,6 +562,16 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
                   enabled={caps.has('CAN_END_CYCLE')} onClick={() => send('END_CYCLE')} />
         </div>
       </footer>
+
+      {market && (
+        <Market
+          view={pub}
+          priv={priv}
+          onAccept={(offerId) => { send('ACCEPT_TRADE', { offerId }); setMarket(false); }}
+          onCancel={(offerId) => send('CANCEL_TRADE', { offerId })}
+          onClose={() => setMarket(false)}
+        />
+      )}
 
       {pub.winner && <GameOver view={pub} me={priv.id} />}
 
