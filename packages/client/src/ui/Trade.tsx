@@ -17,6 +17,8 @@ import { useState } from 'react';
 
 import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
 
+import { ResourceIcon } from './ResourceIcon.jsx';
+
 const CORE = ['wood', 'brick', 'wool', 'grain', 'ore'] as const;
 const SHORT: Record<string, string> = {
   wood: 'Bois', brick: 'Brique', wool: 'Laine',
@@ -55,17 +57,25 @@ export function Trade({ pub, priv, canOffer, canBank, onOffer, onAccept, onCance
       <div className="gc-trade-compose">
         <label>
           Je donne
+          {/* Une balise `option` n'accepte pas de dessin : l'icône se place
+              donc à côté du menu, et suit la ressource choisie. */}
+          <span className="gc-trade-pick">
+            <ResourceIcon resource={give} size={20} />
           <select value={give} onChange={(e) => setGive(e.target.value)}>
             {CORE.map((r) => (
               <option key={r} value={r}>{SHORT[r]} ({held(r)})</option>
             ))}
           </select>
+          </span>
         </label>
         <label>
           Je veux
-          <select value={want} onChange={(e) => setWant(e.target.value)}>
-            {CORE.map((r) => <option key={r} value={r}>{SHORT[r]}</option>)}
-          </select>
+          <span className="gc-trade-pick">
+            <ResourceIcon resource={want} size={20} />
+            <select value={want} onChange={(e) => setWant(e.target.value)}>
+              {CORE.map((r) => <option key={r} value={r}>{SHORT[r]}</option>)}
+            </select>
+          </span>
         </label>
         <label>
           À

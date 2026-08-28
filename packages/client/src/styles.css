@@ -238,8 +238,6 @@ body {
   .gc-action small { font-size: 8.5px; }
   .gc-res { padding: 3px 7px; font-size: 11px; }
 
-  .gc-devcards { width: 100%; }
-  .gc-devcard { flex: 1 1 46%; min-height: 42px; }
 }
 
 /* Les modales doivent tenir sans défilement horizontal, et rester
@@ -361,27 +359,11 @@ body {
 /* ── cartes développement ──────────────────────────────────────────────
    Elles vivent dans le pied de page, à côté de la main : ce sont des
    ressources comme les autres, et les séparer les ferait oublier. */
-.gc-devcards { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.gc-devcards { display: flex; align-items: flex-end; gap: 7px; flex-wrap: wrap; }
 .gc-devcards-label {
   font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
   color: var(--gc-ink-soft);
 }
-.gc-devcard {
-  background: var(--gc-raised); color: var(--gc-ink);
-  border: 1px solid var(--gc-line); padding: 5px 10px;
-  font-family: var(--gc-font-ui); font-size: 12px; cursor: pointer;
-  text-align: left;
-}
-.gc-devcard small { display: block; font-size: 9px; color: var(--gc-ink-soft); }
-.gc-devcard:disabled { opacity: .45; cursor: default; }
-/* Armée : la carte attend un clic sur le plateau, il faut que ça se voie. */
-.gc-devcard.is-armed {
-  background: var(--gc-second); color: var(--gc-accent-ink);
-  border-color: transparent; outline: 2px solid var(--gc-accent); outline-offset: 1px;
-}
-.gc-devcard.is-armed small { color: var(--gc-accent-ink); opacity: .85; }
-.gc-devcard.is-pending { font-style: italic; }
-
 /* Bandeau d'accompagnement d'une carte en cours : dit l'étape suivante. */
 .gc-card-progress {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -479,4 +461,93 @@ body {
     width: 100%; max-height: 26vh;
     border-right: none; border-top: 1px solid var(--gc-line);
   }
+}
+
+/* ── icônes de ressources ──────────────────────────────────────────────── */
+.gc-icon { display: block; flex: none; }
+.gc-res { display: inline-flex; align-items: center; gap: 5px; }
+.gc-discard-name, .gc-pick-name { display: flex; align-items: center; gap: 7px; }
+.gc-trade-pick { display: flex; align-items: center; gap: 7px; }
+.gc-trade-pick select { flex: 1; min-width: 0; }
+
+/* ── cartes développement ──────────────────────────────────────────────
+   L'illustration existait déjà ; ce qui manquait était la carte. Le cadre
+   est en CSS pour rester net du pouce d'un téléphone à l'écran de l'hôte. */
+/* Le bouton n'est qu'une enveloppe : tout le dessin vit dans `.gc-card`. */
+.gc-card-button {
+  flex: none; cursor: pointer;
+  background: none; border: none; padding: 0; text-align: left;
+}
+.gc-card-button:disabled { cursor: default; }
+.gc-card-button:disabled .gc-card-frame { filter: grayscale(.55) brightness(.82); }
+
+.gc-card { width: 116px; }
+.gc-card-frame {
+  position: relative; aspect-ratio: 5 / 7; overflow: hidden;
+  background: var(--gc-raised);
+  border: 1px solid var(--gc-line);
+  box-shadow: var(--gc-shadow);
+  display: flex; flex-direction: column;
+  color: var(--gc-gold);
+}
+.gc-card-art {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: 50% 18%;
+}
+/* Un voile en bas : sans lui, le titre se perdrait dans l'illustration. */
+.gc-card-frame::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 54%;
+  background: linear-gradient(to top, rgba(28, 19, 14, .94) 34%, rgba(28, 19, 14, 0));
+}
+.gc-card-plate {
+  position: relative; z-index: 1; margin-top: auto; padding: 7px 8px 8px;
+  display: grid; gap: 2px;
+}
+.gc-card-title {
+  font-family: var(--gc-font-display); font-size: 12.5px; line-height: 1.15;
+  color: var(--gc-accent-ink);
+}
+.gc-card-effect {
+  font-size: 8.5px; line-height: 1.3; color: var(--gc-accent-ink); opacity: .72;
+}
+
+.gc-card-corner {
+  position: absolute; width: 13px; height: 13px; z-index: 1; opacity: .8;
+}
+.gc-card-corner.is-tl { top: 4px; left: 4px; }
+.gc-card-corner.is-tr { top: 4px; right: 4px; transform: scaleX(-1); }
+.gc-card-corner.is-bl { bottom: 4px; left: 4px; transform: scaleY(-1); }
+.gc-card-corner.is-br { bottom: 4px; right: 4px; transform: scale(-1); }
+
+/* Armée : la carte attend un clic sur le plateau. */
+.gc-card.is-armed .gc-card-frame {
+  border-color: var(--gc-accent);
+  box-shadow: 0 0 0 2px var(--gc-accent), var(--gc-shadow-lg);
+}
+/* Face cachée : achetée ce tour, jouable au prochain. */
+.gc-card.is-facedown .gc-card-frame { color: var(--gc-line); }
+.gc-card-back { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .55; }
+.gc-card-wait {
+  position: relative; z-index: 1; margin-top: auto; padding: 7px;
+  font-size: 9px; text-align: center; font-style: italic;
+  color: var(--gc-accent-ink);
+}
+
+/* ── cartes sur téléphone ──────────────────────────────────────────────
+   Ce bloc vient après le style de base des cartes, et non avec les autres
+   règles mobiles : à spécificité égale, c'est la dernière déclaration du
+   fichier qui l'emporte. Placé plus haut, il était simplement ignoré, et le
+   pied de page enflait jusqu'à 736 pixels — il ne restait que huit pixels
+   au plateau. */
+@media (max-width: 780px) {
+  .gc-devcards {
+    width: 100%; flex-wrap: nowrap; overflow-x: auto;
+    padding-bottom: 4px; gap: 6px;
+  }
+  .gc-devcards-label { display: none; }
+  .gc-card { width: 84px; }
+  .gc-card-title { font-size: 10.5px; }
+  .gc-card-effect { font-size: 7.5px; }
+  .gc-card-plate { padding: 5px 6px 6px; }
+  .gc-card-corner { width: 10px; height: 10px; }
 }

@@ -25,14 +25,10 @@ import { type CardRequest, DevCards } from './ui/DevCards.jsx';
 import { Discard } from './ui/Discard.jsx';
 import { GameOver } from './ui/GameOver.jsx';
 import { type Entry, Journal, describe } from './ui/Journal.jsx';
+import { RESOURCE_LABELS, ResourceIcon } from './ui/ResourceIcon.jsx';
 import { Lobby } from './ui/Lobby.jsx';
 import { ObjectiveChoice } from './ui/ObjectiveChoice.jsx';
 import { Trade } from './ui/Trade.jsx';
-
-const RESOURCE_LABELS: Record<string, string> = {
-  wood: 'Bois', brick: 'Brique', wool: 'Laine',
-  grain: 'Blé', ore: 'Minerai', gold: 'Or', fish: 'Poisson',
-};
 
 /** La phrase d'ordre : ce que le joueur doit faire, en une ligne. */
 function orderSentence(pub: PublicGameView | undefined, priv: PrivatePlayerView | undefined): string {
@@ -380,7 +376,8 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
         <div className="gc-hand">
           {Object.entries(priv.hand).map(([resource, count]) => (
             <span key={resource} className="gc-res" title={RESOURCE_LABELS[resource] ?? resource}>
-              {RESOURCE_LABELS[resource] ?? resource} <strong>{count}</strong>
+              <ResourceIcon resource={resource} />
+              <strong>{count}</strong>
             </span>
           ))}
           <span className={`gc-limit${overLimit ? ' is-over' : ''}`}>

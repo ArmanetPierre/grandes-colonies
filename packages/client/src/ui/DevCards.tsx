@@ -15,31 +15,16 @@ import { useState } from 'react';
 
 import type { PrivatePlayerView } from '@grand-colonies/protocol';
 
-const RESOURCE_LABELS: Record<string, string> = {
-  wood: 'Bois', brick: 'Brique', wool: 'Laine',
-  grain: 'Blé', ore: 'Minerai', gold: 'Or', fish: 'Poisson',
-};
+import { CARD_TITLES, DevCardArt } from './DevCardArt.jsx';
+import { RESOURCE_LABELS, ResourceIcon } from './ResourceIcon.jsx';
 
 /** Les ressources qu'une carte peut viser — l'or et le poisson compris. */
 const CHOOSABLE = ['wood', 'brick', 'wool', 'grain', 'ore', 'gold', 'fish'] as const;
 
-export const CARD_LABELS: Record<string, string> = {
-  knight: 'Chevalier',
-  roadBuilding: 'Construction de routes',
-  invention: 'Invention',
-  monopoly: 'Monopole',
-  freeBuild: 'Bâtisseur',
-};
-
-const CARD_HINTS: Record<string, string> = {
-  knight: 'déplace le voleur',
-  roadBuilding: 'deux routes offertes',
-  invention: 'deux ressources',
-  monopoly: 'rafle une ressource',
-  freeBuild: 'une construction offerte',
-};
-
 /** Ce que le panneau demande à l'écran de jeu d'armer sur le plateau. */
+/** Réexporté pour le journal, qui nomme les cartes jouées. */
+export { CARD_TITLES as CARD_LABELS } from './DevCardArt.jsx';
+
 export type CardRequest =
   | { readonly kind: 'knight' }
   | { readonly kind: 'roadBuilding' }
@@ -82,18 +67,19 @@ export function DevCards({
         {playable.map((card, index) => (
           <button
             key={`${card}-${index}`}
-            className={`gc-devcard${armed === card ? ' is-armed' : ''}`}
+            className="gc-card-button"
             disabled={!playableFor(card)}
+            title={CARD_TITLES[card] ?? card}
             onClick={() => (armed === card ? onCancel() : start(card))}
           >
-            {CARD_LABELS[card] ?? card}
-            <small>{armed === card ? 'choisis sur le plateau' : CARD_HINTS[card] ?? ''}</small>
+            <DevCardArt card={card} armed={armed === card} />
           </button>
         ))}
+        {/* Face cachée : on la montre quand même, la cacher ferait croire à
+            l'achat perdu. */}
         {pending.map((card, index) => (
-          <button key={`p-${card}-${index}`} className="gc-devcard is-pending" disabled>
-            {CARD_LABELS[card] ?? card}
-            <small>achetée ce tour</small>
+          <button key={`p-${card}-${index}`} className="gc-card-button" disabled>
+            <DevCardArt card={card} facedown />
           </button>
         ))}
       </div>
@@ -164,7 +150,10 @@ function PickResources({ title, hint, count, onConfirm, onCancel }: {
         <div className="gc-pick-grid">
           {CHOOSABLE.map((resource) => (
             <div key={resource} className="gc-pick-row">
-              <span className="gc-pick-name">{RESOURCE_LABELS[resource] ?? resource}</span>
+              <span className="gc-pick-name">
+                <ResourceIcon resource={resource} />
+                {RESOURCE_LABELS[resource] ?? resource}
+              </span>
               <button className="gc-action gc-action-mini" onClick={() => add(resource, -1)}
                       disabled={(picked[resource] ?? 0) === 0}>−</button>
               <span className="gc-pick-count">{picked[resource] ?? 0}</span>

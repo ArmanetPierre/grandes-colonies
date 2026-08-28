@@ -19,10 +19,7 @@ import { useMemo, useState } from 'react';
 import { suggestDiscard } from '@grand-colonies/engine';
 import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
 
-const LABELS: Record<string, string> = {
-  wood: 'Bois', brick: 'Brique', wool: 'Laine',
-  grain: 'Blé', ore: 'Minerai', gold: 'Or', fish: 'Poisson',
-};
+import { RESOURCE_LABELS, ResourceIcon } from './ResourceIcon.jsx';
 
 export interface DiscardProps {
   readonly pub: PublicGameView;
@@ -67,7 +64,10 @@ export function Discard({ pub, priv, onDiscard }: DiscardProps) {
         <div className="gc-discard-rows">
           {Object.entries(priv.hand as Record<string, number>).map(([resource, held]) => (
             <div key={resource} className="gc-discard-row">
-              <span className="gc-discard-name">{LABELS[resource] ?? resource}</span>
+              <span className="gc-discard-name">
+                <ResourceIcon resource={resource} />
+                {RESOURCE_LABELS[resource] ?? resource}
+              </span>
               <span className="gc-discard-held">{held}</span>
               <button onClick={() => adjust(resource, -1)} disabled={(picked[resource] ?? 0) === 0}>−</button>
               <span className="gc-discard-count">{picked[resource] ?? 0}</span>
