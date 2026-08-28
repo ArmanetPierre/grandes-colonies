@@ -13,6 +13,15 @@
   --gc-accent-ink: #F4E7CE;
   --gc-second: #2E2621;
   --gc-danger: #7E2410;
+  /*
+   * L'or des distinctions : monument, métropole, gain encaissé.
+   *
+   * La variable était appelée en trois endroits sans avoir jamais été
+   * définie — le monument héritait donc de la couleur du texte, et la bulle
+   * d'aide d'un cadre de la teinte de son contenu. Assez sombre pour rester
+   * lisible sur les fonds clairs de l'interface, où elle sert le plus.
+   */
+  --gc-gold: #A87C22;
 
   --gc-font-display: 'Marcellus', Georgia, serif;
   --gc-font-body: 'Cormorant Garamond', Georgia, serif;
@@ -126,128 +135,38 @@ body {
    défiler quand il ne tient pas. */
 .gc-board-wrap {
   flex: 1; position: relative; overflow: hidden; padding: 16px;
-  /* Le fond est déjà la mer : sans lui, l'océan de tuiles finissait sur un
-     bord d'équerre bien visible dès qu'on reculait. */
-  background: #2F4C66;
+  /* La scène peint son propre océan ; cette teinte ne se voit que le temps
+     du premier rendu, et doit donc être celle de l'eau. */
+  background: #14384F;
 }
-.gc-board { position: relative; flex: none; transform-origin: center; }
 /*
- * Le cadre qui mesure la place offerte au plateau.
+ * Le cadre qui porte la scène.
  *
  * Détaché du flux : en flex, il grandissait avec son contenu — il mesurait
  * 941 pixels dans une zone de 326 — et rapportait donc une place qui
- * n'existait pas, ce qui annulait toute mise à l'échelle.
+ * n'existait pas. C'est lui que la scène observe pour suivre les changements
+ * de place, une rotation de téléphone comme l'ouverture d'un panneau, et
+ * c'est sur lui que la toile WebGL se dimensionne.
  */
-.gc-board-fit {
-  position: absolute; inset: 16px;
+.gc-board-fit { position: absolute; inset: 16px; }
+
+/* Sans WebGL, une phrase plutôt qu'un cadre noir. */
+.gc-board-panne {
   display: flex; align-items: center; justify-content: center;
+  padding: 24px; text-align: center; cursor: default;
+  font-family: var(--gc-font-ui); font-size: 13px; line-height: 1.6;
+  color: var(--gc-ink-soft);
 }
 
-.gc-hex {
-  position: absolute; background-size: cover; background-position: center;
-  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  display: grid; place-items: center;
-}
-/* Sans jeton opaque, les numéros disparaissent sur les images. */
-.gc-token {
-  width: 20px; height: 20px; border-radius: 50%;
-  background: #FDFAF3; border: 1px solid rgba(0, 0, 0, .25);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, .45);
-  display: grid; place-items: center;
-  font-weight: 700; font-size: 11px; color: var(--gc-ink);
-  font-variant-numeric: tabular-nums;
-}
-/* 6 et 8 sont les plus productifs : ils se signalent, comme sur un plateau. */
-.gc-token-hot { color: var(--gc-danger); }
 /*
- * Le voleur.
+ * Le plateau était dessiné ici, en boîtes découpées au `clip-path`.
  *
- * Il n'était qu'un voile sombre posé sur la tuile — invisible parmi cinquante
- * textures, et plus encore depuis que la mer alentour est bleu profond. Il a
- * maintenant une silhouette : on le repère sans lire le plateau.
+ * Il l'est désormais en volume, dans `ui/board3d/` : tuiles, jetons,
+ * routes, bâtiments, voleur, emplacements proposés et annonces sont des
+ * maillages, pas des éléments du document. Rien de ce qui les concernait
+ * n'a de sens dans une feuille de style — la couleur d'un joueur est
+ * devenue une teinte d'instance, et le survol, un lancer de rayon.
  */
-.gc-robber {
-  position: absolute; inset: 0;
-  background: rgba(18, 11, 7, .58);
-  display: grid; place-items: center;
-}
-.gc-robber::after {
-  content: ''; width: 17px; height: 23px;
-  background: #14100D;
-  border: 2px solid var(--gc-accent);
-  /* Une silhouette de pion : tête ronde, corps évasé. */
-  clip-path: polygon(34% 0, 66% 0, 74% 20%, 62% 34%, 84% 66%, 92% 100%, 8% 100%, 16% 66%, 38% 34%, 26% 20%);
-  box-shadow: 0 0 0 2px rgba(20, 12, 8, .55);
-}
-/* Cible possible pour le voleur : cliquable et signalée. */
-/*
- * Un hexagone qu'on peut viser.
- *
- * Le survol ne suffisait pas : il n'existe pas au doigt. Sur téléphone, le
- * joueur lisait « Déplace le voleur » sans le moindre indice de l'endroit où
- * appuyer. La cible se signale donc d'elle-même, comme les emplacements de
- * construction.
- */
-.gc-hex-target { cursor: pointer; position: relative; }
-/*
- * Le contour est un tracé, pas une bordure.
- *
- * Une bordure CSS suit la boîte rectangulaire ; découpée ensuite en hexagone,
- * il n'en restait que quatre arcs aux angles, éparpillés sur la carte comme
- * des traits sans rapport. Un hexagone dessiné épouse la tuile.
- */
-.gc-hex-target::before {
-  content: ''; position: absolute; inset: 0;
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 86.6 100' preserveAspectRatio='none'%3E%3Cpolygon points='43.3,3 83.6,26.5 83.6,73.5 43.3,97 3,73.5 3,26.5' fill='none' stroke='%23A63A17' stroke-width='6' stroke-dasharray='11 7'/%3E%3C/svg%3E")
-      center / 100% 100% no-repeat,
-    rgba(166, 58, 23, .18);
-  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  animation: gc-pulse 1.6s ease-in-out infinite;
-}
-.gc-hex-target:hover::before { background-color: rgba(166, 58, 23, .36); }
-
-.gc-road {
-  position: absolute; width: 24px; height: 5px;
-  border: 1px solid rgba(27, 19, 16, .45); border-radius: 1px;
-}
-.gc-road-sea { opacity: .85; border-style: dashed; }
-
-.gc-building {
-  position: absolute; width: 15px; height: 15px;
-  transform: translate(-50%, -50%);
-  border: 1px solid rgba(27, 19, 16, .5);
-}
-.gc-settlement { clip-path: polygon(50% 0, 100% 38%, 100% 100%, 0 100%, 0 38%); }
-.gc-city { width: 21px; height: 17px; clip-path: polygon(0 40%, 32% 40%, 32% 0, 100% 0, 100% 100%, 0 100%); }
-
-.gc-port {
-  position: absolute; transform: translate(-50%, -50%);
-  font-size: 9px; font-weight: 700; padding: 1px 4px;
-  background: var(--gc-raised); border: 1px solid var(--gc-line);
-}
-
-/* Emplacements proposés : discrets tant qu'on ne les survole pas. */
-.gc-spot {
-  position: absolute; border: 2px dashed var(--gc-accent);
-  background: rgba(166, 58, 23, .18); cursor: pointer; padding: 0;
-}
-.gc-spot-vertex { width: 16px; height: 16px; border-radius: 50%; transform: translate(-50%, -50%); }
-.gc-spot-edge { width: 30px; height: 8px; }
-.gc-spot:hover { background: rgba(166, 58, 23, .4); }
-
-/* Une annonce en attente doit se voir sans encombrer le plateau. */
-.gc-intent {
-  position: absolute; width: 20px; height: 20px; border-radius: 50%;
-  border: 2px dashed; transform: translate(-50%, -50%); pointer-events: none;
-}
-.gc-intent-contested { animation: gc-pulse 1.4s ease-in-out infinite; }
-@keyframes gc-pulse { 50% { opacity: .35; } }
-
-.gc-frozen {
-  position: absolute; transform: translate(-50%, -50%);
-  color: var(--gc-ink-soft); font-weight: 700; pointer-events: none;
-}
 
 /* ── main et actions ─────────────────────────────────────────────── */
 .gc-footer {
@@ -531,15 +450,10 @@ body {
 .gc-lobby-seat.is-free { opacity: .45; font-style: italic; }
 .gc-lobby-seat.is-me { border-color: var(--gc-accent); font-weight: 600; }
 
-/* ── métropole et monument ─────────────────────────────────────────────
-   La métropole se distingue de la cité : trois pour toute la partie, on
-   doit voir d'un coup d'œil qui les tient. */
-.gc-building.gc-metropolis {
-  background: var(--gc-gold); border: 2px solid var(--gc-ink);
-  width: 15px; height: 15px;
-}
-/* Le monument n'occupe aucun sommet : il se signale dans la liste des
-   joueurs, faute de quoi deux points apparaîtraient sans cause visible. */
+/* ── monument ──────────────────────────────────────────────────────────
+   Le monument se signale aussi dans la liste des joueurs : sur le plateau
+   il occupe un sommet, mais à douze on ne balaie pas la carte pour savoir
+   qui a pris ses deux points. */
 .gc-monument { color: var(--gc-gold); font-size: 11px; }
 
 /* ── choix de la victime du voleur ─────────────────────────────────────── */
@@ -940,30 +854,15 @@ body {
   user-select: none; -webkit-user-select: none;
 }
 .gc-board-fit:active { cursor: grabbing; }
-.gc-board { will-change: transform; }
 
 /*
- * Le large : décor pur, jamais cliquable.
+ * Ni voile sur les bords, ni silhouettes d'îles en aplat.
  *
- * La même dalle d'eau que le plateau, pour que la mer se prolonge sans
- * couture. Ce sont les jetons et les constructions qui font ressortir la
- * carte jouable, pas une teinte différente.
+ * Le voile masquait le bord d'équerre du pavage de tuiles, les silhouettes
+ * disaient que l'archipel continuait. La scène fait les deux mieux et en
+ * profondeur : son océan est continu, sa brume efface le large, et les îles
+ * lointaines y sont des volumes que la brume mange à distance.
  */
-.gc-hex-large { pointer-events: none; }
-
-/* Les terres du large : des silhouettes, sans détail ni relief. */
-.gc-hex-lointain { background: #14100D; }
-
-/* Le monde s'efface vers les bords plutôt que de s'arrêter à l'équerre. */
-.gc-board-wrap::after {
-  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
-  background: radial-gradient(
-    ellipse 82% 82% at 50% 50%,
-    transparent 58%,
-    rgba(20, 32, 44, .42) 88%,
-    rgba(16, 26, 36, .68) 100%
-  );
-}
 
 .gc-recentrer {
   position: absolute; right: 10px; bottom: 10px; z-index: 2;
@@ -973,3 +872,83 @@ body {
   border: 1px solid var(--gc-line); box-shadow: var(--gc-shadow);
 }
 .gc-recentrer:hover { border-color: var(--gc-accent); }
+
+/* ── les ressources gagnées ────────────────────────────────────────────
+   Une carte part de l'hexagone qui l'a produite et rejoint sa pile. Le
+   compteur seul ne disait ni qu'il avait changé, ni d'où venait le gain. */
+
+.gc-vols {
+  /*
+   * Au-dessus du plateau et de la barre du bas, sous les fenêtres modales.
+   *
+   * Une défausse à annoncer ou un objectif à choisir interrompent le jeu :
+   * des cartes qui volent par-dessus donneraient à croire qu'on peut encore
+   * agir ailleurs.
+   */
+  position: fixed; inset: 0; z-index: 45;
+  /* Pure décoration : rien ici ne doit intercepter un clic destiné au
+     plateau, qui reste jouable pendant que les cartes volent. */
+  pointer-events: none;
+}
+
+.gc-vol {
+  position: fixed; left: 0; top: 0;
+  display: grid; place-items: center;
+  width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  background: var(--gc-raised); border: 1px solid var(--gc-line);
+  border-radius: 3px; box-shadow: 0 3px 10px rgba(12, 20, 28, .45);
+  opacity: 0;
+  animation: gc-vol var(--gc-vol, 780ms) cubic-bezier(.34, .12, .28, 1) forwards;
+}
+
+/*
+ * La trajectoire.
+ *
+ * Le point intermédiaire est décalé vers le haut de soixante-dix pixels par
+ * rapport à la corde : c'est ce qui fait une cloche plutôt qu'une glissade.
+ * Une carte qui rejoint sa pile en ligne droite se lit comme un curseur qui
+ * se déplace, pas comme quelque chose qu'on reçoit.
+ */
+@keyframes gc-vol {
+  0%   { transform: translate(0, 0) scale(.55); opacity: 0; }
+  14%  { transform: translate(calc(var(--gc-dx) * .14), calc(var(--gc-dy) * .14 - 22px)) scale(1.1); opacity: 1; }
+  55%  { transform: translate(calc(var(--gc-dx) * .55), calc(var(--gc-dy) * .55 - 70px)) scale(1.1); opacity: 1; }
+  88%  { opacity: 1; }
+  100% { transform: translate(var(--gc-dx), var(--gc-dy)) scale(.5); opacity: 0; }
+}
+
+/* La pile qui encaisse : elle enfle une fois, brièvement. */
+.gc-res { position: relative; transition: transform .18s ease-out; }
+.gc-res.is-gagne {
+  animation: gc-encaisse .5s ease-out;
+  border-color: var(--gc-gold);
+}
+@keyframes gc-encaisse {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+
+/* Le montant exact, qui monte et s'efface — le vol dit « quelque chose
+   arrive », ce chiffre dit combien. */
+.gc-res-gain {
+  position: absolute; left: 50%; top: -4px;
+  font-family: var(--gc-font-ui); font-size: 12px; font-weight: 700;
+  font-style: normal; color: var(--gc-gold);
+  text-shadow: 0 1px 3px rgba(12, 20, 28, .8);
+  pointer-events: none;
+  animation: gc-montant 1.6s ease-out forwards;
+}
+@keyframes gc-montant {
+  0%   { transform: translate(-50%, 6px); opacity: 0; }
+  18%  { transform: translate(-50%, -10px); opacity: 1; }
+  70%  { transform: translate(-50%, -16px); opacity: 1; }
+  100% { transform: translate(-50%, -26px); opacity: 0; }
+}
+
+/* Un mouvement qu'on n'a pas demandé peut gêner : on le respecte. */
+@media (prefers-reduced-motion: reduce) {
+  .gc-vol { display: none; }
+  .gc-res.is-gagne { animation: none; }
+  .gc-res-gain { animation: none; opacity: 1; transform: translate(-50%, -12px); }
+}

@@ -9,8 +9,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { BoardGraph, parseHexKey } from '@grand-colonies/engine';
-import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
+import { BoardGraph, type ResourceCounts, type Terrain, parseHexKey, yieldOf } from '@grand-colonies/engine';
+import type { Pair, PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
 
 import {
   type ConnectionStatus,
@@ -20,7 +20,8 @@ import {
   GameConnection,
   newActionId,
 } from './net/connection.js';
-import { Board, colorOf } from './ui/Board.jsx';
+import { Board, type PoigneePlateau, colorOf } from './ui/Board.jsx';
+import { Gains, type Vol, composerVols } from './ui/Gains.jsx';
 import { type CardRequest, DevCards } from './ui/DevCards.jsx';
 import { Discard } from './ui/Discard.jsx';
 import { GameOver } from './ui/GameOver.jsx';
@@ -151,6 +152,19 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
    * personne ne remonte au cycle trois.
    */
   const [journal, setJournal] = useState<readonly Entry[]>([]);
+  /*
+   * La dernière production annoncée par le serveur.
+   *
+   * On garde l'événement plutôt que d'agir dans le gestionnaire : ce dernier
+   * est créé une fois pour toutes avec la connexion, et ne verrait donc
+   * jamais que la vue du premier rendu. Le travail se fait dans un effet, où
+   * le plateau et la main du joueur sont ceux d'aujourd'hui.
+   */
+  const [production, setProduction] = useState<readonly Pair<ResourceCounts>[]>([]);
+  const [vols, setVols] = useState<readonly Vol[]>([]);
+  /** Ce qui vient d'entrer dans la main, le temps de le montrer. */
+  const [recolte, setRecolte] = useState<Readonly<Record<string, number>>>({});
+  const plateau = useRef<PoigneePlateau | null>(null);
   /** Le marché est ouvert : on regarde toutes les offres de la table. */
   const [market, setMarket] = useState(false);
   /**
@@ -203,6 +217,11 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
       onPrivate: setPriv,
       onTimer: setTimer,
       onEvents: (events) => {
+        // La production est la seule chose qu'on lise autrement que comme une
+        // ligne de journal : c'est un gain, et un gain se fête.
+        const gains = events.flatMap((e) => (e.type === 'ResourcesProduced' ? e.gains : []));
+        if (gains.length > 0) setProduction(gains);
+
         const fresh = events.map(describe).filter((e): e is Entry => e !== undefined);
         if (fresh.length === 0) return;
         setJournal((current) => [...fresh.reverse(), ...current].slice(0, JOURNAL_LENGTH));
@@ -245,6 +264,72 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
     () => (hexKeys === '' ? undefined : new BoardGraph(hexKeys.split(';').map(parseHexKey))),
     [hexKeys],
   );
+
+  /*
+   * La récolte : les jetons sautent, les cartes volent.
+   *
+   * Le montant vient du serveur et de nulle part ailleurs — c'est lui qui
+   * tient les règles, et une addition faite ici finirait par diverger de la
+   * sienne. Ne reste à deviner que le point de départ du vol, qui est de
+   * l'affichage : au pire une carte part du mauvais hexagone, jamais un
+   * mauvais nombre.
+   */
+  useEffect(() => {
+    if (production.length === 0 || !pub || !priv) return undefined;
+
+    /*
+     * Les hexagones qui ont produit.
+     *
+     * Le chiffre sorti et la présence du voleur suffisent, et l'un comme
+     * l'autre sont publics : on ne redit pas ici la règle de production, on
+     * lit ce que le plateau montre déjà à tout le monde.
+     */
+    const sorti = pub.lastRoll?.total;
+    const producteurs = sorti === undefined
+      ? []
+      : pub.hexes.filter((h) => h.token === sorti && !h.blocked);
+    plateau.current?.signalerProduction(producteurs.map((h) => h.id));
+
+    const miens = production.find((g) => g.player === priv.id)?.value;
+    if (!miens) return undefined;
+    setRecolte(miens as Record<string, number>);
+
+    /*
+     * D'où part chaque carte.
+     *
+     * De l'hexagone qui produit cette ressource **et** que touche l'une de
+     * mes constructions — un sommet porte dans son identifiant les trois
+     * hexagones qui s'y rejoignent, il n'y a donc rien à calculer. À défaut,
+     * la carte part du centre du plateau : mieux vaut un vol approximatif
+     * qu'un gain passé sous silence.
+     */
+    const miennes = new Set(
+      pub.buildings.filter((b) => b.owner === priv.id).flatMap((b) => b.vertex.split('|')),
+    );
+    const depart = (resource: string): { x: number; y: number } | undefined => {
+      const source = producteurs.find((h) => yieldOf(h.terrain as Terrain) === resource && miennes.has(h.id))
+        ?? producteurs.find((h) => yieldOf(h.terrain as Terrain) === resource);
+      const hex = source?.id ?? pub.hexes[Math.floor(pub.hexes.length / 2)]?.id;
+      return hex === undefined ? undefined : plateau.current?.projeterHex(hex);
+    };
+
+    const arrivee = (resource: string): { x: number; y: number } | undefined => {
+      const pile = document.querySelector(`[data-ressource="${resource}"]`);
+      if (!pile) return undefined;
+      const cadre = pile.getBoundingClientRect();
+      return { x: cadre.left + cadre.width / 2, y: cadre.top + cadre.height / 2 };
+    };
+
+    setVols(composerVols(miens as Record<string, number>, depart, arrivee, Date.now()));
+
+    // La pile cesse d'afficher son gain une fois les cartes arrivées.
+    const fin = window.setTimeout(() => setRecolte({}), 2000);
+    return () => window.clearTimeout(fin);
+    // `pub` et `priv` sont lus au passage, mais c'est l'arrivée d'une
+    // production qui déclenche : les suivre relancerait l'animation à chaque
+    // message du serveur, donc plusieurs fois par seconde.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [production]);
 
   // Pendant la mise en place, le jeu impose la suite : colonie puis route.
   // Inutile de demander au joueur de choisir ce qu'il sait déjà.
@@ -438,6 +523,7 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
 
         <main className="gc-board-wrap">
           <Board
+            ref={plateau}
             view={pub}
             highlightVertices={shownVertices ?? []}
             highlightEdges={shownEdges ?? []}
@@ -451,12 +537,22 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
         </main>
       </div>
 
+      <Gains vols={vols} />
+
       <footer className="gc-footer">
         <div className="gc-hand">
           {Object.entries(priv.hand).map(([resource, count]) => (
-            <span key={resource} className="gc-res" title={RESOURCE_LABELS[resource] ?? resource}>
+            <span
+              key={resource}
+              // Visé par les cartes en vol : c'est par cet attribut que
+              // l'animation retrouve la pile où atterrir.
+              data-ressource={resource}
+              className={`gc-res${recolte[resource] ? ' is-gagne' : ''}`}
+              title={RESOURCE_LABELS[resource] ?? resource}
+            >
               <ResourceIcon resource={resource} />
               <strong>{count}</strong>
+              {recolte[resource] ? <em className="gc-res-gain">+{recolte[resource]}</em> : null}
             </span>
           ))}
           <span className={`gc-limit${overLimit ? ' is-over' : ''}`}>

@@ -90,16 +90,45 @@ lsof -ti:2567 -ti:5173 | xargs kill -9
 ## Développement
 
 ```bash
-npm test          # 356 tests
+npm test          # 399 tests
 npm run typecheck # les six paquets
+npm run assets    # met les images générées à la portée du client
 ```
+
+Le plateau est rendu en Three.js, dans
+[`packages/client/src/ui/board3d/`](packages/client/src/ui/board3d/) : les
+tuiles sont des prismes hexagonaux dont la surface est sculptée — la montagne
+a un pic, la colline une croupe, le champ ondule à peine — la mer est une
+nappe animée, et les pièces sont des volumes. Le relief est décrit terrain
+par terrain dans
+[`board3d/relief.ts`](packages/client/src/ui/board3d/relief.ts), sous une
+contrainte qui gouverne tout le fichier : **le bord d'une tuile est plat et
+presque au même niveau que ses voisines**, parce que les routes courent sur
+les arêtes et les colonies sur les sommets. Tout le volume est au centre. Tout est instancié —
+une partie à douze tient en une trentaine d'appels de dessin, ce qui laisse
+un téléphone d'entrée de gamme à soixante images par seconde. Un doigt
+déplace la carte, deux doigts zooment et la font pivoter, un tap construit.
+
+Ce qui bouge répond à une question que l'écran posait sans y répondre. Une
+pièce posée **tombe du ciel** et soulève un peu de poussière : à douze
+joueurs, où l'on bâtit hors de son tour, une route apparue sans bruit n'était
+pas remarquée. Un hexagone qui produit fait **sauter son jeton**, et les
+cartes gagnées **volent jusqu'à leur pile** dans la barre du bas : le montant
+vient du serveur, le trajet dit d'où il vient. Les courbes sont réunies dans
+[`board3d/chute.ts`](packages/client/src/ui/board3d/chute.ts), et toutes se
+taisent sous `prefers-reduced-motion`.
+
+Les images vivent dans `assets/generated` et le client les sert depuis son
+dossier `public`, qui n'est pas versionné : `npm run play` fait la copie, et
+`npm run assets` la refait à la demande. Sans elle, le plateau s'affiche sans
+ses terrains.
 
 | Paquet | Rôle |
 |---|---|
 | `packages/engine` | Les règles. Ne dépend ni du réseau, ni du navigateur. |
 | `packages/protocol` | Les vues publique et privée, et la sérialisation des événements. |
 | `packages/server` | Sièges, chronomètres, reconnexion, transport WebSocket. |
-| `packages/client` | L'écran des joueurs (React). |
+| `packages/client` | L'écran des joueurs (React), et le plateau en 3D. |
 | `packages/sim` | Bots et simulation, pour mesurer l'équilibrage. |
 | `apps/host` | L'écran de l'hôte : QR code et démarrage. |
 
