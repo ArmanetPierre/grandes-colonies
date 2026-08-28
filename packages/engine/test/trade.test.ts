@@ -9,7 +9,9 @@ import { dispatch } from '../src/game/engine.js';
 import { type GameState, createGame, playerOf } from '../src/game/state.js';
 import { checkOffer, isAddressedTo, type TradeOffer } from '../src/game/trade.js';
 import { settlementSpots } from '../src/placement.js';
-import { BASE_RATE, type Port, tradeRate } from '../src/ports.js';
+import { GRAND_COLONIES_MARKET } from '../src/market.js';
+import { type Port, portDiscount } from '../src/ports.js';
+import { bankRate } from '../src/game/trade.js';
 import { amount, counts } from '../src/resources.js';
 
 const ORIGIN: Axial = { q: 0, r: 0 };
@@ -49,48 +51,44 @@ function startedGame(playerCount = 4, ports?: Map<VertexId, Port>): GameState {
   return state;
 }
 
-describe('taux de change et ports', () => {
-  it('applique quatre contre une sans port', () => {
+describe('remise des ports', () => {
+  it('ne remise rien sans port', () => {
     const board = new Board(boardInit());
-    expect(tradeRate(board, 'p1', 'wood')).toBe(BASE_RATE);
+    expect(portDiscount(board, 'p1', 'wood')).toBe(0);
   });
 
-  it('applique trois contre une sur un port générique', () => {
-    const board = new Board(boardInit());
-    const vertex = [...board.graph.vertices].sort()[0] as VertexId;
+  it('remise d une carte sur un port générique', () => {
+    const vertex = [...new Board(boardInit()).graph.vertices].sort()[0] as VertexId;
+    const board = new Board(boardInit(new Map([[vertex, { kind: 'generic' } as Port]])));
     board.setBuilding(vertex, { kind: 'settlement', owner: 'p1' });
-
-    const ports = new Map<VertexId, Port>([[vertex, { kind: 'generic' }]]);
-    const withPort = new Board(boardInit(ports));
-    withPort.setBuilding(vertex, { kind: 'settlement', owner: 'p1' });
-    expect(tradeRate(withPort, 'p1', 'wood')).toBe(3);
+    expect(portDiscount(board, 'p1', 'wood')).toBe(1);
   });
 
-  it('applique deux contre une sur le port spécialisé correspondant', () => {
+  it('remise de deux cartes sur le port spécialisé correspondant', () => {
     const vertex = [...new Board(boardInit()).graph.vertices].sort()[0] as VertexId;
     const board = new Board(boardInit(new Map([[vertex, { kind: 'wood' } as Port]])));
     board.setBuilding(vertex, { kind: 'settlement', owner: 'p1' });
 
-    expect(tradeRate(board, 'p1', 'wood')).toBe(2);
+    expect(portDiscount(board, 'p1', 'wood')).toBe(2);
     // Les autres ressources n'en profitent pas.
-    expect(tradeRate(board, 'p1', 'ore')).toBe(BASE_RATE);
+    expect(portDiscount(board, 'p1', 'ore')).toBe(0);
   });
 
-  it('applique deux contre une sur tout au port marchand', () => {
+  it('remise de deux cartes sur tout au port marchand', () => {
     const vertex = [...new Board(boardInit()).graph.vertices].sort()[0] as VertexId;
     const board = new Board(boardInit(new Map([[vertex, { kind: 'merchant' } as Port]])));
     board.setBuilding(vertex, { kind: 'settlement', owner: 'p1' });
-    expect(tradeRate(board, 'p1', 'ore')).toBe(2);
+    expect(portDiscount(board, 'p1', 'ore')).toBe(2);
   });
 
   it('ne profite pas d un port occupé par un autre joueur', () => {
     const vertex = [...new Board(boardInit()).graph.vertices].sort()[0] as VertexId;
     const board = new Board(boardInit(new Map([[vertex, { kind: 'generic' } as Port]])));
     board.setBuilding(vertex, { kind: 'settlement', owner: 'p2' });
-    expect(tradeRate(board, 'p1', 'wood')).toBe(BASE_RATE);
+    expect(portDiscount(board, 'p1', 'wood')).toBe(0);
   });
 
-  it('retient le meilleur taux quand plusieurs ports se cumulent', () => {
+  it('retient la meilleure remise quand plusieurs ports se cumulent', () => {
     const base = new Board(boardInit());
     const [a, b] = [...base.graph.vertices].sort();
     const ports = new Map<VertexId, Port>([
@@ -101,24 +99,43 @@ describe('taux de change et ports', () => {
     board.setBuilding(a as VertexId, { kind: 'settlement', owner: 'p1' });
     board.setBuilding(b as VertexId, { kind: 'city', owner: 'p1' });
 
-    expect(tradeRate(board, 'p1', 'ore')).toBe(2);
+    expect(portDiscount(board, 'p1', 'ore')).toBe(2);
     // Le port générique reste utile pour les autres ressources.
-    expect(tradeRate(board, 'p1', 'wood')).toBe(3);
+    expect(portDiscount(board, 'p1', 'wood')).toBe(1);
+  });
+
+  it('retranche la remise au cours du marché', () => {
+    const vertex = [...new Board(boardInit()).graph.vertices].sort()[0] as VertexId;
+    const state = startedGame(4, new Map([[vertex, { kind: 'wood' } as Port]]));
+    state.board.setBuilding(vertex, { kind: 'settlement', owner: 'p1' });
+
+    // Le bois ouvre à 5 (§10) : deux cartes de remise le ramènent à 3.
+    expect(bankRate(state, 'p1', 'wood')).toBe(3);
+    expect(bankRate(state, 'p2', 'wood')).toBe(GRAND_COLONIES_MARKET.opening.wood);
+  });
+
+  it('ne descend jamais au-dessous du plancher du marché', () => {
+    const vertex = [...new Board(boardInit()).graph.vertices].sort()[0] as VertexId;
+    const state = startedGame(4, new Map([[vertex, { kind: 'merchant' } as Port]]));
+    state.board.setBuilding(vertex, { kind: 'settlement', owner: 'p1' });
+
+    // L'or ouvre déjà au plancher : un port marchand ne le brade pas.
+    expect(bankRate(state, 'p1', 'gold')).toBe(GRAND_COLONIES_MARKET.minimum);
   });
 
   it('fait suivre le taux à la banque dans le moteur', () => {
     const state = startedGame();
     const p1 = playerOf(state, 'p1');
     if (!p1) throw new Error('joueur absent');
-    p1.hand = counts({ wood: 4 });
+    p1.hand = counts({ wood: 5 });
 
-    // Sans port, trois cartes ne suffisent pas.
+    // Le bois ouvre à 5 : quatre cartes ne suffisent plus.
     expect(dispatch(state, cmd('TRADE_WITH_BANK', 'p1', {
-      give: counts({ wood: 3 }), receive: counts({ ore: 1 }),
+      give: counts({ wood: 4 }), receive: counts({ ore: 1 }),
     }))).toMatchObject({ ok: false, reason: 'invalid-trade' });
 
     expect(dispatch(state, cmd('TRADE_WITH_BANK', 'p1', {
-      give: counts({ wood: 4 }), receive: counts({ ore: 1 }),
+      give: counts({ wood: 5 }), receive: counts({ ore: 1 }),
     })).ok).toBe(true);
   });
 });

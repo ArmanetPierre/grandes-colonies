@@ -14,10 +14,12 @@ import {
   type BoardInit,
   type GameState,
   type PlayerId,
+  RESOURCES,
   SeededRandom,
   createGame,
   defaultConfig,
   dispatch,
+  marketRate,
   pairedPlayer,
   classicBoard,
   playerPoints,
@@ -55,6 +57,18 @@ export interface GameOutcome {
   readonly tradesOffered: number;
   /** Offres effectivement acceptées — le taux d'acceptation du §19. */
   readonly tradesAccepted: number;
+  /** Conversions passées par la banque, qui seules font bouger le cours. */
+  readonly bankTrades: number;
+  /** Conversions passées par un port à contrat (§11), qui n'y touchent pas. */
+  readonly portTrades: number;
+  /**
+   * Cours de chaque ressource à la fin de la partie (§10).
+   *
+   * Sans lui, impossible de dire si le marché a réellement vécu ou s'il est
+   * resté sur ses valeurs d'ouverture pendant deux cents cycles — c'est la
+   * première chose à vérifier après l'avoir branché.
+   */
+  readonly marketRates: Readonly<Record<string, number>>;
   /** Taille de main moyenne, tous joueurs et tous cycles confondus. */
   readonly averageHand: number;
   /** Plus grande main observée. */
@@ -105,6 +119,8 @@ export function playGame(options: SimulationOptions): GameOutcome {
   let discards = 0;
   let tradesOffered = 0;
   let tradesAccepted = 0;
+  let bankTrades = 0;
+  let portTrades = 0;
   let handSamples = 0;
   let handTotal = 0;
   let peakHand = 0;
@@ -119,6 +135,8 @@ export function playGame(options: SimulationOptions): GameOutcome {
       if (event.type === 'ResourcesDiscarded') discards++;
       if (event.type === 'TradeCreated') tradesOffered++;
       if (event.type === 'TradeAccepted') tradesAccepted++;
+      if (event.type === 'BankTraded') bankTrades++;
+      if (event.type === 'PortTraded') portTrades++;
       if (event.type === 'SettlementPlaced' || event.type === 'CityBuilt' || event.type === 'RoadPlaced') {
         const index = players.findIndex((p) => p.id === event.player);
         if (index >= 0) builds[index] = (builds[index] ?? 0) + 1;
@@ -217,6 +235,11 @@ export function playGame(options: SimulationOptions): GameOutcome {
     discards,
     tradesOffered,
     tradesAccepted,
+    bankTrades,
+    portTrades,
+    marketRates: Object.fromEntries(
+      RESOURCES.map((r) => [r, marketRate(config.market, state.market, r)]),
+    ),
     averageHand: handSamples === 0 ? 0 : handTotal / handSamples,
     peakHand,
     cyclesOverLimit,

@@ -23,6 +23,7 @@ import {
   type Terrain,
   type VertexId,
   activeObjective,
+  bankRate,
   getCapabilities,
   heldCount,
   knightsPlayed,
@@ -39,10 +40,12 @@ import {
   playerPoints,
   maritimeSpots,
   roadSpots,
+  marketDrift,
+  marketRate,
+  portKindsOf,
   roleOf,
   settlementSpots,
   total,
-  tradeRate,
 } from '@grand-colonies/engine';
 
 export interface PublicPlayer {
@@ -84,6 +87,28 @@ export interface PublicOffer {
   readonly receive: ResourceCounts;
 }
 
+/**
+ * Le cours du marché, vu de la table (§10).
+ *
+ * Public par nécessité : un marché que chacun découvrirait en cliquant ne
+ * serait pas un marché. C'est justement de le voir monter qu'on décide de
+ * vendre son bois maintenant plutôt qu'au prochain cycle.
+ */
+export interface PublicMarket {
+  /** Cours nu, avant la remise des ports : le prix affiché à tous. */
+  readonly rates: Readonly<Record<string, number>>;
+  /**
+   * Transactions accumulées vers le prochain cran, signées.
+   *
+   * Positif : la ressource s'abîme et coûtera bientôt une carte de plus.
+   * Zéro quand le cours est bloqué contre sa borne — mieux vaut ne rien
+   * promettre que d'annoncer un mouvement qui n'aura jamais lieu.
+   */
+  readonly drift: Readonly<Record<string, number>>;
+  /** Transactions nettes qu'il faut pour bouger d'un cran. */
+  readonly step: number;
+}
+
 export interface PublicIntent {
   readonly id: string;
   readonly player: PlayerId;
@@ -103,6 +128,7 @@ export interface PublicGameView {
   readonly ports: readonly { vertex: VertexId; kind: string }[];
   readonly players: readonly PublicPlayer[];
   readonly offers: readonly PublicOffer[];
+  readonly market: PublicMarket;
   readonly intents: readonly PublicIntent[];
   readonly frozenLocations: readonly string[];
   readonly longestRouteHolder: PlayerId | undefined;
@@ -194,6 +220,16 @@ export interface PrivatePlayerView {
    */
   readonly bankRates: Readonly<Record<string, number>>;
 
+  /**
+   * Les types de ports que ce joueur occupe.
+   *
+   * `bankRates` suffit pour les ports qui remisent le cours — la remise y est
+   * déjà fondue. Les ports à contrat du §11, eux, ont leur propre échange :
+   * sans cette liste, le client n'aurait aucun moyen de savoir qu'il doit en
+   * proposer le bouton.
+   */
+  readonly ports: readonly string[];
+
   /** Nombre de cartes à défausser, zéro le reste du temps. */
   readonly mustDiscard: number;
 }
@@ -260,6 +296,7 @@ export function publicView(state: GameState, connectivity?: Connectivity): Publi
     offers: state.offers.map((o) => ({
       id: o.id, from: o.from, to: o.to, give: o.give, receive: o.receive,
     })),
+    market: marketView(state),
     intents: state.intents.map((i) => {
       const key = i.target.kind === 'road' ? `e:${i.target.edge}` : `v:${i.target.vertex}`;
       return {
@@ -279,6 +316,17 @@ export function publicView(state: GameState, connectivity?: Connectivity): Publi
     started: connectivity?.started ?? true,
     standings: finalStandings(state),
   };
+}
+
+/** Le cours de chaque ressource, et vers où il penche. */
+function marketView(state: GameState): PublicMarket {
+  const rates: Record<string, number> = {};
+  const drift: Record<string, number> = {};
+  for (const resource of RESOURCES) {
+    rates[resource] = marketRate(state.config.market, state.market, resource);
+    drift[resource] = marketDrift(state.config.market, state.market, resource);
+  }
+  return { rates, drift, step: state.config.market.step };
 }
 
 /** Vide tant que la partie dure : rien ne doit fuir avant la fin. */
@@ -314,12 +362,13 @@ export function privateView(state: GameState, playerId: PlayerId): PrivatePlayer
   const capabilities = [...getCapabilities(state, playerId)];
 
   const bankRates: Record<string, number> = {};
-  for (const resource of RESOURCES) bankRates[resource] = tradeRate(state.board, playerId, resource);
+  for (const resource of RESOURCES) bankRates[resource] = bankRate(state, playerId, resource);
 
   return {
     id: playerId,
     spots: buildableSpots(state, playerId, capabilities),
     bankRates,
+    ports: portKindsOf(state.board, playerId),
     mustDiscard: player.mustDiscard,
     hand: player.hand,
     playableDevCards: [...player.devCards.playable],

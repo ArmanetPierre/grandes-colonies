@@ -1,6 +1,6 @@
 # Rules Contract v1 — Grand Colonies
 
-> Les règles exactes des mécaniques concurrentes, tranchées le 2026-08-27.
+> Les règles exactes des mécaniques concurrentes, tranchées à partir du 2026-08-27.
 >
 > Ce document existe parce que le game design décrit des **intentions**, pas des cas limites. Coder une mécanique simultanée sans avoir écrit sa règle revient à l'inventer par accident — et à devoir la défaire quand on s'aperçoit qu'elle ne correspondait pas à l'intention.
 >
@@ -114,6 +114,8 @@ Le §1 accorde au joueur actif le droit de négocier avec les autres pendant son
 Les offres **ne franchissent pas le cycle** : les inventaires ont trop changé pour qu'une offre d'un cycle précédent garde un sens. Elles expirent à la résolution.
 
 Les ressources réservées par une annonce de construction **ne sont pas échangeables**.
+
+L'échange avec la **banque** relève du §10 : son prix bouge, celui d'une offre entre joueurs jamais.
 
 > **À surveiller au playtest.** À 12 joueurs, 30 secondes pour négocier *et* valider, c'est très court. Si la fenêtre se révèle insuffisante, les leviers sont : l'allonger, ou basculer sur un commerce permanent pendant tout le cycle.
 
@@ -294,7 +296,153 @@ avoir traversé le premier.
 
 ---
 
-## 10. Journal des décisions
+## 10. Le marché dynamique
+
+Le §10 du game design demande « un indicateur de demande » par ressource,
+qui baisse quand on en vend beaucoup et monte quand elle manque — et insiste
+pour que le marché reste **simple**, sous peine de transformer la soirée en
+simulation économique. Il donne six valeurs et rien d'autre : ni unité, ni
+palier, ni bornes.
+
+### L'indicateur est le taux bancaire
+
+La lecture retenue est la plus économe possible : cet indicateur **est** le
+taux d'échange avec la banque, celui qui existait déjà. Le jeu avait un 4:1
+figé ; il a maintenant un cours qui bouge. Rien de nouveau à apprendre pour
+un joueur — c'est le même geste, à un prix qui change.
+
+Les six valeurs du §10 se lisent alors directement, et elles décrivent bien
+l'économie de la table : bois 5, brique 4, laine 4, blé 3, minerai 3, or 2.
+Le bois est partout et vaut peu ; l'or est rare et achète beaucoup.
+
+### Le port remise, il n'impose pas
+
+Le cours fixe le prix, **le port en retranche une remise** : une carte pour
+un port générique, deux pour un port spécialisé ou marchand. C'est
+exactement l'ancien barème — 4 nu, 3 générique, 2 spécialisé — mais exprimé
+de façon à ce que les deux systèmes coexistent.
+
+L'inverse aurait tué le marché : un port qui *impose* son taux le rendrait
+invisible à tout joueur installé, c'est-à-dire à tous après quelques cycles.
+
+Le taux final ne descend jamais sous **2**, le plancher du cours lui-même.
+Sans quoi un port spécialisé sur une ressource déjà rare finirait par donner
+du 1:1. L'or, qui ouvre au plancher, ne tire donc aucun bénéfice d'un port —
+il est déjà au meilleur prix du jeu.
+
+### Ce qui fait bouger le cours
+
+**Une transaction bancaire, un cran de solde** : la ressource donnée afflue
+et se déprécie, celle qui sort se raréfie et se renchérit. **Quatre
+transactions nettes** dans le même sens déplacent le cours d'une carte.
+
+On compte des transactions et non des cartes. Un échange donne toujours
+`cours` cartes contre une seule : compter les cartes ferait monter le côté
+vendu quatre à six fois plus vite que ne descend le côté acheté, et tous les
+cours dériveraient vers le plafond en quelques dizaines d'échanges.
+
+Le cours est borné à **2–6**, et le solde qui le porte l'est aussi, un cran
+au-delà. Cette seconde borne n'est pas cosmétique : sans elle, la mesure a
+montré une ressource vendue quatre cents fois de suite et un cours qu'il
+aurait fallu quatre cents achats pour décoller. Une ressource saturée le
+reste tant qu'on la brade, et repart dès qu'on cesse.
+
+### Ce qui n'y touche pas
+
+Le cours ne bouge **que** par la banque. Production, vol, monopole,
+défausse, et surtout **échanges entre joueurs** n'y changent rien.
+
+C'est délibéré, et c'est le cœur de l'intérêt du dispositif à douze joueurs :
+plus la banque devient chère sur une ressource, plus il devient rentable de
+se tourner vers la table. Le marché ne remplace pas la négociation, il la
+pousse.
+
+### Le cours est public
+
+Chacun voit les six prix et le sens du prochain mouvement. Un marché que
+l'on découvrirait au moment de cliquer ne serait pas un marché : c'est de le
+voir monter qu'on décide de vendre maintenant plutôt qu'au cycle suivant.
+Le taux affiché à chaque joueur est le sien, remise de ses ports comprise.
+
+### Le poisson
+
+`fish` porte une valeur d'ouverture pour que le barème soit complet, mais
+aucun plateau actuel n'a de terrain qui en produise. Il ne sert pas.
+
+---
+
+## 11. Les ports à contrat
+
+Le §11 introduit quatre ports en plus des classiques. Trois sont
+implémentés ; le quatrième attend son système.
+
+### Le port marchand
+
+Déjà en place : remise de deux cartes sur n'importe quelle ressource. C'est
+le seul des quatre dont l'effet se comprend sans avoir lu la règle, et c'est
+pourquoi il est le premier semé quand la côte est courte.
+
+### Le port minier — 2 minerai → 1 or
+
+L'échange du §11, pris à la lettre. Mais il fallait trancher une chose que le
+game design ne pouvait pas prévoir, puisqu'il ignore le marché : **ce prix
+est-il soumis au cours ?**
+
+**Non.** Le port minier est un contrat à prix fixe, et le marché ne le touche
+jamais.
+
+Sans cette exemption le port serait mort-né. Un port spécialisé minerai donne
+déjà deux cartes de remise sur *tout*, y compris l'or, donc un port minier
+soumis au même plancher de 2 n'aurait rien apporté que le port ordinaire ne
+donnait déjà. Exempté, il devient exactement ce qu'un contrat doit être :
+sans intérêt quand le minerai est bon marché, et très précieux quand le
+marché l'a poussé à six.
+
+### Le port commercial — 2 ressources différentes → 1 au choix
+
+**Deux cartes de natures différentes**, jamais deux fois la même, et jamais
+la ressource demandée en paiement. Prix fixe lui aussi.
+
+C'est la contrainte de nature qui le distingue de tout le reste : on n'y
+écoule pas un surplus, on y convertit une main éparpillée. La simulation
+avait montré que le blocage à douze joueurs n'est pas la pénurie mais la
+dispersion — dix cartes réparties sur cinq types ne font jamais une ville.
+Ce port répond à ce problème-là, et à lui seul.
+
+### Les contrats ne font pas bouger le marché
+
+Un échange à l'un de ces ports n'émet pas de `MarketMoved` et ne touche pas
+au solde du §10.
+
+Ce n'est pas seulement cohérent avec leur prix fixe, c'est nécessaire : le
+port commercial consomme deux cartes pour en rendre une. Les compter aurait
+poussé deux cours vers le haut pour un seul vers le bas à chaque usage, et
+fait dériver l'ensemble du marché vers son plafond — précisément le
+déséquilibre que le §10 évite en comptant des transactions plutôt que des
+cartes.
+
+### Un seul exemplaire de chacun
+
+Le marchand, le minier et le commercial sont semés **une fois par plateau**,
+comme les métropoles sont trois pour la partie. Ce sont des positions de
+course : deux ports miniers sur la même côte n'apprendraient rien de plus à
+la table, et un plateau immense en aurait semé deux ou trois puisque les
+types s'y répètent.
+
+Ils sont plafonnés au tiers des ports du plateau : sur une côte de six, en
+mettre trois ferait un plateau où le commerce ordinaire est l'exception.
+
+### Le port royal reste à faire
+
+Le §11 lui donne « un bonus d'Influence aux joueurs qui contrôlent sa
+région ». Ni l'Influence ni la notion de région n'existent. Il n'est ni semé,
+ni déclaré : contrairement aux jetons de défenseur du §8, il n'y a rien à
+garder au chaud — un type de port inutilisé ne se contente pas d'être inerte,
+il occupe un sommet de côte.
+
+---
+
+## 12. Journal des décisions
 
 | Date | Question | Décision |
 |---|---|---|
@@ -325,3 +473,18 @@ avoir traversé le premier.
 | 2026-08-27 | Mise en place | **Sur l'île centrale seulement** |
 | 2026-08-27 | Exploration majeure | **1 point au premier arrivé sur chaque île secondaire**, hors mise en place |
 | 2026-08-27 | Hexagones face cachée du §13 | **Repoussés** — huit natures de tuiles à concevoir |
+| 2026-08-28 | Nature de l'indicateur du §10 | **C'est le taux bancaire lui-même**, pas une valeur séparée |
+| 2026-08-28 | Cours d'ouverture | **Les six valeurs du §10** : bois 5, brique 4, laine 4, blé 3, minerai 3, or 2 |
+| 2026-08-28 | Ports et marché | **Le cours fixe, le port remise** — 1 carte en générique, 2 en spécialisé |
+| 2026-08-28 | Plancher du taux | **2 contre 1**, port compris — l'or n'y gagne donc rien |
+| 2026-08-28 | Unité de mouvement | **La transaction, pas la carte** — sinon tous les cours dérivent vers le plafond |
+| 2026-08-28 | Palier | **4 transactions nettes** pour un cran ; cours borné à 2–6 |
+| 2026-08-28 | Solde porteur du cours | **Borné lui aussi**, un cran au-delà — sans quoi un cours saturé ne redescend jamais |
+| 2026-08-28 | Ce qui fait bouger le cours | **La banque seule** — les échanges entre joueurs n'y touchent pas |
+| 2026-08-28 | Visibilité du cours | **Public**, avec le sens du prochain cran |
+| 2026-08-28 | Port minier et marché | **Exempté du cours** — sinon un port spécialisé minerai le rendait inutile |
+| 2026-08-28 | Port commercial | **Deux cartes de natures différentes** contre une au choix, prix fixe |
+| 2026-08-28 | Paiement au port commercial | **Jamais avec la ressource demandée** |
+| 2026-08-28 | Contrats et cours | **Sans effet sur le marché** — deux entrées pour une sortie l'auraient fait dériver |
+| 2026-08-28 | Semis des ports particuliers | **Un seul de chaque par plateau**, plafonnés au tiers des ports |
+| 2026-08-28 | Port royal | **Non semé** — il attend l'Influence, et un port inutilisé occupe une côte |

@@ -386,6 +386,44 @@ body {
   font-family: var(--gc-font-display); font-size: 12px;
   letter-spacing: .12em; text-transform: uppercase; color: var(--gc-ink-soft);
 }
+/*
+ * Le cours du marché : six prix, sur une seule ligne.
+ *
+ * Ils sont posés en grille plutôt qu'en flux : un chiffre qui passe de 4 à 5
+ * ne doit pas décaler ses voisins, sinon la bande entière bouge à chaque
+ * échange et on la lit comme un tableau de départs plutôt que comme un prix.
+ */
+.gc-cours { display: grid; gap: 5px; }
+.gc-cours-head {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--gc-ink-soft);
+}
+.gc-cours-list {
+  list-style: none; display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px;
+}
+.gc-cours-item {
+  display: flex; align-items: center; justify-content: center; gap: 2px;
+  background: var(--gc-raised); border: 1px solid var(--gc-line);
+  padding: 4px 2px; font-size: 11.5px; font-variant-numeric: tabular-nums;
+  cursor: default;
+}
+.gc-cours-rate { font-weight: 600; }
+/* Le liseré d'or dit « tu as un port ici » sans coûter une ligne de texte. */
+.gc-cours-item.is-discounted {
+  border-bottom: 2px solid var(--gc-gold);
+  padding-bottom: 3px;
+}
+/*
+ * La flèche montante est une mauvaise nouvelle pour qui détient la ressource :
+ * elle prend la terre cuite, celle des alertes. La descendante prend l'or.
+ * L'infobulle dit la même chose en toutes lettres — la couleur ne porte
+ * jamais l'information seule.
+ */
+.gc-cours-arrow { font-size: 8px; line-height: 1; }
+.gc-cours-arrow.is-up { color: var(--gc-accent); }
+.gc-cours-arrow.is-down { color: var(--gc-gold); }
+.gc-cours-flat { font-size: 8px; line-height: 1; color: var(--gc-line); }
+
 .gc-trade-compose { display: grid; gap: 7px; }
 .gc-trade-compose label {
   display: grid; gap: 2px; font-size: 10.5px;
@@ -439,6 +477,30 @@ body {
   text-shadow: 0 1px 0 rgba(255, 249, 234, .7);
 }
 .gc-action-mini { padding: 5px 10px; font-size: 11px; letter-spacing: .06em; }
+
+/* Les ports à contrat, sous les deux boutons ordinaires : ils appartiennent
+   au commerce mais ne se règlent pas au cours, d'où le filet qui les sépare. */
+.gc-trade-ports {
+  display: grid; gap: 6px; margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--gc-gold) 40%, var(--gc-line));
+}
+.gc-trade-appoint {
+  display: grid; gap: 2px; font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: .06em; color: var(--gc-ink-soft);
+}
+.gc-trade-appoint select {
+  font-family: var(--gc-font-ui); font-size: 13px; padding: 6px 24px 6px 8px;
+  color: var(--gc-ink);
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6'%3E%3Cpath d='M0 0h9L4.5 6z' fill='%23A87C22'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-color: var(--gc-raised);
+  border: 1px solid var(--gc-line);
+  border-bottom: 2px solid color-mix(in srgb, var(--gc-gold) 45%, var(--gc-line));
+  border-radius: 0;
+  box-shadow: inset 0 1px 3px rgba(27, 19, 16, .11);
+}
 
 .gc-trade-list { display: grid; gap: 5px; }
 .gc-trade-sub { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--gc-ink-soft); }
@@ -1147,6 +1209,8 @@ body {
  * en entier. Les deux boutons passent côte à côte, les intitulés maigrissent,
  * et la cible du doigt reste au-dessus de quarante pixels.
  */
+.gc-compact .gc-sheet .gc-cours-list { gap: 2px; }
+.gc-compact .gc-sheet .gc-cours-item { padding: 5px 1px; font-size: 11px; }
 .gc-compact .gc-sheet .gc-trade-compose { gap: 5px; }
 .gc-compact .gc-sheet .gc-trade-compose label { font-size: 9.5px; gap: 1px; }
 .gc-compact .gc-sheet .gc-trade-compose select { padding: 7px 6px; font-size: 13px; }

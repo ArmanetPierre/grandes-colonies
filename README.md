@@ -58,6 +58,11 @@ temps que lui. Tout le monde produit à chaque lancer, échange pendant la
 fenêtre de commerce, et peut **annoncer une construction hors de son tour**,
 qui se résout en fin de cycle.
 
+La banque n'a pas de prix fixe : chaque ressource a un **cours** qui monte
+quand la table la brade et descend quand elle se raréfie. La bande de
+chiffres au-dessus du commerce le donne, port compris, avec une flèche quand
+il est sur le point de bouger.
+
 Un joueur qui rafraîchit sa page **retrouve son siège**. Un joueur absent voit
 son tour joué au minimum plutôt que de bloquer la table.
 
@@ -90,9 +95,12 @@ lsof -ti:2567 -ti:5173 | xargs kill -9
 ## Développement
 
 ```bash
-npm test          # 399 tests
+npm test          # 452 tests
 npm run typecheck # les six paquets
 npm run assets    # met les images générées à la portée du client
+
+npx tsx scripts/marche.ts   # mesure le marché contre un taux figé
+npx tsx scripts/ports.ts    # mesure les ports à contrat contre une côte sans eux
 ```
 
 Le plateau est rendu en Three.js, dans
@@ -132,7 +140,20 @@ ses terrains.
 | `packages/sim` | Bots et simulation, pour mesurer l'équilibrage. |
 | `apps/host` | L'écran de l'hôte : QR code et démarrage. |
 
+Le **marché dynamique** du §10 est branché : le taux bancaire n'est plus la
+constante 4:1 mais un cours par ressource, qui bouge d'une carte toutes les
+quatre transactions et que les ports remisent au lieu de le remplacer.
+
+Deux **ports à contrat** du §11 s'y ajoutent, semés une fois par plateau : le
+port minier fond 2 minerai en 1 or, le port commercial convertit 2 ressources
+de natures différentes en 1 au choix. Leurs prix sont fixes — le marché ne
+les touche pas, ce qui les rend précieux exactement quand il s'emballe.
+
+Les décisions sont aux §10 et §11 de
+[RULES_CONTRACT.md](RULES_CONTRACT.md), les mesures aux sixième et septième
+tours de [SIMULATION_FINDINGS.md](SIMULATION_FINDINGS.md).
+
 Ce qui reste à faire est recensé dans
 [SIMULATION_FINDINGS.md](SIMULATION_FINDINGS.md) — notamment les barbares,
-l'Influence et les hexagones d'exploration face cachée, qui ne sont pas
-implémentés.
+l'Influence — dont dépend le port royal du §11 —, les contrats et les
+hexagones d'exploration face cachée, qui ne sont pas implémentés.

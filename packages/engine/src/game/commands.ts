@@ -10,6 +10,7 @@
 import type { PlayerId } from '../board/board.js';
 import type { EdgeId, HexId, VertexId } from '../board/graph.js';
 import type { DevCardKind } from '../devCards.js';
+import type { ContractPort } from '../ports.js';
 import type { Resource, ResourceCounts } from '../resources.js';
 import type { Phase } from './state.js';
 import type { IntentTarget } from './buildIntent.js';
@@ -47,6 +48,14 @@ export type Command =
   | (CommandBase & { readonly type: 'PLAY_MONOPOLY'; readonly resource: Resource })
   | (CommandBase & { readonly type: 'PLAY_FREE_BUILD'; readonly target: IntentTarget })
   | (CommandBase & { readonly type: 'TRADE_WITH_BANK'; readonly give: ResourceCounts; readonly receive: ResourceCounts })
+  /**
+   * Échange à un port à contrat (§11).
+   *
+   * Le type de port voyage avec la commande plutôt que d'être deviné : deux
+   * minerai contre un or peuvent venir du port minier comme du cours
+   * ordinaire, et le moteur doit savoir lequel valider.
+   */
+  | (CommandBase & { readonly type: 'TRADE_AT_PORT'; readonly port: ContractPort; readonly give: ResourceCounts; readonly receive: ResourceCounts })
   | (CommandBase & { readonly type: 'DECLARE_BUILD'; readonly target: IntentTarget })
   | (CommandBase & { readonly type: 'CANCEL_BUILD'; readonly intentId: string })
   | (CommandBase & { readonly type: 'END_TURN' })
@@ -85,6 +94,10 @@ export type DomainEvent =
   | { readonly type: 'MonopolyResolved'; readonly player: PlayerId; readonly resource: Resource; readonly taken: readonly { readonly from: PlayerId; readonly count: number }[] }
   | { readonly type: 'ResourcesGranted'; readonly player: PlayerId; readonly resources: ResourceCounts }
   | { readonly type: 'BankTraded'; readonly player: PlayerId; readonly give: ResourceCounts; readonly receive: ResourceCounts }
+  /** Échange à un port à contrat — hors marché, donc sans MarketMoved. */
+  | { readonly type: 'PortTraded'; readonly player: PlayerId; readonly port: ContractPort; readonly give: ResourceCounts; readonly receive: ResourceCounts }
+  /** Le cours d'une ressource a franchi un cran (§10). Public : tout le monde commerce dessus. */
+  | { readonly type: 'MarketMoved'; readonly resource: Resource; readonly from: number; readonly to: number }
   | { readonly type: 'TitleChanged'; readonly title: 'longestRoute' | 'largestArmy'; readonly from: PlayerId | undefined; readonly to: PlayerId | undefined }
   | { readonly type: 'PhaseChanged'; readonly from: Phase; readonly to: Phase }
   | { readonly type: 'TurnEnded'; readonly player: PlayerId; readonly cycle: number }
@@ -116,6 +129,7 @@ export type RejectionReason =
   | 'invalid-placement'
   | 'invalid-discard'
   | 'invalid-trade'
+  | 'no-such-port'
   | 'invalid-robber-move'
   | 'invalid-victim'
   | 'card-not-playable'

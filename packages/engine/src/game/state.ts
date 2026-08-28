@@ -11,6 +11,7 @@
 import { Board, type BoardInit, type PlayerId } from '../board/board.js';
 import type { VertexId } from '../board/graph.js';
 import { type DevCardHolding, EMPTY_HOLDING } from '../devCards.js';
+import { type MarketState, createMarket } from '../market.js';
 import { type ResourceCounts, EMPTY, counts } from '../resources.js';
 import { SeededRandom } from '../rng.js';
 import type { DevCardKind } from '../devCards.js';
@@ -71,6 +72,11 @@ export interface GameState {
   lastRoll: { readonly a: number; readonly b: number; readonly total: number } | undefined;
 
   bank: ResourceCounts;
+  /**
+   * Cours du marché (§10). Il a la mémoire de toute la partie : le remettre
+   * à zéro à chaque cycle reviendrait à ne plus avoir de marché du tout.
+   */
+  market: MarketState;
   deck: DevCardKind[];
   rng: SeededRandom;
 
@@ -184,6 +190,7 @@ export function createGame(options: NewGameOptions): GameState {
     activeIndex: 0,
     lastRoll: undefined,
     bank: options.bank ?? DEFAULT_BANK,
+    market: createMarket(),
     deck: [],
     rng,
     longestRouteHolder: undefined,

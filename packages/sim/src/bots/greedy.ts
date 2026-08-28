@@ -16,12 +16,13 @@ import {
   type SeededRandom,
   CORE_RESOURCES,
   amount,
+  bankRate,
   canAfford,
   canPlayCard,
   counts,
+  hasPort,
   playerOf,
   suggestDiscard,
-  tradeRate,
 } from '@grand-colonies/engine';
 
 import {
@@ -154,6 +155,42 @@ function playDevCard(state: GameState, playerId: PlayerId, actionId: string): Co
  * révélé — des mains pleines, des défausses en série, et presque aucune
  * construction.
  */
+/**
+ * Les ports à contrat, essayés avant la banque (§11).
+ *
+ * À deux cartes pour une, ils battent presque toujours le cours — et
+ * toujours quand celui-ci est monté. Sans cette préférence, les deux ports
+ * du plateau n'auraient figuré dans aucune mesure d'équilibrage, comme les
+ * chevaliers avant eux.
+ *
+ * Le port minier reste inutilisé : l'or ne sert qu'à la métropole, et un bot
+ * qui thésaurise de l'or sans pouvoir bâtir bloquerait sa main. C'est une
+ * lacune connue des mesures, pas un oubli.
+ */
+function portTrade(state: GameState, playerId: PlayerId, actionId: string): Command | undefined {
+  if (!hasPort(state.board, playerId, 'commercial')) return undefined;
+
+  const player = playerOf(state, playerId);
+  if (!player) return undefined;
+
+  const need = scarcest(state, playerId);
+  if (need === undefined || amount(state.bank, need) < 1) return undefined;
+
+  // Deux natures différentes, et jamais celle qu'on réclame.
+  const spare = CORE_RESOURCES
+    .filter((r) => r !== need && amount(player.hand, r) > 0)
+    .sort((a, b) => amount(player.hand, b) - amount(player.hand, a));
+
+  const [first, second] = spare;
+  if (first === undefined || second === undefined) return undefined;
+
+  return {
+    actionId, playerId, type: 'TRADE_AT_PORT', port: 'commercial',
+    give: counts({ [first]: 1, [second]: 1 }),
+    receive: counts({ [need]: 1 }),
+  };
+}
+
 function bankTrade(state: GameState, playerId: PlayerId, actionId: string): Command | undefined {
   const player = playerOf(state, playerId);
   if (!player) return undefined;
@@ -167,7 +204,10 @@ function bankTrade(state: GameState, playerId: PlayerId, actionId: string): Comm
 
   for (const r of CORE_RESOURCES) {
     const held = amount(player.hand, r);
-    const rate = tradeRate(state.board, playerId, r);
+    // Le cours bouge : un surplus bradé la semaine dernière coûte plus cher
+    // aujourd'hui, et le bot le constate sans le savoir — il se rabat de
+    // lui-même sur une autre ressource.
+    const rate = bankRate(state, playerId, r);
 
     // On privilégie le surplus dont l'échange coûte le moins cher.
     if (held >= rate) {
@@ -270,7 +310,9 @@ export class GreedyBot implements Bot {
     // monument, ville, colonie, métropole, route, carte.
     const [best] = affordableBuilds(state, playerId);
     // Rien d'abordable : on convertit un surplus plutôt que de thésauriser.
-    if (best === undefined) return bankTrade(state, playerId, actionId);
+    if (best === undefined) {
+      return portTrade(state, playerId, actionId) ?? bankTrade(state, playerId, actionId);
+    }
 
     switch (best) {
       case 'BUILD_MONUMENT': {
@@ -323,7 +365,9 @@ export class RandomBot implements Bot {
     }
 
     const options = affordableBuilds(state, playerId);
-    if (options.length === 0) return bankTrade(state, playerId, actionId);
+    if (options.length === 0) {
+      return portTrade(state, playerId, actionId) ?? bankTrade(state, playerId, actionId);
+    }
 
     // Un bot qui construit systématiquement ne laisserait jamais de ressources
     // s'accumuler : on le fait parfois s'abstenir, pour que la simulation voie

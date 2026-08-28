@@ -471,12 +471,32 @@ a { color: var(--accent); }
       </p>
       <h3>Les ports</h3>
       <p>
-        Semés sur la côte, ils améliorent votre taux d'échange avec la banque
-        dès qu'une de vos colonies les touche. Un port générique donne
-        <strong>3 contre 1</strong> ; un port spécialisé,
-        <strong>2 contre 1</strong> sur sa ressource ; le port marchand,
-        2 contre 1 sur n'importe laquelle.
+        Semés sur la côte, ils allègent votre taux d'échange avec la banque
+        dès qu'une de vos colonies les touche. Un port générique retranche
+        <strong>une carte</strong> au cours du jour ; un port spécialisé,
+        <strong>deux cartes</strong> sur sa ressource ; le port marchand,
+        deux cartes sur n'importe laquelle. Jamais en dessous de deux contre
+        une.
       </p>
+      <p>
+        Deux ports ne suivent pas le cours du tout. Ils ont leur propre
+        échange, <strong>à prix fixe</strong>, écrit sur leur panneau — ce qui
+        les rend sans intérêt quand le marché est calme, et très précieux
+        quand il s'emballe. Il n'y en a <strong>qu'un de chaque par
+        plateau</strong> : les occuper est une course.
+      </p>
+      <ul>
+        <li>
+          <strong>Port minier</strong> — 2 minerai contre 1 or. Le seul moyen
+          de faire de l'or sans tuile d'or, et l'or bâtit les métropoles.
+        </li>
+        <li>
+          <strong>Port commercial</strong> — 2 ressources de
+          <strong>natures différentes</strong> contre 1 au choix. On n'y
+          écoule pas un surplus : on y sauve une main éparpillée, celle de dix
+          cartes réparties sur cinq types qui ne fait jamais une ville.
+        </li>
+      </ul>
     </section>
 
     <section id="ressources">
@@ -680,10 +700,40 @@ a { color: var(--accent); }
 
       <h3>Avec la banque</h3>
       <p>
-        Quatre ressources identiques contre une de votre choix. Un port abaisse
-        ce taux à trois, ou à deux s'il est spécialisé. C'est cher : gardez-le
-        pour vous débloquer, pas pour bâtir votre économie.
+        Un certain nombre de ressources identiques contre une de votre choix.
+        Ce nombre — le <strong>cours</strong> — n'est pas le même pour toutes,
+        et il <strong>bouge pendant la partie</strong>. Un port l'allège d'une
+        ou deux cartes. Dans tous les cas c'est cher : gardez la banque pour
+        vous débloquer, pas pour bâtir votre économie.
       </p>
+
+      <div class="note">
+        <div class="note-titre">Le cours de la banque</div>
+        <p>
+          La partie s'ouvre sur des prix inégaux, qui disent la valeur de
+          chaque ressource : le bois est partout et coûte <strong>5</strong>,
+          la brique et la laine <strong>4</strong>, le blé et le minerai
+          <strong>3</strong>, l'or, rare et précieux, <strong>2</strong>.
+        </p>
+        <p>
+          Ensuite, la table décide. <strong>Quatre ventes</strong> d'une même
+          ressource à la banque et elle en vaut une de moins : il en faudra
+          une de plus la fois suivante. Quatre achats et elle se raréfie : son
+          prix baisse d'autant. Les prix ne descendent jamais sous 2 ni ne
+          montent au-dessus de 6.
+        </p>
+        <p>
+          La bande de chiffres au-dessus du commerce donne le cours du moment,
+          port compris, avec une flèche quand il est sur le point de bouger.
+          Une flèche qui monte veut dire : <em>vendez maintenant</em>.
+        </p>
+        <p>
+          Les échanges <strong>entre joueurs</strong> n'y touchent pas, et
+          ceux des deux ports à prix fixe non plus. Quand la banque devient
+          chère, la table redevient le meilleur endroit où commercer — c'est
+          le but.
+        </p>
+      </div>
 
       <h3>Entre joueurs</h3>
       <p>
@@ -695,9 +745,9 @@ a { color: var(--accent); }
       </p>
 
       <div class="note">
-        <div class="note-titre">Le marché</div>
+        <div class="note-titre">Le bouton « Marché »</div>
         <p>
-          Un bouton ouvre la liste de <em>toutes</em> les offres en cours, y
+          Il ouvre la liste de <em>toutes</em> les offres en cours, y
           compris celles échangées entre deux autres joueurs. Savoir que trois
           personnes réclament du minerai vaut mieux que de proposer le vôtre au
           premier venu.

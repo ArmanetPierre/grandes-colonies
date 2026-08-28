@@ -79,6 +79,30 @@ export function describe(event: WireEvent): Entry | undefined {
     }
     case 'TradeAccepted':
       return { player: event.to, text: 'accepte un échange' };
+    /**
+     * Le cours qui bouge n'appartient à personne : l'entrée est sans joueur,
+     * comme la fin de cycle. C'est un fait de table, et c'est précisément
+     * celui qu'on ne veut pas manquer entre deux tours — il change le prix
+     * de la prochaine conversion pour les douze.
+     */
+    /**
+     * Un port à contrat est une position sur le plateau : savoir qui s'en
+     * sert dit qui le tient, et c'est une information de course.
+     */
+    case 'PortTraded':
+      return {
+        player: event.player,
+        text: event.port === 'mining'
+          ? 'fond son minerai en or au port minier'
+          : 'convertit deux ressources au port commercial',
+      };
+    case 'MarketMoved':
+      return {
+        player: undefined,
+        text: event.to > event.from
+          ? `le ${resourceName(event.resource)} se déprécie : ${event.to} contre 1`
+          : `le ${resourceName(event.resource)} se raréfie : ${event.to} contre 1`,
+      };
     case 'TitleChanged':
       if (event.to === undefined) return undefined;
       return {

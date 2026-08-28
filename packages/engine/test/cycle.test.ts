@@ -134,10 +134,11 @@ describe('joueur associé', () => {
     const state = newGame(6);
     const paired = pairedPlayer(state);
     if (!paired) return;
-    paired.hand = counts({ wood: 4 });
+    // Le bois ouvre à 5 au marché (§10).
+    paired.hand = counts({ wood: 5 });
 
     expect(dispatch(state, cmd('TRADE_WITH_BANK', paired.id, {
-      give: counts({ wood: 4 }), receive: counts({ ore: 1 }),
+      give: counts({ wood: 5 }), receive: counts({ ore: 1 }),
     })).ok).toBe(true);
     expect(amount(paired.hand, 'ore')).toBe(1);
   });

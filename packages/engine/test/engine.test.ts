@@ -236,29 +236,31 @@ describe('déroulement d un tour', () => {
     expect(p1.devCards.playable).toHaveLength(0);
   });
 
-  it('échange quatre contre une avec la banque', () => {
+  it('échange avec la banque au cours du marché', () => {
     const state = started();
     dispatch(state, cmd('ROLL_DICE', 'p1'));
     const p1 = playerOf(state, 'p1');
     if (!p1) throw new Error('joueur absent');
-    p1.hand = counts({ wood: 4 });
+    // Cinq contre une : le cours d'ouverture du bois, et non le 4:1 figé
+    // d'avant le marché dynamique.
+    p1.hand = counts({ wood: 5 });
 
     const result = dispatch(state, cmd('TRADE_WITH_BANK', 'p1', {
-      give: counts({ wood: 4 }), receive: counts({ ore: 1 }),
+      give: counts({ wood: 5 }), receive: counts({ ore: 1 }),
     }));
     expect(result.ok).toBe(true);
     expect(amount(p1.hand, 'wood')).toBe(0);
     expect(amount(p1.hand, 'ore')).toBe(1);
   });
 
-  it('refuse un taux de change différent de quatre contre une', () => {
+  it('refuse un taux de change qui n est pas celui du jour', () => {
     const state = started();
     dispatch(state, cmd('ROLL_DICE', 'p1'));
     const p1 = playerOf(state, 'p1');
-    if (p1) p1.hand = counts({ wood: 3 });
+    if (p1) p1.hand = counts({ wood: 4 });
 
     expect(dispatch(state, cmd('TRADE_WITH_BANK', 'p1', {
-      give: counts({ wood: 3 }), receive: counts({ ore: 1 }),
+      give: counts({ wood: 4 }), receive: counts({ ore: 1 }),
     }))).toMatchObject({ ok: false, reason: 'invalid-trade' });
   });
 });

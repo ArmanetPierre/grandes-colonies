@@ -10,6 +10,8 @@ import type { ProductionConfig } from '../production.js';
 import { GRAND_COLONIES_PRODUCTION } from '../production.js';
 import type { DeckComposition } from '../devCards.js';
 import { GRAND_COLONIES_DECK } from '../devCards.js';
+import type { MarketConfig } from '../market.js';
+import { GRAND_COLONIES_MARKET } from '../market.js';
 import type { VictoryConfig } from '../victory.js';
 import { GRAND_COLONIES_VICTORY } from '../victory.js';
 
@@ -17,6 +19,13 @@ export interface GameConfig {
   readonly victory: VictoryConfig;
   readonly production: ProductionConfig;
   readonly deck: DeckComposition;
+  /**
+   * Cours d'ouverture et amplitude du marché dynamique (§10).
+   *
+   * Réglable comme le reste : c'est le seul moyen de comparer deux barèmes
+   * en playtest sans recompiler.
+   */
+  readonly market: MarketConfig;
 
   /** Limite de main au-delà de laquelle un 7 force la défausse. */
   readonly handLimit: number;
@@ -86,6 +95,7 @@ export function defaultConfig(playerCount: number): GameConfig {
     victory: GRAND_COLONIES_VICTORY,
     production: GRAND_COLONIES_PRODUCTION,
     deck: GRAND_COLONIES_DECK,
+    market: GRAND_COLONIES_MARKET,
     handLimit: handLimitFor(playerCount),
     robberCount: robberCountFor(playerCount),
     minimumRouteLength: 5,

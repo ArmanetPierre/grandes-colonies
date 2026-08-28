@@ -17,6 +17,7 @@ import { useState } from 'react';
 
 import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
 
+import { Cours } from './Cours.jsx';
 import { ResourceIcon } from './ResourceIcon.jsx';
 
 const CORE = ['wood', 'brick', 'wool', 'grain', 'ore'] as const;
@@ -34,16 +35,30 @@ export interface TradeProps {
   readonly onAccept: (offerId: string) => void;
   readonly onCancel: (offerId: string) => void;
   readonly onBank: (give: Record<string, number>, receive: Record<string, number>) => void;
+  /** Échange à un port à contrat (§11) : minier ou commercial. */
+  readonly onPort: (
+    port: 'mining' | 'commercial',
+    give: Record<string, number>,
+    receive: Record<string, number>,
+  ) => void;
 }
 
-export function Trade({ pub, priv, canOffer, canBank, onOffer, onAccept, onCancel, onBank }: TradeProps) {
+export function Trade({
+  pub, priv, canOffer, canBank, onOffer, onAccept, onCancel, onBank, onPort,
+}: TradeProps) {
   const [give, setGive] = useState<string>('wood');
   const [want, setWant] = useState<string>('ore');
   const [target, setTarget] = useState<string>('');
+  /** La seconde carte du port commercial, qui en exige deux de natures différentes. */
+  const [appoint, setAppoint] = useState<string>('brick');
 
   const hand = priv.hand as Record<string, number>;
   const held = (resource: string): number => hand[resource] ?? 0;
   const bankRate = priv.bankRates[give] ?? 4;
+  // Le cours nu, pour savoir si l'écart vient d'un port ou du marché : avec
+  // un cours mobile, « moins de quatre » ne prouve plus rien.
+  const cours = pub.market.rates[give] ?? 4;
+  const ports = new Set(priv.ports);
 
   const mine = pub.offers.filter((o) => o.from === priv.id);
   // Le serveur dit lesquelles sont acceptables : la règle dépend de la phase
@@ -56,6 +71,10 @@ export function Trade({ pub, priv, canOffer, canBank, onOffer, onAccept, onCance
   return (
     <aside className="gc-trade">
       <div className="gc-trade-head">Commerce</div>
+
+      {/* Le cours d'abord : c'est lui qui dit s'il faut vendre maintenant,
+          et il vaut aussi pour qui n'a pas le droit de proposer. */}
+      <Cours pub={pub} priv={priv} />
 
       {/* Sans droit de proposer ni d'échanger avec la banque, le formulaire
           n'aurait aucun effet : on dit pourquoi plutôt que de le griser. */}
@@ -107,17 +126,71 @@ export function Trade({ pub, priv, canOffer, canBank, onOffer, onAccept, onCance
           >
             Proposer 2 ↔ 1
           </button>
-          {/* Le taux bancaire dépend des ports possédés : on l'affiche pour
-              qu'un joueur voie l'intérêt d'en occuper un. */}
+          {/* Le taux vient du cours du marché, remisé par les ports : il change
+              d'un cycle à l'autre, donc on l'affiche sur le bouton lui-même
+              plutôt que de laisser le joueur le déduire de la bande. */}
           <button
             className="gc-action gc-action-quiet"
             disabled={!canBank || give === want || held(give) < bankRate}
             onClick={() => onBank({ [give]: bankRate }, { [want]: 1 })}
           >
             Banque {bankRate}:1
-            {bankRate < 4 && <small>port</small>}
+            {bankRate < cours && <small>port</small>}
           </button>
         </div>
+
+        {/*
+          Les ports à contrat n'apparaissent qu'à qui les occupe.
+          Les montrer grisés à tout le monde remplirait le panneau de deux
+          boutons morts pendant toute la partie, pour dix joueurs sur douze.
+        */}
+        {(ports.has('mining') || ports.has('commercial')) && (
+          <div className="gc-trade-ports">
+            <div className="gc-trade-sub">Tes ports</div>
+
+            {ports.has('mining') && (
+              <button
+                className="gc-action gc-action-quiet"
+                disabled={!canBank || held('ore') < 2}
+                onClick={() => onPort('mining', { ore: 2 }, { gold: 1 })}
+                title="Prix fixe : le marché ne le fait jamais bouger."
+              >
+                Port minier
+                <small>2 minerai → 1 or</small>
+              </button>
+            )}
+
+            {ports.has('commercial') && (
+              <>
+                {/* Deux cartes de natures différentes : d'où ce second menu,
+                    qui n'a de sens que pour ce port et n'apparaît qu'avec lui. */}
+                <label className="gc-trade-appoint">
+                  Avec
+                  <span className="gc-trade-pick">
+                    <ResourceIcon resource={appoint} size={20} />
+                    <select value={appoint} onChange={(e) => setAppoint(e.target.value)}>
+                      {CORE.map((r) => (
+                        <option key={r} value={r}>{SHORT[r]} ({held(r)})</option>
+                      ))}
+                    </select>
+                  </span>
+                </label>
+                <button
+                  className="gc-action gc-action-quiet"
+                  disabled={
+                    !canBank || give === appoint || want === give || want === appoint
+                    || held(give) < 1 || held(appoint) < 1
+                  }
+                  onClick={() => onPort('commercial', { [give]: 1, [appoint]: 1 }, { [want]: 1 })}
+                  title="Deux cartes de natures différentes contre une au choix. Prix fixe."
+                >
+                  Port commercial
+                  <small>{SHORT[give]} + {SHORT[appoint]} → {SHORT[want]}</small>
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
       )}
 

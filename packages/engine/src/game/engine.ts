@@ -52,8 +52,14 @@ import {
   playerOf,
 } from './state.js';
 import { type ObjectiveId, isObjectiveComplete } from '../objectives.js';
-import { tradeRate } from '../ports.js';
-import { type TradeOffer, checkOffer, isAddressedTo } from './trade.js';
+import { recordMarketTrade } from '../market.js';
+import {
+  type ContractPort,
+  COMMERCIAL_PORT_GIVE,
+  MINING_PORT_TRADE,
+  hasPort,
+} from '../ports.js';
+import { type TradeOffer, bankRate, checkOffer, isAddressedTo } from './trade.js';
 
 const reject = (reason: RejectionReason, detail?: string): CommandResult =>
   detail === undefined ? { ok: false, reason } : { ok: false, reason, detail };
@@ -100,6 +106,7 @@ function execute(state: GameState, command: Command): CommandResult {
     case 'PLAY_MONOPOLY':          return playMonopoly(state, command.playerId, command.resource);
     case 'PLAY_FREE_BUILD':        return playFreeBuild(state, command.playerId, command.target);
     case 'TRADE_WITH_BANK':        return tradeWithBank(state, command.playerId, command.give, command.receive);
+    case 'TRADE_AT_PORT':          return tradeAtPort(state, command.playerId, command.port, command.give, command.receive);
     case 'DECLARE_BUILD':          return declareBuild(state, command.playerId, command.target);
     case 'CANCEL_BUILD':           return cancelBuild(state, command.playerId, command.intentId);
     case 'END_TURN':               return endTurn(state, command.playerId);
@@ -802,10 +809,14 @@ function playFreeBuild(state: GameState, playerId: string, target: IntentTarget)
 // ── commerce ───────────────────────────────────────────────────────────────
 
 /**
- * Échange avec la banque, au meilleur taux dont dispose le joueur.
+ * Échange avec la banque, au cours du marché remisé par les ports.
  *
- * Quatre contre une sans port, trois avec un port générique, deux avec un
- * port spécialisé ou marchand (§11).
+ * Le taux n'est plus une constante : le marché du §10 le fait bouger d'un
+ * cran toutes les quatre transactions nettes, et le port du §11 en retranche
+ * une ou deux cartes. Un joueur qui convertit toujours le même surplus le
+ * rend donc progressivement moins rentable — c'est tout l'intérêt du
+ * dispositif, et la raison pour laquelle le mouvement est annoncé à la
+ * table plutôt que découvert au prochain échange.
  */
 function tradeWithBank(
   state: GameState,
@@ -828,7 +839,7 @@ function tradeWithBank(
   const from = given[0] as Resource;
   const to = received[0] as Resource;
   if (from === to) return reject('invalid-trade', 'échange sans effet');
-  const rate = tradeRate(state.board, playerId, from);
+  const rate = bankRate(state, playerId, from);
   if (amount(give, from) !== rate || amount(receive, to) !== 1) {
     return reject('invalid-trade', `taux applicable : ${rate} contre 1`);
   }
@@ -838,7 +849,91 @@ function tradeWithBank(
   player.hand = addCounts(subtractCounts(player.hand, give), receive);
   state.bank = subtractCounts(addCounts(state.bank, give), receive);
 
-  return { ok: true, events: [{ type: 'BankTraded', player: playerId, give, receive }] };
+  // Le cours ne bouge qu'une fois l'échange conclu : un refus ne doit rien
+  // laisser derrière lui, marché compris.
+  const moves = recordMarketTrade(state.config.market, state.market, from, to);
+
+  return {
+    ok: true,
+    events: [
+      { type: 'BankTraded', player: playerId, give, receive },
+      ...moves.map((m): DomainEvent => ({
+        type: 'MarketMoved', resource: m.resource, from: m.from, to: m.to,
+      })),
+    ],
+  };
+}
+
+/**
+ * Échange à un port à contrat (§11).
+ *
+ * Ces deux ports ne remisent pas le cours, ils s'y soustraient : leur taux
+ * est fixe et ne bouge jamais. Un échange qui passe par eux ne fait donc
+ * **pas** bouger le marché — ce n'est pas une vente au marché, c'est un
+ * contrat. Le faire compter aurait d'ailleurs déséquilibré le cours : le
+ * port commercial consomme deux ressources pour en rendre une, ce qui
+ * pousserait deux cours vers le haut pour un seul vers le bas, et ferait
+ * dériver l'ensemble vers le plafond.
+ */
+function tradeAtPort(
+  state: GameState,
+  playerId: string,
+  port: ContractPort,
+  give: ResourceCounts,
+  receive: ResourceCounts,
+): CommandResult {
+  const blocked = ensureCanAct(state, playerId);
+  if (blocked) return blocked;
+
+  const player = playerOf(state, playerId);
+  if (!player) return reject('unknown-player');
+  if (!hasPort(state.board, playerId, port)) return reject('no-such-port');
+
+  const received = RESOURCES.filter((r) => amount(receive, r) > 0);
+  if (received.length !== 1 || amount(receive, received[0] as Resource) !== 1) {
+    return reject('invalid-trade', 'une seule carte en retour');
+  }
+  const to = received[0] as Resource;
+
+  const problem = port === 'mining'
+    ? checkMiningGive(give, to)
+    : checkCommercialGive(give, to);
+  if (problem) return reject('invalid-trade', problem);
+
+  if (!canAfford(player.hand, give)) return reject('not-enough-resources');
+  if (amount(state.bank, to) < 1) return reject('invalid-trade', 'la banque est à sec');
+
+  player.hand = addCounts(subtractCounts(player.hand, give), receive);
+  state.bank = subtractCounts(addCounts(state.bank, give), receive);
+
+  return { ok: true, events: [{ type: 'PortTraded', player: playerId, port, give, receive }] };
+}
+
+/** Le port minier ne connaît qu'un échange : deux minerai contre un or. */
+function checkMiningGive(give: ResourceCounts, to: Resource): string | undefined {
+  if (to !== MINING_PORT_TRADE.to) return `le port minier ne rend que de l ${MINING_PORT_TRADE.to}`;
+  if (total(give) !== MINING_PORT_TRADE.give) return `${MINING_PORT_TRADE.give} cartes exactement`;
+  if (amount(give, MINING_PORT_TRADE.from) !== MINING_PORT_TRADE.give) {
+    return `${MINING_PORT_TRADE.give} ${MINING_PORT_TRADE.from} exactement`;
+  }
+  return undefined;
+}
+
+/**
+ * Le port commercial demande deux cartes **de natures différentes**.
+ *
+ * C'est ce qui le distingue de tous les autres : on n'y écoule pas un
+ * surplus, on y convertit une main éparpillée. La simulation avait justement
+ * montré que le blocage à douze joueurs n'est pas la pénurie mais la
+ * dispersion — dix cartes réparties sur cinq types ne font jamais une ville.
+ */
+function checkCommercialGive(give: ResourceCounts, to: Resource): string | undefined {
+  if (total(give) !== COMMERCIAL_PORT_GIVE) return `${COMMERCIAL_PORT_GIVE} cartes exactement`;
+
+  const kinds = RESOURCES.filter((r) => amount(give, r) > 0);
+  if (kinds.length !== COMMERCIAL_PORT_GIVE) return 'deux ressources de natures différentes';
+  if (kinds.includes(to)) return 'la ressource demandée ne peut pas servir à payer';
+  return undefined;
 }
 
 // ── commerce entre joueurs ─────────────────────────────────────────────────

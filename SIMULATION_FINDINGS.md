@@ -338,3 +338,114 @@ En revanche la première colonne se lit dans l'autre sens : **sur le plateau
 normal, vingt routes bride encore** — trente feraient passer douze joueurs de
 13/16 à 16/16 et gagneraient trente cycles. C'est un réglage de l'équilibre de
 base, laissé en l'état faute d'avoir été demandé, mais il mérite d'être repris.
+
+---
+
+## Sixième tour : le marché dynamique
+
+`scripts/marche.ts`, archipel à l'échelle normale, bots gourmands, 600 cycles
+de garde-fou. Le témoin est l'ancien jeu — cours plat à 4:1, palier hors
+d'atteinte — ce qui rend les deux lignes strictement comparables.
+
+Trois questions, dans l'ordre où elles pouvaient tuer la mécanique : le cours
+**vit-il** ? S'emballe-t-il ? Coûte-t-il la partie ?
+
+### Une première mesure trompeuse
+
+Sur seize parties, le marché paraissait coûter cher : 236 cycles contre 191,
+soit **+24 % de durée** à douze joueurs, sur le jeu dont la durée est déjà le
+problème connu. De quoi remettre la mécanique en cause.
+
+Sur quarante parties, l'écart disparaît :
+
+| Effectif | Marché | Conclues | Cycles (médiane) | Points du gagnant | Constr./j |
+|---|---|---|---|---|---|
+| 12 | figé 4:1 | 34/40 | 189 | 15,0 | 12,3 |
+| 12 | **§10** | **36/40** | **191** | 15,2 | 12,2 |
+| 8 | figé 4:1 | 39/40 | 178 | 15,3 | 14,0 |
+| 8 | **§10** | **40/40** | **183** | 15,2 | 14,0 |
+
+Deux cycles à douze, cinq à huit : sous le bruit. Les parties conclues gagnent
+même deux points sur quarante. Le +24 % était un artefact d'échantillon — une
+mesure de plus que ce document doit corriger avant d'en tirer une
+conclusion, et la même leçon que les précédentes : **seize parties ne
+suffisent pas à départager deux réglages proches.**
+
+### Le cours vit, et il sature
+
+L'amplitude moyenne — de combien de crans a bougé le cours le plus mobile —
+s'établit à **2,8** sur une plage de 2 à 6. Le marché n'est donc pas un
+barème déguisé : il traverse presque toute son étendue en une partie.
+
+Mais **3,4 cours sur 6 finissent collés à une borne**. Le premier jet était
+pire, à 4,8, parce que le solde qui porte le cours courait sans limite : le
+bois vendu quatre cents fois demandait quatre cents achats pour décoller de
+son plafond, ce qui n'arrive jamais. Borner le solde un cran au-delà du cours
+a ramené la saturation à 3,4 et rendu la remontée possible en un palier.
+
+Les 3,4 restants tiennent aux bots, et il faut le dire clairement : ils
+vendent toujours le même surplus structurel — bois et laine — et achètent
+toujours la même pénurie structurelle — minerai et blé. Rien dans leur
+politique ne réagit au prix. Un joueur humain qui voit le bois à 6 cesse de
+le vendre et va négocier à la table, ce qui est précisément l'effet
+recherché.
+
+### La limite de cette lecture
+
+Le cours ne facture que la ressource **donnée**. Le voir descendre à 2 sur le
+minerai ne rend donc pas le minerai plus facile à obtenir : cela ne profite
+qu'à celui qui en a du surplus, c'est-à-dire à personne. La moitié « une
+ressource qui manque voit son prix monter » du §10 pèse ainsi nettement moins
+que l'autre.
+
+C'était le prix à payer pour que les ports gardent leur sens : dans la boîte,
+un port bois donne 2 bois contre n'importe quoi. Facturer la ressource reçue
+aurait inversé la signification de tous les ports du plateau.
+
+### Ce qu'il reste à mesurer
+
+- Le marché n'a jamais été mesuré **avec des joueurs humains**, qui sont les
+  seuls à pouvoir réagir à un prix. Toutes les valeurs ci-dessus décrivent
+  une table qui ne regarde pas le tableau.
+- Les échanges bancaires par partie ne bougent presque pas (273 contre 279 à
+  douze) : les bots paient plus cher sans commercer moins. Un humain
+  devrait, lui, se détourner de la banque — c'est l'hypothèse centrale du
+  dispositif, et elle reste à vérifier.
+- Le palier de 4 et la plage 2–6 n'ont été comparés qu'à deux variantes, sur
+  seize parties chacune — donc sur du bruit. À reprendre à quarante si le
+  réglage est remis en cause.
+
+---
+
+## Septième tour : les ports à contrat
+
+`scripts/ports.ts`, 40 parties par ligne. Le témoin retire les deux ports du
+plateau **après génération** : mêmes terres, mêmes jetons, mêmes autres
+ports, seule la côte change.
+
+| Effectif | Plateau | Conclues | Cycles (méd.) | Points du gagnant | Constr./j | Via port | Via banque |
+|---|---|---|---|---|---|---|---|
+| 12 | sans contrats | 35/40 | 212 | 14,9 | 12,1 | 0 | 317 |
+| 12 | **§11** | 35/40 | 209 | 15,0 | 12,2 | 5 | 316 |
+| 8 | sans contrats | 40/40 | 181 | 15,2 | 13,8 | 0 | 114 |
+| 8 | **§11** | 40/40 | 189 | 15,2 | 13,9 | 7 | 116 |
+
+**Le port commercial sert, et ne déséquilibre rien.** Cinq à sept conversions
+par partie, aucun effet mesurable sur la durée, le nombre de constructions ou
+le score du gagnant. La crainte était qu'un 2:1 sans condition de nature
+devienne le meilleur taux du jeu offert à qui pose une colonie au bon
+endroit ; la contrainte des deux natures différentes le ramène à sa place.
+
+### Ce que ces chiffres ne disent pas
+
+- **Le port minier n'est pas mesuré du tout.** Zéro usage : les bots ne le
+  touchent jamais. L'or ne sert qu'à la métropole, et un bot qui en
+  thésauriserait sans pouvoir bâtir bloquerait sa main. C'est une lacune
+  connue, pas un oubli — mais elle veut dire que l'exemption de marché du
+  §11, la décision la plus discutable du lot, n'a été validée que par le
+  raisonnement.
+- **Cinq usages par partie, c'est peu**, et c'est le plancher : le port
+  n'appartient qu'à un joueur, et ce joueur est un bot qui n'y touche que
+  lorsqu'il ne peut plus rien bâtir. Un humain qui tient ce port irait le
+  chercher.
+- Le port royal n'existe pas : il attend l'Influence.

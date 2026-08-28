@@ -661,6 +661,8 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
       onAccept={(offerId) => send('ACCEPT_TRADE', { offerId })}
       onCancel={(offerId) => send('CANCEL_TRADE', { offerId })}
       onBank={(giveCounts, receive) => send('TRADE_WITH_BANK', { give: giveCounts, receive })}
+      onPort={(port, giveCounts, receive) =>
+        send('TRADE_AT_PORT', { port, give: giveCounts, receive })}
     />
   );
 

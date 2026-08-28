@@ -13,6 +13,7 @@ import {
   hexKey,
   hexesWithin,
   playerOf,
+  recordMarketTrade,
   settlementSpots,
 } from '@grand-colonies/engine';
 
@@ -364,5 +365,39 @@ describe('offres acceptables', () => {
     dispatch(state, cmd('CREATE_TRADE', 'p1', { give: { wood: 2 }, receive: { ore: 1 } }));
 
     expect(privateView(state, 'p1')?.acceptableOffers).toHaveLength(0);
+  });
+});
+
+describe('le cours du marché', () => {
+  it('est public : tout le monde voit le même prix', () => {
+    const state = startedGame();
+    const view = publicView(state);
+
+    expect(view.market.rates.wood).toBe(5);
+    expect(view.market.rates.gold).toBe(2);
+    expect(view.market.step).toBe(state.config.market.step);
+  });
+
+  it('penche vers son prochain cran', () => {
+    const state = startedGame();
+    recordMarketTrade(state.config.market, state.market, 'wood', 'ore');
+
+    const view = publicView(state);
+    // Une vente : le bois se déprécie sans avoir encore changé de prix.
+    expect(view.market.rates.wood).toBe(5);
+    expect(view.market.drift.wood).toBe(1);
+    expect(view.market.drift.ore).toBe(-1);
+  });
+
+  it('donne à chacun son propre taux, cours et port compris', () => {
+    const state = startedGame();
+    for (let i = 0; i < state.config.market.step; i++) {
+      recordMarketTrade(state.config.market, state.market, 'wood', 'ore');
+    }
+
+    const priv = privateView(state, 'p1');
+    // Le cours a bougé : la vue privée le suit sans que le client calcule.
+    expect(priv?.bankRates.wood).toBe(6);
+    expect(priv?.bankRates.ore).toBe(2);
   });
 });

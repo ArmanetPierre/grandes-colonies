@@ -12,7 +12,29 @@
  */
 
 import type { PlayerId } from '../board/board.js';
-import { type ResourceCounts, RESOURCES, amount, total } from '../resources.js';
+import { marketRate } from '../market.js';
+import { portDiscount } from '../ports.js';
+import { type Resource, type ResourceCounts, RESOURCES, amount, total } from '../resources.js';
+import type { GameState } from './state.js';
+
+/**
+ * Combien de cartes donner à la banque pour en recevoir une.
+ *
+ * Deux systèmes s'y rencontrent, et l'ordre compte : le **marché** fixe le
+ * cours de la ressource (§10), le **port** en retranche une remise (§11).
+ * L'inverse — un port qui imposerait son taux — aurait rendu le marché
+ * invisible à quiconque occupe un port, c'est-à-dire à tous les joueurs
+ * installés.
+ *
+ * Le plancher est celui du marché lui-même : un port ne descend jamais
+ * au-dessous du prix le plus bas que le cours puisse atteindre, sinon un
+ * port spécialisé sur une ressource déjà rare finirait par donner du 1:1.
+ */
+export function bankRate(state: GameState, player: PlayerId, resource: Resource): number {
+  const cours = marketRate(state.config.market, state.market, resource);
+  const discount = portDiscount(state.board, player, resource);
+  return Math.max(state.config.market.minimum, cours - discount);
+}
 
 export interface TradeOffer {
   readonly id: string;

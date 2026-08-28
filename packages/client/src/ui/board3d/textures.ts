@@ -100,7 +100,19 @@ export function textureJeton(valeur: number): Texture | undefined {
 const MARCHANDISE: Readonly<Record<string, string>> = {
   wood: 'Bois', brick: 'Argile', wool: 'Laine', grain: 'Blé', ore: 'Minerai',
   merchant: 'Marchand', generic: 'Tout',
+  // Les deux ports à contrat du §11 : leur ligne du bas dit l'échange entier,
+  // parce que leur taux seul ne suffit pas à les distinguer d'un 2:1 ordinaire.
+  mining: 'Minerai → Or', commercial: 'Deux sortes',
 };
+
+/**
+ * Le gros chiffre du panneau.
+ *
+ * Le port générique prend trois cartes, tous les autres deux. Ce n'est donc
+ * pas le taux qui distingue les ports à contrat — c'est la ligne du dessous,
+ * et c'est pour cela qu'elle porte l'échange en toutes lettres.
+ */
+const TAUX: Readonly<Record<string, string>> = { generic: '3:1' };
 
 /**
  * Le panneau d'un port.
@@ -113,7 +125,7 @@ export function texturePort(kind: string): Texture | undefined {
   if (!c) return undefined;
   const { toile, ctx } = c;
   const T = 256;
-  const taux = kind === 'generic' ? '3:1' : '2:1';
+  const taux = TAUX[kind] ?? '2:1';
 
   ctx.clearRect(0, 0, T, T);
   // La planche n'occupe pas tout le carré : le reste est transparent, ce qui
@@ -133,8 +145,12 @@ export function texturePort(kind: string): Texture | undefined {
   ctx.textBaseline = 'middle';
   ctx.font = `700 ${T * 0.3}px Georgia, serif`;
   ctx.fillText(taux, T / 2, y + h * 0.36);
-  ctx.font = `600 ${T * 0.13}px "Helvetica Neue", Arial, sans-serif`;
-  ctx.fillText(MARCHANDISE[kind] ?? kind, T / 2, y + h * 0.74);
+  const legende = MARCHANDISE[kind] ?? kind;
+  // « Minerai → Or » est deux fois plus long que « Blé » : à taille fixe il
+  // débordait de la planche et se faisait couper par la transparence.
+  const corps = legende.length > 9 ? T * 0.098 : T * 0.13;
+  ctx.font = `600 ${corps}px "Helvetica Neue", Arial, sans-serif`;
+  ctx.fillText(legende, T / 2, y + h * 0.74);
 
   return enTexture(toile);
 }

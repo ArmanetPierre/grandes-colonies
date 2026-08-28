@@ -78,12 +78,46 @@ export function classicBoard(rng: SeededRandom): BoardInit {
 }
 
 /**
- * Répartition des ports (§11) : deux tiers de spécialisés, un tiers de
- * génériques, plus un port marchand qui donne 2:1 sur tout.
+ * Les ports ordinaires (§11) : deux tiers de spécialisés, un tiers de
+ * génériques. Ils se répètent autant que la côte le permet.
  */
-const PORT_KINDS: readonly PortKind[] = [
-  'generic', 'generic', 'wood', 'brick', 'wool', 'grain', 'ore', 'merchant',
+const COMMON_PORT_KINDS: readonly PortKind[] = [
+  'generic', 'generic', 'wood', 'brick', 'wool', 'grain', 'ore',
 ];
+
+/**
+ * Les trois ports particuliers du §11, **en un seul exemplaire**.
+ *
+ * Ce sont des positions de course, comme la métropole : deux ports miniers
+ * sur la même côte n'apprendraient rien de plus à la table, et un plateau
+ * immense en aurait semé deux ou trois puisque les types s'y répètent.
+ *
+ * L'ordre compte : si le plateau est trop petit pour les trois, c'est le
+ * marchand qui reste, parce qu'il est le seul dont l'effet se comprend sans
+ * avoir lu la règle.
+ *
+ * Le port royal manque encore — il donne un bonus d'Influence, et
+ * l'Influence n'existe pas.
+ */
+const UNIQUE_PORT_KINDS: readonly PortKind[] = ['merchant', 'mining', 'commercial'];
+
+/**
+ * La liste des types à semer, pour un nombre de ports donné.
+ *
+ * Les particuliers sont plafonnés au tiers du total : sur une côte de six
+ * ports, en mettre trois ferait un plateau où le commerce ordinaire est
+ * l'exception.
+ */
+function portKinds(rng: SeededRandom, count: number): PortKind[] {
+  const uniques = UNIQUE_PORT_KINDS.slice(0, Math.max(1, Math.floor(count / 3)));
+  const commons = rng.shuffle(COMMON_PORT_KINDS);
+
+  const kinds: PortKind[] = [...uniques];
+  for (let i = 0; kinds.length < count; i++) {
+    kinds.push(commons[i % commons.length] as PortKind);
+  }
+  return rng.shuffle(kinds);
+}
 
 /**
  * Place les ports sur des sommets côtiers, espacés les uns des autres.
@@ -110,7 +144,7 @@ function placePorts(
     }
   }
 
-  const kinds = rng.shuffle(PORT_KINDS);
+  const kinds = portKinds(rng, count);
   const ports = new Map<VertexId, Port>();
   const taken = new Set<VertexId>();
 
@@ -118,7 +152,9 @@ function placePorts(
     if (ports.size >= count) break;
     if (taken.has(vertex)) continue;
 
-    const kind = kinds[ports.size % kinds.length];
+    // Un type par port, sans repli cyclique : la liste a exactement la bonne
+    // longueur, et boucler dessus dupliquerait les ports uniques.
+    const kind = kinds[ports.size];
     if (kind === undefined) break;
     ports.set(vertex, { kind });
 
