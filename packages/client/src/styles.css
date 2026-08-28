@@ -61,7 +61,41 @@ body {
   padding: 6px 12px; background: var(--gc-raised); border: 1px solid var(--gc-line);
 }
 
-.gc-main { flex: 1; display: flex; min-height: 0; }
+/*
+ * Trois colonnes de largeur fixe : joueurs, plateau, panneaux.
+ *
+ * En flex, la colonne du commerce apparaissait et disparaissait avec la
+ * phase : le journal glissait de deux cent cinquante pixels et le plateau se
+ * recentrait à chaque cycle. Une interface qui bouge sous le doigt se lit
+ * mal, et un joueur qui vise une arête la rate.
+ */
+.gc-main {
+  flex: 1; min-height: 0;
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr) 268px;
+  /* Une seule rangée, qui prend toute la hauteur. Sans elle, la rangée se
+     dimensionnait sur son contenu : le cadre du plateau, dont l'intérieur est
+     en position absolue, ne mesurait que ses marges. */
+  grid-template-rows: minmax(0, 1fr);
+}
+/*
+ * Colonne **et** rangée nommées pour chacun.
+ *
+ * Dans l'ordre du DOM les panneaux précèdent le plateau : sans consigne ils
+ * s'installaient au milieu. Et nommer la seule colonne ne suffisait pas — le
+ * placement automatique ne revient jamais en arrière, si bien que le plateau,
+ * déclaré en colonne 2 après un élément de colonne 3, se retrouvait sur une
+ * seconde rangée haute de ses seules marges.
+ */
+.gc-players    { grid-area: 1 / 1; }
+.gc-board-wrap { grid-area: 1 / 2; }
+.gc-side       { grid-area: 1 / 3; }
+
+/* La colonne des panneaux : commerce en haut, journal dessous. */
+.gc-side {
+  min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr);
+  border-left: 1px solid var(--gc-line); background: var(--gc-surface);
+}
 
 /* ── joueurs ─────────────────────────────────────────────────────── */
 .gc-players {
@@ -270,9 +304,10 @@ body {
 
 /* ── commerce ────────────────────────────────────────────────────── */
 .gc-trade {
-  width: 250px; flex: none; overflow-y: auto;
-  border-left: 1px solid var(--gc-line); background: var(--gc-surface);
+  width: auto; min-height: 0; overflow-y: auto;
+  border-bottom: 1px solid var(--gc-line);
   padding: 12px; display: flex; flex-direction: column; gap: 12px;
+  max-height: 52vh;
 }
 .gc-trade-head {
   font-family: var(--gc-font-display); font-size: 12px;
@@ -372,7 +407,10 @@ body {
 /* ── cartes développement ──────────────────────────────────────────────
    Elles vivent dans le pied de page, à côté de la main : ce sont des
    ressources comme les autres, et les séparer les ferait oublier. */
-.gc-devcards { display: flex; align-items: flex-end; gap: 7px; flex-wrap: wrap; }
+.gc-devcards {
+  display: flex; align-items: flex-end; gap: 9px; flex-wrap: wrap;
+  justify-content: center; margin-top: 12px;
+}
 .gc-devcards-label {
   font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
   color: var(--gc-ink-soft);
@@ -452,8 +490,7 @@ body {
    À douze joueurs, on n'agit qu'un cycle sur douze : sans lui, on ne sait
    pas ce qui s'est passé pendant l'attente. */
 .gc-journal {
-  width: 200px; flex: none; overflow-y: auto;
-  border-right: 1px solid var(--gc-line); background: var(--gc-surface);
+  width: auto; min-height: 0; overflow-y: auto;
   padding: 10px 12px;
 }
 .gc-journal-head {
@@ -785,4 +822,39 @@ body {
   .gc-modal { max-height: 92vh; overflow-y: auto; padding: 12px 14px; }
   .gc-modal-title { font-size: 18px; }
   .gc-objectives { grid-template-columns: 1fr 1fr; }
+}
+
+/* Les états vides des panneaux : ils occupent la place plutôt que de la
+   rendre, pour que rien ne bouge quand ils se remplissent. */
+.gc-trade-idle, .gc-journal-idle {
+  font-size: 11px; line-height: 1.4; color: var(--gc-ink-soft); font-style: italic;
+}
+
+/* ── les dés ───────────────────────────────────────────────────────────
+   Le seul moment où la table entière regarde la même chose : il mérite
+   mieux qu'une ligne de texte au coin de l'écran. */
+.gc-dice {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 12px; background: var(--gc-raised); border: 1px solid var(--gc-line);
+}
+.gc-die { width: 28px; height: 28px; display: block; }
+.gc-dice-total {
+  font-family: var(--gc-font-display); font-size: 20px; color: var(--gc-accent);
+  min-width: 24px; text-align: center; font-variant-numeric: tabular-nums;
+}
+
+/* Le roulement : les dés sautent et tournent, le total se tait. */
+.gc-dice.is-rolling .gc-die { animation: gc-tumble .28s ease-in-out infinite; }
+.gc-dice.is-rolling .gc-die:last-of-type { animation-delay: .09s; }
+.gc-dice.is-rolling .gc-dice-total { opacity: .4; }
+
+@keyframes gc-tumble {
+  0%   { transform: translateY(0) rotate(0deg); }
+  50%  { transform: translateY(-5px) rotate(11deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+/* Un mouvement qu'on n'a pas demandé peut gêner : on le respecte. */
+@media (prefers-reduced-motion: reduce) {
+  .gc-dice.is-rolling .gc-die { animation: none; }
 }

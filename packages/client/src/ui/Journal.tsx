@@ -102,13 +102,16 @@ export interface JournalProps {
 }
 
 export function Journal({ view, entries }: JournalProps) {
-  if (entries.length === 0) return null;
   const order = view.players.map((p) => p.id);
   const nameOf = (id: string): string => view.players.find((p) => p.id === id)?.name ?? id;
 
   return (
     <div className="gc-journal">
       <div className="gc-journal-head">Journal</div>
+      {/* Le vide se dit : disparaître décalerait tout ce qui suit. */}
+      {entries.length === 0 && (
+        <p className="gc-journal-idle">Rien ne s'est encore produit.</p>
+      )}
       <ol className="gc-journal-list">
         {/* Le plus récent en tête : c'est ce qu'on vient de manquer. */}
         {entries.map((entry, index) => (

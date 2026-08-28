@@ -58,7 +58,13 @@ export function Trade({ pub, priv, canOffer, canBank, onOffer, onAccept, onCance
       <div className="gc-trade-head">Commerce</div>
 
       {/* Sans droit de proposer ni d'échanger avec la banque, le formulaire
-          n'aurait aucun effet : on ne montre alors que les offres reçues. */}
+          n'aurait aucun effet : on dit pourquoi plutôt que de le griser. */}
+      {!canOffer && !canBank && (
+        <p className="gc-trade-idle">
+          La fenêtre de commerce s'ouvre à la fin de chaque tour. Tu pourras
+          alors proposer à qui tu veux.
+        </p>
+      )}
       {(canOffer || canBank) && (
       <div className="gc-trade-compose">
         <label>

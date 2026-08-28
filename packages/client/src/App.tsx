@@ -24,6 +24,7 @@ import { Board, colorOf } from './ui/Board.jsx';
 import { type CardRequest, DevCards } from './ui/DevCards.jsx';
 import { Discard } from './ui/Discard.jsx';
 import { GameOver } from './ui/GameOver.jsx';
+import { Dice } from './ui/Dice.jsx';
 import { type CostKind, Hint } from './ui/Hint.jsx';
 import { type Entry, Journal, describe } from './ui/Journal.jsx';
 import { Market } from './ui/Market.jsx';
@@ -153,6 +154,14 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
   /** Le marché est ouvert : on regarde toutes les offres de la table. */
   const [market, setMarket] = useState(false);
   /**
+   * Le dernier lancer connu, conservé au-delà du cycle.
+   *
+   * `lastRoll` repasse à `undefined` en fin de cycle : les dés étaient donc
+   * démontés puis remontés à chaque tour, se croyaient toujours au premier
+   * affichage, et n'ont jamais roulé une seule fois.
+   */
+  const [roll, setRoll] = useState<{ a: number; b: number; total: number }>();
+  /**
    * Ce que le joueur s'apprête à poser. Rien n'est cliquable tant qu'il n'a
    * pas choisi : sur un plateau de cinquante tuiles, afficher tous les
    * emplacements de tous les types en même temps serait illisible.
@@ -213,6 +222,10 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
   const send = useCallback((type: string, extra: Record<string, unknown> = {}) => {
     connection.current?.send({ actionId: newActionId(), type, ...extra });
   }, []);
+
+  useEffect(() => {
+    if (pub?.lastRoll) setRoll(pub.lastRoll);
+  }, [pub?.lastRoll]);
 
   const caps = useMemo(() => new Set(priv?.capabilities ?? []), [priv]);
   const order = useMemo(() => pub?.players.map((p) => p.id) ?? [], [pub]);
@@ -375,11 +388,7 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
             {status !== 'open' && ` · ${status === 'reconnecting' ? 'reconnexion…' : status}`}
           </div>
         </div>
-        {pub.lastRoll && (
-          <div className="gc-roll" title="Dernier lancer">
-            {pub.lastRoll.a} + {pub.lastRoll.b} = <strong>{pub.lastRoll.total}</strong>
-          </div>
-        )}
+        {roll && <Dice a={roll.a} b={roll.b} total={roll.total} />}
       </header>
 
       <div className="gc-main">
@@ -406,11 +415,13 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
           ))}
         </aside>
 
-        {/* Le panneau apparaît aussi quand une offre attend une réponse : le
-            joueur actif peut s'adresser à un passif (contrat §4), et jusqu'ici
-            celui-ci ne la voyait jamais. */}
-        {(caps.has('CAN_TRADE_PLAYER') || caps.has('CAN_TRADE_BANK')
-          || priv.acceptableOffers.length > 0) && (
+        {/*
+          * Le commerce garde sa colonne en permanence, même quand on ne peut
+          * rien y faire. Le faire apparaître et disparaître décalait le
+          * journal et recentrait le plateau à chaque changement de phase, et
+          * une interface qui bouge sous le doigt se lit mal.
+          */}
+        <div className="gc-side">
           <Trade
             pub={pub}
             priv={priv}
@@ -422,9 +433,8 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
             onCancel={(offerId) => send('CANCEL_TRADE', { offerId })}
             onBank={(giveCounts, receive) => send('TRADE_WITH_BANK', { give: giveCounts, receive })}
           />
-        )}
-
-        <Journal view={pub} entries={journal} />
+          <Journal view={pub} entries={journal} />
+        </div>
 
         <main className="gc-board-wrap">
           <Board
@@ -470,15 +480,6 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
             ))}
           </div>
         )}
-
-        <DevCards
-          priv={priv}
-          armed={card?.kind}
-          onCancel={() => setCard(null)}
-          onBoardCard={(request) => { setCard({ kind: request.kind, edges: [] }); setIntent(null); }}
-          onInvention={(resources) => send('PLAY_INVENTION', { resources })}
-          onMonopoly={(resource) => send('PLAY_MONOPOLY', { resource })}
-        />
 
         {roadCard && (
           <div className="gc-card-progress">
@@ -545,6 +546,14 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
               </button>
             </Hint>
           )}
+          <DevCards
+            priv={priv}
+            armed={card?.kind}
+            onCancel={() => setCard(null)}
+            onBoardCard={(request) => { setCard({ kind: request.kind, edges: [] }); setIntent(null); }}
+            onInvention={(resources) => send('PLAY_INVENTION', { resources })}
+            onMonopoly={(resource) => send('PLAY_MONOPOLY', { resource })}
+          />
           <Hint text={HINTS['market']?.text ?? ''} note={HINTS['market']?.note ?? ''}>
             <button className="gc-action gc-action-quiet" onClick={() => setMarket(true)}>
               Marché

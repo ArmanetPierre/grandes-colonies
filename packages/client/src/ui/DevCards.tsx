@@ -45,10 +45,9 @@ export function DevCards({
   priv, onBoardCard, onInvention, onMonopoly, armed, onCancel,
 }: DevCardsProps) {
   const [choosing, setChoosing] = useState<'invention' | 'monopoly' | null>(null);
+  const [open, setOpen] = useState(false);
   const playable = priv.playableDevCards;
   const pending = priv.pendingDevCards;
-
-  if (playable.length === 0 && pending.length === 0) return null;
 
   const canPlay = priv.capabilities.includes('CAN_PLAY_DEV_CARD');
   const canKnight = priv.capabilities.includes('CAN_PLAY_KNIGHT');
@@ -56,14 +55,46 @@ export function DevCards({
 
   // Une carte par tour : dès qu'une est armée, les autres attendent.
   const start = (card: string): void => {
+    setOpen(false);
     if (card === 'invention' || card === 'monopoly') setChoosing(card);
     else onBoardCard({ kind: card as CardRequest['kind'] });
   };
 
   return (
     <>
-      <div className="gc-devcards">
-        <span className="gc-devcards-label">Cartes</span>
+      {/*
+        * Une main de cartes ouverte à la demande, plutôt qu'étalée en
+        * permanence. Affichées en ligne, les cartes faisaient grandir le pied
+        * de page à mesure qu'on en achetait, et débordaient par-dessus le
+        * plateau : la barre d'action changeait de hauteur en pleine partie.
+        */}
+      {/* Toujours présent, même à main vide : un bouton qui apparaît et
+          disparaît décale toute la rangée d'actions en pleine partie. */}
+      <button
+        className={`gc-action gc-action-quiet${armed !== undefined ? ' is-armed' : ''}`}
+        disabled={playable.length + pending.length === 0}
+        onClick={() => setOpen(true)}
+      >
+        Mes cartes
+        <small>
+          {playable.length + pending.length === 0
+            ? 'aucune'
+            : `${playable.length + pending.length} en main`}
+        </small>
+      </button>
+
+      {open && (
+        <div className="gc-modal-backdrop" onClick={() => setOpen(false)}>
+          <div className="gc-modal gc-modal-wide" onClick={(e) => e.stopPropagation()}>
+            <header className="gc-modal-head">
+              <span className="gc-modal-title">Mes cartes</span>
+              <span className="gc-modal-count">{playable.length} jouable{playable.length > 1 ? 's' : ''}</span>
+            </header>
+            <p className="gc-modal-hint">
+              Une seule carte par tour, et jamais celle achetée le tour même.
+            </p>
+
+            <div className="gc-devcards">
         {playable.map((card, index) => (
           <button
             key={`${card}-${index}`}
@@ -82,7 +113,14 @@ export function DevCards({
             <DevCardArt card={card} facedown />
           </button>
         ))}
-      </div>
+            </div>
+
+            <div className="gc-modal-actions">
+              <button className="gc-action gc-action-quiet" onClick={() => setOpen(false)}>Fermer</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {choosing === 'invention' && (
         <PickResources
