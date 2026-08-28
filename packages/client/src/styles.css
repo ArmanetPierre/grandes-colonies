@@ -246,10 +246,25 @@ body {
    QR code et jouent sur leur téléphone. Toute la mise en page est donc
    revue autour d'une règle — le plateau domine, le reste se replie. */
 @media (max-width: 780px) {
-  /* La colonne défile d'un bloc. Des hauteurs fixes empilées dépassaient la
-     zone disponible et le commerce se peignait par-dessus les actions ;
-     un seul défilement vaut mieux que trois zones qui se disputent la place. */
-  .gc-main { flex-direction: column; overflow-y: auto; }
+  /*
+   * Retour au flex, en colonne.
+   *
+   * `.gc-main` est une grille sur grand écran ; régler `flex-direction`
+   * dessus ne faisait rien, et le téléphone recevait les trois colonnes du
+   * bureau écrasées dans quatre cents pixels. Il faut donc défaire la grille,
+   * pas seulement lui demander de s'empiler.
+   */
+  .gc-main {
+    display: flex; flex-direction: column; overflow-y: auto;
+    grid-template-columns: none; grid-template-rows: none;
+  }
+  .gc-players, .gc-board-wrap, .gc-side { grid-area: auto; }
+
+  /* La colonne des panneaux redevient une simple pile, sans bordure latérale. */
+  .gc-side {
+    display: flex; flex-direction: column;
+    border-left: none; border-top: 1px solid var(--gc-line);
+  }
 
   /* Le plateau passe devant le commerce. Empilé après lui, il n'avait plus
      qu'un bandeau de quelques centimètres, alors que c'est l'élément qu'on
@@ -729,11 +744,18 @@ body {
     /* Journal et commerce prennent ce qu'il leur faut ; joueurs et actions
        occupent tout le reste. Deux rangées égales bridaient les colonnes
        latérales à la moitié de la hauteur, pour rien. */
-    grid-template-rows: auto 1fr auto;
+    /*
+     * Le commerce et le journal vivent désormais dans un même conteneur : les
+     * placer dans deux cases distinctes revenait à viser des zones absentes
+     * de leur parent, et ils se peignaient l'un sur l'autre.
+     */
+    /* La rangée des actions est la plus lourde : neuf boutons et la main.
+       À parts égales, « Fin de cycle » tombait hors du cadre. */
+    grid-template-rows: auto 1.55fr 1fr;
     grid-template-areas:
       "head    head  head"
       "players board actions"
-      "journal board trade";
+      "players board side";
     height: 100vh; overflow: hidden;
   }
 
@@ -770,14 +792,16 @@ body {
   .gc-board-wrap { grid-area: board; order: 0; min-height: 0; padding: 4px; }
   .gc-board-fit { inset: 4px; }
 
+  .gc-side {
+    grid-area: side; min-height: 0;
+    border-left: 1px solid var(--gc-line); border-top: 1px solid var(--gc-line);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
   .gc-journal {
-    grid-area: journal; width: auto; max-height: none;
-    border-right: 1px solid var(--gc-line); border-top: 1px solid var(--gc-line);
-    padding: 5px 6px; overflow-y: auto;
+    width: auto; max-height: none; padding: 5px 6px; overflow-y: auto;
   }
   .gc-journal-head { font-size: 8.5px; margin-bottom: 4px; }
   .gc-journal-entry { font-size: 9px; }
-  .gc-journal { max-height: 34vh; }
 
   /* La main, les cartes et les actions passent à droite, sous le pouce. */
   /*
@@ -787,7 +811,7 @@ body {
    */
   .gc-footer {
     grid-area: actions; flex-direction: column; flex-wrap: nowrap;
-    align-items: stretch; gap: 5px; padding: 5px 6px; overflow-y: auto;
+    align-items: stretch; gap: 4px; padding: 4px 5px; overflow-y: auto;
     border-top: none; border-left: 1px solid var(--gc-line);
   }
   .gc-hand { gap: 3px; }
@@ -797,14 +821,14 @@ body {
      de boutons débordait de sa colonne. */
   .gc-actions {
     display: grid; grid-template-columns: repeat(2, 1fr);
-    gap: 4px; width: 100%; margin-left: 0;
+    gap: 3px; width: 100%; margin-left: 0;
   }
-  .gc-action { padding: 6px 4px; font-size: 10.5px; min-height: 34px; }
-  .gc-action small { font-size: 7.5px; }
+  .gc-action { padding: 5px 4px; font-size: 10px; min-height: 31px; }
+  .gc-action small { font-size: 7px; line-height: 1.15; }
 
   .gc-trade {
-    grid-area: trade; width: auto; max-height: 48vh;
-    border-left: 1px solid var(--gc-line); border-top: 1px solid var(--gc-line);
+    width: auto; max-height: 42vh;
+    border-bottom: 1px solid var(--gc-line);
     padding: 6px; overflow-y: auto; gap: 6px;
   }
   .gc-trade-head { font-size: 9px; }
