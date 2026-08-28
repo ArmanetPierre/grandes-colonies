@@ -282,7 +282,15 @@ export function Board({
       const [a, b] = [...pointeurs.current.values()];
       if (a && b) ecart.current = Math.hypot(a.x - b.x, a.y - b.y);
     }
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    /*
+     * Surtout pas de capture ici.
+     *
+     * Capturer le pointeur dès l'appui détourne vers le cadre le clic qui
+     * suit : l'emplacement visé ne le recevait jamais, et plus rien ne se
+     * posait sur le plateau — ni route, ni colonie, ni voleur. La capture
+     * n'est utile qu'une fois le glissement engagé, pour le suivre hors du
+     * cadre ; elle est donc prise au premier mouvement, pas avant.
+     */
   };
 
   const onPointerMove = (event: PointerEvent): void => {
@@ -307,7 +315,12 @@ export function Board({
     const dy = apres.y - avant.y;
     // Quelques pixels de tolérance : un doigt n'est jamais parfaitement
     // immobile, et un clic ne doit pas devenir un glissement pour autant.
-    if (Math.abs(dx) + Math.abs(dy) > 3) glisse.current = true;
+    if (!glisse.current && Math.abs(dx) + Math.abs(dy) > 3) {
+      glisse.current = true;
+      // Le déplacement commence : on suit le doigt même s'il sort du cadre.
+      const cadre = event.currentTarget as HTMLElement;
+      if (!cadre.hasPointerCapture(event.pointerId)) cadre.setPointerCapture(event.pointerId);
+    }
     if (glisse.current) setVue((v) => ({ ...v, x: v.x + dx, y: v.y + dy }));
   };
 
