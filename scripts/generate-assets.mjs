@@ -6,8 +6,12 @@
  * d'environnement GEMINI_API_KEY, ou depuis un fichier .env local (gitignoré).
  *
  *   node scripts/generate-assets.mjs --list
+ *   node scripts/generate-assets.mjs --id sheet_terrains --best
  *   node scripts/generate-assets.mjs --priority P0
  *   node scripts/generate-assets.mjs --id tile_forest --force
+ *
+ * Un asset peut déclarer des images de référence (champ `ref` du manifeste),
+ * jointes à la demande pour tenir la cohérence de la série : voir loadRefs().
  *
  * Voir assets/README.md.
  */
@@ -22,7 +26,7 @@ const API = 'https://generativelanguage.googleapis.com/v1beta';
 // ---------------------------------------------------------------- arguments
 
 function parseArgs(argv) {
-  const args = { priority: null, id: null, force: false, list: false, model: null, dryRun: false, tier: 'balanced', yes: false, manifest: 'assets/prompts.json' };
+  const args = { priority: null, id: null, force: false, list: false, model: null, dryRun: false, tier: 'balanced', yes: false, noRef: false, manifest: 'assets/prompts.json' };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--force') args.force = true;
@@ -31,6 +35,7 @@ function parseArgs(argv) {
     else if (a === '--best') args.tier = 'best';
     else if (a === '--cheap') args.tier = 'cheap';
     else if (a === '--yes' || a === '-y') args.yes = true;
+    else if (a === '--no-ref') args.noRef = true;
     else if (a === '--priority') args.priority = argv[++i]?.toUpperCase();
     else if (a === '--id') args.id = argv[++i];
     else if (a === '--model') args.model = argv[++i];
@@ -148,18 +153,37 @@ async function discoverImageModel(key, override, tier) {
 
 // ------------------------------------------------------------------ génération
 
-function buildPrompt(asset, manifest) {
+/**
+ * Consigne ajoutée quand des images de référence accompagnent le prompt.
+ *
+ * Sans elle, le modèle traite la planche comme un sujet à reproduire et rend
+ * une grille de panneaux au lieu de la surface demandée.
+ */
+const CONSIGNE_REFERENCE =
+  'The attached image is the reference sheet of this series: it fixes the palette, the material, ' +
+  'the lighting and the level of stylisation. Match them exactly, and match the brightness of the ' +
+  'panel described above. Produce only that single surface, filling the entire frame — never the ' +
+  'sheet itself, never its grid, its panels or its separations.';
+
+function buildPrompt(asset, manifest, avecRefs = false) {
   const styleKey = asset.style || asset.category;
   const style = manifest.style[styleKey] || manifest.style[asset.category];
-  return `${asset.subject}. ${style}. Avoid: ${manifest.negative}.`;
+  // La planche de série a ses propres interdits : elle doit justement porter
+  // une grille et des séparations, que le négatif commun proscrit.
+  const negative = asset.negative || manifest.negative;
+  const reference = avecRefs ? ` ${CONSIGNE_REFERENCE}` : '';
+  return `${asset.subject}. ${style}.${reference} Avoid: ${negative}.`;
 }
 
 /**
- * Appelle le modèle et renvoie le PNG en Buffer.
+ * Appelle le modèle et renvoie l'image en Buffer.
  * Les variantes de payload couvrent les différences entre versions de l'API :
  * certaines exigent TEXT en plus d'IMAGE, d'autres ignorent imageConfig.
+ *
+ * `refs` porte les images de référence jointes à la demande — le mécanisme de
+ * cohérence de la série, décrit sur loadRefs().
  */
-async function generateImage(key, model, prompt, aspect) {
+async function generateImage(key, model, prompt, aspect, refs = []) {
   const variants = [
     { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: aspect } },
     { responseModalities: ['TEXT', 'IMAGE'], imageConfig: { aspectRatio: aspect } },
@@ -167,9 +191,16 @@ async function generateImage(key, model, prompt, aspect) {
     {},
   ];
 
+  // Les références passent avant le texte : le modèle voit la gamme de la
+  // série avant de lire ce qu'on lui demande d'en tirer.
+  const demande = [
+    ...refs.map(r => ({ inlineData: { mimeType: r.mimeType, data: r.buffer.toString('base64') } })),
+    { text: prompt },
+  ];
+
   let lastError;
   for (const generationConfig of variants) {
-    const body = { contents: [{ parts: [{ text: prompt }] }] };
+    const body = { contents: [{ parts: demande }] };
     if (Object.keys(generationConfig).length) body.generationConfig = generationConfig;
 
     const res = await fetch(`${API}/models/${model}:generateContent`, {
@@ -218,6 +249,45 @@ async function findExisting(outDir, category, id) {
   return null;
 }
 
+const mimeOf = (path) => (/\.jpe?g$/i.test(path) ? 'image/jpeg' : /\.webp$/i.test(path) ? 'image/webp' : 'image/png');
+
+/**
+ * Charge les images de référence déclarées par un asset (champ `ref`).
+ *
+ * C'est le mécanisme de cohérence de la série, et il répond à une limite de
+ * fond du pipeline précédent : l'harmonie est une propriété *relationnelle*,
+ * que le texte ne sait pas transmettre. Dix tuiles décrites séparément, si
+ * soigneusement que ce soit, sont dix images qui ne se sont jamais vues — et
+ * elles dérivent. La mesure de la première série le montrait : saturations de
+ * 21 à 146, et cinq tuiles à la même luminosité. Générer chaque tuile *en
+ * présence* de la planche de série remplace la description par la contrainte.
+ *
+ * Une référence est une valeur du champ `ref` : soit l'identifiant d'un autre
+ * asset du manifeste, soit un chemin relatif à la racine du dépôt.
+ *
+ * Une référence manquante est une erreur, jamais un repli silencieux. Générer
+ * sans elle produirait une image plausible et hors gamme — le genre de défaut
+ * qu'on ne repère qu'à la planche de contrôle, dix images plus tard.
+ */
+async function loadRefs(asset, manifest, outDir) {
+  const refs = [];
+  for (const ref of asset.ref || []) {
+    const source = manifest.assets.find(a => a.id === ref);
+    const path = source
+      ? await findExisting(outDir, source.category, source.id)
+      : (await exists(join(ROOT, ref)) ? join(ROOT, ref) : null);
+
+    if (!path) {
+      throw new Error(
+        `référence « ${ref} » absente — la générer d'abord :\n` +
+        `      node scripts/generate-assets.mjs --id ${ref}`
+      );
+    }
+    refs.push({ buffer: await readFile(path), mimeType: mimeOf(path) });
+  }
+  return refs;
+}
+
 /**
  * Écrit assets/generated/index.json : identifiant -> chemin réel du fichier.
  * Le modèle renvoie tantôt du JPEG tantôt du PNG ; sans cet index, tout
@@ -257,12 +327,17 @@ async function main() {
     for (const a of manifest.assets) (byPriority[a.priority] ||= []).push(a);
     for (const p of Object.keys(byPriority).sort()) {
       console.log(`  ${p} — ${byPriority[p].length} images`);
-      for (const a of byPriority[p]) console.log(`     ${a.id.padEnd(22)} ${a.aspect.padEnd(6)} ${a.category}`);
+      for (const a of byPriority[p]) {
+        const ref = a.ref?.length ? `  ← ${a.ref.join(', ')}` : '';
+        console.log(`     ${a.id.padEnd(22)} ${a.aspect.padEnd(6)} ${a.category}${ref}`);
+      }
     }
     console.log('\nUsage :');
-    console.log('  node scripts/generate-assets.mjs --priority P0');
+    console.log('  node scripts/generate-assets.mjs --id sheet_terrains --best   (la planche de série, en premier)');
+    console.log('  node scripts/generate-assets.mjs --priority P0                (les tuiles, alignées dessus)');
     console.log('  node scripts/generate-assets.mjs --id tile_forest --force');
-    console.log('  node scripts/generate-assets.mjs --dry-run --priority P0   (affiche les prompts)\n');
+    console.log('  node scripts/generate-assets.mjs --dry-run --priority P0      (affiche les prompts)');
+    console.log('  --no-ref  génère sans les images de référence (comparaison, dépannage)\n');
     return;
   }
 
@@ -274,7 +349,9 @@ async function main() {
 
   if (args.dryRun) {
     for (const a of assets) {
-      console.log(`\n──────── ${a.id} (${a.aspect}) ────────\n${buildPrompt(a, manifest)}`);
+      const refs = args.noRef ? [] : (a.ref || []);
+      const entete = refs.length ? `${a.id} (${a.aspect}, référence : ${refs.join(', ')})` : `${a.id} (${a.aspect})`;
+      console.log(`\n──────── ${entete} ────────\n${buildPrompt(a, manifest, refs.length > 0)}`);
     }
     return;
   }
@@ -310,7 +387,10 @@ async function main() {
   for (const asset of todo) {
     process.stdout.write(`  … ${asset.id.padEnd(22)} `);
     try {
-      const { buffer, mimeType } = await generateImage(key, model, buildPrompt(asset, manifest), asset.aspect);
+      const refs = args.noRef ? [] : await loadRefs(asset, manifest, outDir);
+      const { buffer, mimeType } = await generateImage(
+        key, model, buildPrompt(asset, manifest, refs.length > 0), asset.aspect, refs,
+      );
       const ext = extFor(mimeType);
       const out = join(ROOT, outDir, asset.category, `${asset.id}.${ext}`);
 

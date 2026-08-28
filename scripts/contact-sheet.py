@@ -9,7 +9,9 @@ la nouvelle tuile alors qu'on voit l'ancienne.
 
     python3 scripts/contact-sheet.py [dossier_de_sortie]
 
-Sorties : planche_120px.png (test décisif) et planche_plateau.png (tessellation).
+Sorties : planche_120px.png (test décisif), planche_gris.png (le même sans la
+teinte, où seule la valeur distingue les tuiles) et planche_plateau.png
+(tessellation).
 """
 
 import json
@@ -20,12 +22,28 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 GENERATED = os.path.join(ROOT, 'assets/generated')
+PROCESSED = os.path.join(ROOT, 'assets/processed')
 
 ORDER = ['tile_forest', 'tile_pasture', 'tile_field', 'tile_hills', 'tile_mountain',
          'tile_desert', 'tile_sea', 'tile_gold', 'tile_fish', 'tile_unexplored']
 
 BG = (20, 22, 26)
 DIM = (150, 157, 170)
+
+
+def chemin(index, asset_id, brut=False):
+    """Le fichier qui fait foi pour cet asset.
+
+    Même règle que scripts/assets.mjs : la version étalonnée prime sur la
+    version brute, parce que c'est elle qui part chez le client. `brut=True`
+    force la sortie du modèle — c'est elle qu'on regarde pour décider s'il faut
+    régénérer, l'étalonnage ne rattrapant que la couleur, jamais la géométrie.
+    """
+    if not brut:
+        etalonnee = os.path.join(PROCESSED, index[asset_id])
+        if os.path.exists(etalonnee):
+            return etalonnee
+    return os.path.join(GENERATED, index[asset_id])
 
 
 def load_index():
@@ -45,7 +63,7 @@ def hex_mask(width):
 
 def hex_tile(index, asset_id, width):
     """Charge une tuile, la recadre en 'cover' puis la masque en hexagone."""
-    img = Image.open(os.path.join(GENERATED, index[asset_id])).convert('RGB')
+    img = Image.open(chemin(index, asset_id)).convert('RGB')
     mask, height = hex_mask(width)
     scale = max(width / img.width, height / img.height)
     img = img.resize((max(1, int(img.width * scale)), max(1, int(img.height * scale))), Image.LANCZOS)
@@ -63,15 +81,21 @@ def font(size=13):
         return ImageFont.load_default()
 
 
-def contact_sheet(index, out_path, width=120, cols=5):
-    """Les tuiles à leur taille réelle en vue d'ensemble : le test qui décide."""
+def contact_sheet(index, out_path, width=120, cols=5, gris=False):
+    """Les tuiles à leur taille réelle en vue d'ensemble : le test qui décide.
+
+    En niveaux de gris, c'est le test le plus sévère de la série : il retire la
+    teinte et ne laisse que la valeur, qui est ce que l'œil lit en premier sur
+    un plateau dézoomé. Deux tuiles qui se confondent ici se confondront en jeu.
+    """
     height = int(width * 1.1547)
     pad, label_h, header = 18, 22, 30
     rows = (len(ORDER) + cols - 1) // cols
     sheet = Image.new('RGB', (cols * (width + pad) + pad,
                               rows * (height + pad + label_h) + pad + header), BG)
     draw = ImageDraw.Draw(sheet)
-    draw.text((pad, 8), f'{width} px — taille reelle en vue d ensemble', fill=(200, 200, 200), font=font())
+    titre = f'{width} px — taille reelle en vue d ensemble'
+    draw.text((pad, 8), titre + (' — niveaux de gris' if gris else ''), fill=(200, 200, 200), font=font())
 
     for i, asset_id in enumerate(ORDER):
         if asset_id not in index:
@@ -80,6 +104,8 @@ def contact_sheet(index, out_path, width=120, cols=5):
         x = pad + col * (width + pad)
         y = header + pad + row * (height + pad + label_h)
         tile = hex_tile(index, asset_id, width)
+        if gris:
+            tile = Image.merge('RGBA', (*[tile.convert('L')] * 3, tile.getchannel('A')))
         sheet.paste(tile, (x, y), tile)
         draw.text((x, y + height + 4), asset_id.replace('tile_', ''), fill=DIM, font=font())
 
@@ -136,7 +162,7 @@ def grid_sheet(index, ids, out_path, title, cell_w, ratio, cols):
         row, col = divmod(i, cols)
         x = pad + col * (cell_w + pad)
         y = header + pad + row * (cell_h + pad + label_h)
-        img = Image.open(os.path.join(GENERATED, index[asset_id])).convert('RGB')
+        img = Image.open(chemin(index, asset_id)).convert('RGB')
         scale = max(cell_w / img.width, cell_h / img.height)
         img = img.resize((max(1, int(img.width * scale)), max(1, int(img.height * scale))), Image.LANCZOS)
         left, top = (img.width - cell_w) // 2, (img.height - cell_h) // 2
@@ -152,6 +178,7 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
     index = load_index()
     print('planche 120px  ', contact_sheet(index, os.path.join(out_dir, 'planche_120px.png')))
+    print('planche en gris', contact_sheet(index, os.path.join(out_dir, 'planche_gris.png'), gris=True))
     print('plateau assemble', board(index, os.path.join(out_dir, 'planche_plateau.png')))
     print('cartes         ', grid_sheet(index, CARDS, os.path.join(out_dir, 'planche_cartes.png'),
                                         'Cartes — 2:3', 150, 1.5, 5))

@@ -14,3 +14,4 @@ packages/client/public/assets/
 
 # Scripts de test jetables, jamais versionnés.
 scratch-*
+__pycache__/

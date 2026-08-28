@@ -18,6 +18,10 @@ import { fileURLToPath } from 'node:url';
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE = join(RACINE, 'assets/generated');
+// Les tuiles étalonnées par scripts/etalonner.py portent le même nom que leur
+// source et priment sur elle : c'est la version qui tient l'échelle de valeurs,
+// et la seule chose que le modèle n'a jamais su tenir. Voir assets/README.md.
+const ETALONNEES = join(RACINE, 'assets/processed');
 const CIBLE = join(RACINE, 'packages/client/public/assets');
 
 /** Les familles d'images que le client sait afficher. */
@@ -32,6 +36,7 @@ async function existe(chemin) {
 let copiees = 0;
 let ignorees = 0;
 let absentes = 0;
+let etalonnees = 0;
 
 await mkdir(CIBLE, { recursive: true });
 
@@ -50,7 +55,11 @@ for (const famille of FAMILLES) {
     // On ne recopie pas ce qui est déjà là : trente-huit images font dix-sept
     // méga-octets, et `npm run play` passe par ici à chaque soirée.
     if (!force && await existe(cible)) { ignorees++; continue; }
-    await cp(join(depuis, nom), cible);
+
+    const etalonnee = join(ETALONNEES, famille, nom);
+    const source = await existe(etalonnee) ? etalonnee : join(depuis, nom);
+    if (source === etalonnee) etalonnees++;
+    await cp(source, cible);
     copiees++;
   }
 }
@@ -61,5 +70,9 @@ if (absentes === FAMILLES.length) {
     + "  Le plateau s'affichera sans ses terrains — voir assets/README.md.",
   );
 } else if (copiees > 0) {
-  console.log(`  ${copiees} image(s) mise(s) en place${ignorees ? `, ${ignorees} déjà à jour` : ''}.`);
+  const detail = [
+    etalonnees ? `dont ${etalonnees} étalonnée(s)` : null,
+    ignorees ? `${ignorees} déjà à jour` : null,
+  ].filter(Boolean).join(', ');
+  console.log(`  ${copiees} image(s) mise(s) en place${detail ? ` — ${detail}` : ''}.`);
 }
