@@ -95,7 +95,7 @@ lsof -ti:2567 -ti:5173 | xargs kill -9
 ## Développement
 
 ```bash
-npm test          # 452 tests
+npm test          # 476 tests
 npm run typecheck # les six paquets
 npm run assets    # met les images générées à la portée du client
 
@@ -125,6 +125,34 @@ cartes gagnées **volent jusqu'à leur pile** dans la barre du bas : le montant
 vient du serveur, le trajet dit d'où il vient. Les courbes sont réunies dans
 [`board3d/chute.ts`](packages/client/src/ui/board3d/chute.ts), et toutes se
 taisent sous `prefers-reduced-motion`.
+
+Le **lancer se joue sur le plateau**. Le bouton reste où il était — c'est
+lui qui envoie l'ordre au serveur — mais les deux dés tombent du ciel au
+centre de la carte, roulent, se heurtent, s'arrêtent, et le nombre sorti
+monte au-dessus d'eux en grand, le temps qu'on le lise depuis l'autre bout de
+la pièce.
+
+Ils tombent pour de bon : `board3d/physique.ts` est un petit solveur de corps
+rigide — pesanteur, contacts par les huit coins, rebond, frottement de
+Coulomb — et non une courbe déguisée. **Comment un dé qui tombe librement
+arrive-t-il sur le nombre que le serveur a tiré ?** Par les vingt-quatre
+symétries du cube. On simule une chute honnête sans savoir ce qu'elle
+donnera, on regarde quelle face s'est arrêtée en haut, puis on fait tourner
+la *peinture* du dé — pas sa trajectoire — pour que le nombre voulu soit
+celui qui regarde le ciel. Mêmes chocs, mêmes rebonds, même arrêt : le dé n'a
+pas été dévié d'un millimètre, il a été repeint. Le client ne tire jamais
+rien ; le moteur reste seul juge, et l'image ne peut pas mentir sur l'état du
+jeu.
+
+Le lancer entier est calculé au lâcher, en une fraction de milliseconde, puis
+rejoué image par image — ce qui permet de connaître la face avant de
+l'afficher, de savoir où poser le total, et de ne rien dérégler quand une
+image se perd. Le calcul n'emploie que les quatre opérations et une racine
+carrée, exactes au bit près : à graine égale — cycle, joueur actif, deux
+nombres — les douze écrans calculent **le même** lancer, ce qui est la moitié
+de l'intérêt de le montrer sur la table. Le reste de l'interface se règle sur
+lui : le bandeau ne dit le total qu'une fois les dés posés, les jetons ne
+sautent qu'après, et la défausse d'un sept attend son tour.
 
 Les images vivent dans `assets/generated` et le client les sert depuis son
 dossier `public`, qui n'est pas versionné : `npm run play` fait la copie, et
