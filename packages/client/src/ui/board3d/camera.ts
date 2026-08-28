@@ -63,8 +63,26 @@ export class Cadrage {
   ): void {
     this.cible.set(centre.x, 0, centre.z);
     this.distance = Math.max(rayon * 2, 6);
-    this.distanceMin = Math.max(2.2, rayon * 0.18);
-    this.distanceMax = Math.max(rayon * 8, 40);
+    /*
+     * Les deux bouts de la course de zoom.
+     *
+     * Ils étaient calculés larges — un dix-huitième du rayon d'un côté, huit
+     * fois de l'autre — et les deux extrémités étaient inexploitables. Le
+     * champ de la caméra est de 42°, donc la hauteur visible vaut environ
+     * 0,77 fois la distance : sur un plateau à douze joueurs, dont le rayon
+     * mesure une vingtaine d'unités, la butée avant tombait à 3,7 et ne
+     * laissait qu'un hexagone et demi à l'écran — on ne savait plus où l'on
+     * était. La butée arrière montait à 164, où le plateau ne couvrait plus
+     * qu'un tiers de la hauteur et flottait, minuscule, au milieu de la mer.
+     *
+     * On resserre donc des deux côtés, autour du cadrage d'ensemble qui vaut
+     * à peu près deux fois le rayon : quatre fois plus près au plus près,
+     * une fois et demie plus loin au plus loin. Le joueur peut toujours
+     * examiner un carrefour et toujours prendre du recul, mais aucun des
+     * deux gestes ne le perd.
+     */
+    this.distanceMin = Math.max(6, rayon * 0.5);
+    this.distanceMax = Math.max(rayon * 3, 26);
 
     const projete = new Vector3();
     for (let tour = 0; tour < 4; tour++) {
