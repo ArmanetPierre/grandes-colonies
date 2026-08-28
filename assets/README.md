@@ -79,6 +79,22 @@ node scripts/generate-assets.mjs --id tile_forest --force
 
 Ouvrir `assets/preview/index.html` dans un navigateur. La page affiche les tuiles à leur taille réelle (120 px), un plateau de démonstration pour vérifier la tessellation, et la checklist qualité.
 
+### 5. Mettre à la portée du client
+
+```bash
+npm run assets
+```
+
+Le client demande ses images à `/assets/…`, donc depuis `packages/client/public/`,
+qui est **ignoré par git** — il est donc vide sur un dépôt fraîchement cloné.
+Rien ne reliait les deux : les images étaient générées ici, le client les
+cherchait là, et personne ne faisait le trajet. Le plateau s'affichait alors
+sans ses terrains, sans qu'aucun message ne signale l'étape manquante.
+
+`npm run play` fait la copie au démarrage ; la commande ci-dessus la refait à
+la demande, et `node scripts/assets.mjs --force` écrase ce qui est déjà en
+place après une régénération.
+
 ---
 
 ## Priorités

@@ -7,5 +7,10 @@ Wireframes Grand Colonies — avec assets.html
 dist/
 .vite/
 
+# Les images que le client sert : une copie de assets/generated, refaite par
+# `npm run assets`. Les versionner reviendrait à porter deux fois dix-sept
+# mégaoctets, et à laisser diverger la copie de son original.
+packages/client/public/assets/
+
 # Scripts de test jetables, jamais versionnés.
 scratch-*

@@ -18,6 +18,17 @@ import { dirname, resolve } from 'node:path';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
+/*
+ * Les images d'abord.
+ *
+ * Elles vivent dans `assets/generated`, le client les sert depuis son dossier
+ * `public`, et ce dossier n'est pas versionné : sur un dépôt fraîchement
+ * cloné il est vide. Le plateau s'affichait alors sans ses terrains, sans
+ * qu'aucun message ne signale l'étape manquante. On la fait ici, où personne
+ * ne peut l'oublier.
+ */
+await import('./assets.mjs');
+
 /** Un processus enfant qui partage notre sortie et notre environnement. */
 function start(name, args) {
   const child = spawn(npx, args, { cwd: root, stdio: 'inherit', env: process.env });

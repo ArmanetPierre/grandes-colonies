@@ -10,10 +10,11 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --build --force",
+    "typecheck": "tsc --noEmit -p packages/engine && tsc --noEmit -p packages/protocol && tsc --noEmit -p packages/server && tsc --noEmit -p packages/client && tsc --noEmit -p packages/sim && tsc --noEmit -p apps/host",
     "dev:server": "tsx packages/server/src/dev.ts",
     "dev:client": "vite --config packages/client/vite.config.ts packages/client",
     "host": "tsx apps/host/src/main.ts",
+    "assets": "node scripts/assets.mjs",
     "play": "node scripts/play.mjs"
   },
   "devDependencies": {
