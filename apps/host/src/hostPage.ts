@@ -11,6 +11,8 @@
  * arriver sans toucher à rien.
  */
 
+import { tableViewMarkup, tableViewScript, tableViewStyles } from './tableView.js';
+
 export interface HostPageData {
   readonly url: string;
   readonly code: string;
@@ -42,6 +44,7 @@ export function renderHostPage(data: HostPageData): string {
     background:var(--bg); color:var(--ink); font-family:'Inter',system-ui,sans-serif;
     min-height:100vh; display:grid; place-items:center; padding:28px;
   }
+  body:has(#table:not([hidden])) { align-items:start; }
   /* La table de navigation, en fond. L'illustration est chargée en son
      centre — une carte marine, des cordages, un astrolabe — et le QR code
      s'y perdrait : le contenu se pose donc sur un panneau opaque plutôt que
@@ -87,6 +90,7 @@ export function renderHostPage(data: HostPageData): string {
     background:var(--accent); margin-right:6px;
   }
   .hint { margin-top:22px; font-size:12.5px; color:var(--soft); }
+${tableViewStyles()}
 
   /* Le lancement appartient à l'hôte : c'est lui qui voit la pièce. */
   .start { margin-top:22px; }
@@ -100,7 +104,7 @@ export function renderHostPage(data: HostPageData): string {
 </style>
 </head>
 <body>
-  <div class="card">
+  <div class="card" id="join-panel">
     <h1>Grand Colonies</h1>
     <p class="sub">Les autres joueurs ouvrent cette adresse dans leur navigateur.</p>
 
@@ -128,6 +132,8 @@ export function renderHostPage(data: HostPageData): string {
 
     <p class="hint">Un joueur qui rafraîchit sa page retrouve son siège automatiquement.</p>
   </div>
+
+${tableViewMarkup()}
 
 <script>
   // Rafraîchissement discret : l'hôte voit ses invités arriver sans rien faire.
@@ -178,6 +184,7 @@ export function renderHostPage(data: HostPageData): string {
   }
   refresh();
   setInterval(refresh, 1500);
+${tableViewScript()}
 </script>
 </body>
 </html>`;

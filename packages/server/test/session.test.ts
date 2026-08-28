@@ -485,3 +485,40 @@ describe('salon d attente', () => {
     expect(late?.name).toBe('Marc');
   });
 });
+
+describe('mise en place chronométrée', () => {
+  /**
+   * Le cas observé en test : un joueur rejoint, laisse sa page ouverte et
+   * s'éloigne. La mise en place n'ayant aucun délai, la table entière
+   * l'attendait sans recours — ni bot, ni passage en force.
+   */
+  it('joue pour un joueur présent mais inactif', () => {
+    const time = clock();
+    const session = lobbySession(4, time);
+    for (let i = 0; i < 4; i++) session.claimFreeSeat();
+    session.start();
+
+    expect(session.state.phase).toBe('setup');
+    // Personne ne joue : le chronomètre est la seule issue.
+    expect(session.remainingMs()).toBeGreaterThan(0);
+
+    time.advance(session.state.config.setupSeconds * 1000 + 1000);
+    const events = session.tick();
+
+    expect(events.length).toBeGreaterThan(0);
+    expect(session.state.board.allBuildings().size).toBeGreaterThan(0);
+  });
+
+  it('laisse le temps de réfléchir avant de trancher', () => {
+    const time = clock();
+    const session = lobbySession(4, time);
+    for (let i = 0; i < 4; i++) session.claimFreeSeat();
+    session.start();
+
+    // Bien avant l'échéance, rien ne se passe : le placement appartient au
+    // joueur tant qu'il lui reste du temps.
+    time.advance(5000);
+    expect(session.tick()).toHaveLength(0);
+    expect(session.state.board.allBuildings().size).toBe(0);
+  });
+});

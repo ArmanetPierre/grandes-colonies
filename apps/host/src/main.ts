@@ -103,6 +103,14 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
         res.end(JSON.stringify({ started: true, launched }));
         return true;
       }
+      // La vue publique complète, pour l'écran de table : plateau, joueurs,
+      // scores. Rien de privé n'y transite — c'est la même vue que reçoivent
+      // tous les clients.
+      if (req.url === '/api/view') {
+        res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify(server.session.publicView()));
+        return true;
+      }
       if (req.url === '/api/seats') {
         const seats = server.session.allSeats().map((seat) => ({
           name: seat.name,

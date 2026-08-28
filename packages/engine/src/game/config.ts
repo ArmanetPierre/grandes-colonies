@@ -51,6 +51,13 @@ export interface GameConfig {
    * mais elles voyagent avec la configuration pour que le serveur, les
    * sauvegardes et les rejeux partagent un seul réglage.
    */
+  /**
+   * Délai laissé à un joueur pour poser, pendant la mise en place.
+   *
+   * Elle n'en avait aucun : un joueur connecté qui s'absentait bloquait la
+   * table indéfiniment, sans recours. À douze, quelqu'un ira chercher à boire.
+   */
+  readonly setupSeconds: number;
   readonly activeTurnSeconds: number;
   readonly pairedTurnSeconds: number;
   readonly tradingWindowSeconds: number;
@@ -87,6 +94,7 @@ export function defaultConfig(playerCount: number): GameConfig {
     settlementsPerPlayer: 5,
     citiesPerPlayer: 4,
     metropolisesTotal: 3,
+    setupSeconds: 60,
     activeTurnSeconds: 90,
     pairedTurnSeconds: 90,
     tradingWindowSeconds: 30,

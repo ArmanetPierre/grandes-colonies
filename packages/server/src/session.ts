@@ -299,9 +299,10 @@ export class GameSession {
     switch (this.state.phase) {
       case 'activeTurn': return config.activeTurnSeconds;
       case 'freeTrade': return config.tradingWindowSeconds;
-      // La production et la mise en place attendent une action précise :
-      // le chronomètre du tour les couvre déjà.
       case 'production': return config.activeTurnSeconds;
+      // La mise en place n'était pas chronométrée : un joueur connecté qui
+      // s'absentait figeait la table sans que rien ne puisse la débloquer.
+      case 'setup': return config.setupSeconds;
       default: return 0;
     }
   }
