@@ -35,7 +35,11 @@ await import('./assets.mjs');
 
 /** Un processus enfant qui partage notre sortie et notre environnement. */
 function start(name, args) {
-  const child = spawn(npx, args, { cwd: root, stdio: 'inherit', env: process.env });
+  // `detached` met l'enfant dans son propre groupe, pour qu'on puisse le
+  // signaler tout entier : `npx` n'est qu'un lanceur, et le tuer laissait
+  // vivre le vite ou le serveur qu'il avait ouvert — port occupé, partie
+  // fantôme, et un « s'est arrêté » trompeur pendant que tout tournait encore.
+  const child = spawn(npx, args, { cwd: root, stdio: 'inherit', detached: true, env: process.env });
   child.on('exit', (code) => {
     // Si l'un tombe, l'autre n'a plus de raison d'être : mieux vaut un arrêt
     // net qu'un serveur orphelin qui garde le port.
@@ -53,7 +57,11 @@ const children = [];
 function stop(code) {
   if (stopping) return;
   stopping = true;
-  for (const child of children) child.kill('SIGTERM');
+  for (const child of children) {
+    if (!child.pid) continue;
+    try { process.kill(-child.pid, 'SIGTERM'); }
+    catch { child.kill('SIGTERM'); }
+  }
   setTimeout(() => process.exit(code), 200);
 }
 

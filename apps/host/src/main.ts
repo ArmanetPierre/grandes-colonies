@@ -83,15 +83,32 @@ class BotTable {
     };
   }
 
+  /*
+   * Abattre l'arbre, pas seulement sa racine.
+   *
+   * Le processus lancé est `npx`, qui lance `tsx`, qui lance le node qui
+   * tient les WebSockets. Un SIGTERM à `npx` ne descend pas jusqu'à lui :
+   * les bots gardaient leur siège, et chaque changement d'effectif en
+   * empilait de nouveaux par-dessus. La table se remplissait de doublons —
+   * douze sièges pris par sept bots annoncés — et il ne restait plus une
+   * place pour personne. On les lance donc dans leur propre groupe, et on
+   * signale le groupe entier.
+   */
+  private tuer(child: ChildProcess | undefined): void {
+    if (!child?.pid) return;
+    try { process.kill(-child.pid, 'SIGTERM'); }
+    catch { child.kill('SIGTERM'); }
+  }
+
   stop(): void {
-    this.child?.kill('SIGTERM');
+    this.tuer(this.child);
     this.child = undefined;
     this.wanted = 0;
   }
 
   /** Remplace la table de bots par une neuve, du nombre demandé. */
   set(count: number): void {
-    this.child?.kill('SIGTERM');
+    this.tuer(this.child);
     this.child = undefined;
     this.failure = undefined;
     this.wanted = Math.max(0, Math.round(count));
@@ -101,6 +118,7 @@ class BotTable {
     const child = spawn(npx, ['tsx', 'scripts/bots.ts', String(this.wanted)], {
       cwd: ROOT,
       stdio: 'inherit',
+      detached: true,
       env: { ...process.env, BOT_URL: `ws://localhost:${this.port}` },
     });
     // Un échec de lancement doit se lire à l'écran, pas seulement dans la
