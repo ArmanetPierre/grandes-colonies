@@ -9,6 +9,11 @@
  * trois secondes de roulement, et les points restent nets à toute taille. Le
  * roulement dure le temps qu'il faut pour attirer l'œil sans retarder le jeu
  * — il n'attend rien, l'état est déjà à jour derrière.
+ *
+ * Depuis que les dés roulent aussi sur le plateau, ce bandeau n'annonce plus
+ * le lancer : il le confirme, et le garde jusqu'au suivant. C'est l'écran de
+ * jeu qui lui transmet le résultat au bon moment — assez tard pour que les
+ * deux roulements s'arrêtent ensemble, ce dont `DUREE_BANDEAU` est la mesure.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -34,6 +39,16 @@ function Face({ value }: { value: number }) {
     </svg>
   );
 }
+
+/**
+ * La durée du roulement, en secondes.
+ *
+ * Publiée parce que le plateau s'accorde dessus : l'écran de jeu retarde la
+ * valeur de ce qu'il faut pour que ce roulement-ci se termine à l'instant où
+ * les dés de la carte se posent. Deux animations du même événement qui ne
+ * finissent pas ensemble se lisent comme deux lancers.
+ */
+export const DUREE_BANDEAU = 0.62;
 
 export interface DiceProps {
   readonly a: number;
@@ -65,7 +80,7 @@ export function Dice({ a, b, total }: DiceProps) {
       clearInterval(shuffle);
       setFaces([a, b]);
       setRolling(false);
-    }, 620);
+    }, DUREE_BANDEAU * 1000);
 
     return () => { clearInterval(shuffle); clearTimeout(settle); };
   }, [a, b, total]);

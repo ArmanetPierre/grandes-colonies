@@ -21,17 +21,31 @@ import { ScenePlateau, couleurDe } from './board3d/scene.js';
 /** Les douze identités, inchangées : le reste de l'interface s'y réfère. */
 export const colorOf = couleurDe;
 
+/*
+ * Combien de temps dure un lancer de dés.
+ *
+ * Republié ici parce que l'interface entière se règle dessus — le bandeau
+ * attend pour afficher le total, les jetons attendent pour sauter — et que
+ * rien de tout cela n'a de raison de connaître le module qui dessine les
+ * dés. C'est une fonction et non une constante : sous
+ * `prefers-reduced-motion`, il n'y a rien à attendre.
+ */
+export { dureeDuJet } from './board3d/roulement.js';
+
 /**
  * Ce que le reste de l'interface peut demander au plateau.
  *
- * Deux gestes que la vue publique ne sait pas exprimer : faire sauter les
- * jetons qui viennent de produire — un instant, pas un état — et traduire un
- * hexagone en pixels d'écran, pour que les ressources gagnées puissent voler
- * jusqu'à la main du joueur.
+ * Trois gestes que la vue publique ne sait pas exprimer, parce que ce sont des
+ * instants et non des états : faire sauter les jetons qui viennent de
+ * produire, jeter les dés sur la carte, et traduire un hexagone en pixels
+ * d'écran — pour que les ressources gagnées puissent voler jusqu'à la main du
+ * joueur.
  */
 export interface PoigneePlateau {
   signalerProduction(hexes: readonly string[]): void;
   projeterHex(hex: string): { x: number; y: number } | undefined;
+  /** Jette les deux dés sur la carte. `cle` ne règle que l'allure du roulement. */
+  lancerDes(a: number, b: number, cle: string): void;
 }
 
 export interface BoardProps {
@@ -112,6 +126,7 @@ export function Board({
   useImperativeHandle(ref, () => ({
     signalerProduction: (hexes) => scene.current?.signalerProduction(hexes),
     projeterHex: (hex) => scene.current?.projeterHex(hex),
+    lancerDes: (a, b, cle) => scene.current?.lancerDes(a, b, cle),
   }), []);
 
   if (panne) {

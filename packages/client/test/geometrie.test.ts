@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  TAILLE, barycentre, bornes, centreHex, ilesDuLarge, rotationArete, touche,
+  TAILLE, barycentre, bornes, centreHex, hexDe, ilesDuLarge, rotationArete, touche,
 } from '../src/ui/board3d/geometrie.js';
 
 /** Les six voisins d'un hexagone, en coordonnées axiales. */
@@ -120,5 +120,40 @@ describe('le cadrage et le large', () => {
     // que le monde bouge sans raison.
     const ids = new Set(['0,0', '1,0', '0,1']);
     expect(ilesDuLarge(ids)).toEqual(ilesDuLarge(ids));
+  });
+});
+
+describe('hexDe', () => {
+  it('retrouve l’hexagone dont on lui donne le centre', () => {
+    for (const id of ['0,0', '3,-2', '-4,1', '7,-3', '-6,6']) {
+      expect(hexDe(centreHex(id))).toBe(id);
+    }
+  });
+
+  it('reste sur la tuile tant qu’on n’en sort pas', () => {
+    // Le rayon inscrit vaut √3/2 : tout point plus proche du centre que cela
+    // appartient à la tuile, quel que soit le cap.
+    const id = '2,1';
+    const centre = centreHex(id);
+    for (let k = 0; k < 24; k++) {
+      const angle = (k * Math.PI) / 12;
+      const rayon = TAILLE * 0.85 * (Math.sqrt(3) / 2);
+      expect(hexDe({ x: centre.x + rayon * Math.cos(angle), z: centre.z + rayon * Math.sin(angle) })).toBe(id);
+    }
+  });
+
+  it('bascule sur le voisin dès qu’on franchit le bord', () => {
+    // Un pas au-delà du milieu du côté partagé : on est chez le voisin, et
+    // c'est bien lui — pas la tuile d'à côté, comme le donnerait un arrondi
+    // fait coordonnée par coordonnée.
+    const centre = centreHex('0,0');
+    for (const voisin of VOISINS) {
+      const cible = centreHex(`${voisin[0]},${voisin[1]}`);
+      const point = {
+        x: centre.x + (cible.x - centre.x) * 0.62,
+        z: centre.z + (cible.z - centre.z) * 0.62,
+      };
+      expect(hexDe(point)).toBe(`${voisin[0]},${voisin[1]}`);
+    }
   });
 });

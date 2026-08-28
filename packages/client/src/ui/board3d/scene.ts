@@ -26,8 +26,9 @@ import type { PublicGameView } from '@grand-colonies/protocol';
 import { Cadrage } from './camera.js';
 import { CASCADE, DUREE_CHUTE, DUREE_RECOLTE, chute, poussiere, recolte } from './chute.js';
 import { Couche } from './couche.js';
+import { Des } from './des.js';
 import {
-  EPAISSEUR, MER, SOL, type Point3, barycentre, bornes, centreHex, ilesDuLarge,
+  EPAISSEUR, MER, SOL, type Point3, barycentre, bornes, centreHex, hexDe, ilesDuLarge,
   rotationArete,
 } from './geometrie.js';
 import {
@@ -38,6 +39,7 @@ import {
 import { creerCiel, type Ciel } from './ciel.js';
 import { baseDe, geoRelief, hauteurRelative, orientationDe, sommetDe } from './relief.js';
 import { CRETE, creerMer, type Mer } from './mer.js';
+import { graineDepuis } from './roulement.js';
 import { textureEcume, textureGel, textureJeton, texturePort, textureTerrain } from './textures.js';
 
 /** Les douze identités : mêmes couleurs que le plateau plat, à la lettre. */
@@ -104,6 +106,8 @@ export class ScenePlateau {
 
   private readonly mer: Mer;
   private readonly ciel: Ciel | undefined;
+  /** Les deux dés, qui ne se posent nulle part sur la maille. */
+  private des!: Des;
   private readonly groupeStatique = new Group();
 
   /** Les couches réécrites à chaque mise à jour. */
@@ -175,6 +179,15 @@ export class ScenePlateau {
   private readonly altitudes = new Map<string, number>();
   /** Le point culminant de chaque terre : jeton, voleur, départ des vols. */
   private readonly sommets = new Map<string, number>();
+  /**
+   * Le terrain de chaque terre.
+   *
+   * Deux nombres ne suffisent pas aux dés : ils tombent n'importe où sur la
+   * carte, pas au centre d'une tuile, et il faut le profil du terrain pour
+   * savoir à quelle hauteur ils s'arrêtent — au flanc d'une montagne, ce
+   * n'est ni la base ni le sommet.
+   */
+  private readonly terrains = new Map<string, string>();
 
   private readonly rayon = new Raycaster();
   private readonly pointeur = new Vector2();
@@ -218,6 +231,7 @@ export class ScenePlateau {
 
     this.eclairer();
     this.creerCouches();
+    this.des = new Des(this.scene);
     this.brancherGestes();
 
     this.cadreObserve = new ResizeObserver(() => this.redimensionner());
@@ -480,6 +494,76 @@ export class ScenePlateau {
   }
 
   /**
+   * Lance les dés sur la carte.
+   *
+   * Déclenché par l'événement `DiceRolled` et non par la vue, pour la même
+   * raison que le sursaut des jetons : `lastRoll` reste inscrit tout le tour,
+   * et s'y fier relancerait les dés à chaque redessin.
+   *
+   * `a` et `b` sont ceux du moteur. La clé, elle, ne sert qu'à tirer l'allure
+   * du roulement : composée de ce que tous les clients connaissent — le
+   * cycle, le joueur actif, les deux dés — elle donne à toute la table
+   * exactement le même lancer, ce qui est la moitié de l'intérêt de le
+   * montrer sur le plateau.
+   */
+  lancerDes(a: number, b: number, cle: string): void {
+    if (this.detruit) return;
+    const { ancre, versCamera } = this.pointDeChute();
+    this.des.lancer(a, b, graineDepuis(cle), ancre, versCamera, this.horloge());
+  }
+
+  /**
+   * Où les dés tombent, et de quel côté ils arrivent.
+   *
+   * Au centre du plateau, comme sur une vraie table : c'est le seul endroit
+   * que les douze joueurs désignent du même mot, et le lancer est le seul
+   * moment de la partie qui appartient à tout le monde en même temps. Un
+   * point calculé sur l'écran de chacun aurait fait tomber les dés à douze
+   * endroits différents de la carte.
+   *
+   * La contrepartie est assumée : qui s'est approché d'un coin de l'archipel
+   * ne les verra pas tomber. Il a le bouton « Recentrer » sous la main, et le
+   * bandeau garde le résultat.
+   *
+   * La direction, elle, reste celle de chaque écran : les dés arrivent du
+   * bord d'où l'on regarde et roulent vers la carte, ce qui se lit comme un
+   * geste et non comme une chute verticale.
+   */
+  private pointDeChute(): { ancre: Vector3; versCamera: Vector3 } {
+    const emprise = bornes(this.etat?.view.hexes.map((h) => h.id) ?? []);
+    const cible = new Vector3(emprise.centreX, 0, emprise.centreZ);
+
+    // La vraie hauteur du décor à cet endroit : sur une terre, les dés se
+    // posent sur la tuile, pas au niveau de l'eau qui la borde.
+    cible.y = this.hauteurAu(cible.x, cible.z);
+
+    const versCamera = new Vector3(
+      this.camera.position.x - cible.x, 0, this.camera.position.z - cible.z,
+    );
+    // Caméra à la verticale du point : n'importe quelle direction fait
+    // l'affaire, mais il en faut une, sinon la normalisation donne un zéro.
+    if (versCamera.lengthSq() < 1e-6) versCamera.set(0, 0, 1);
+
+    return { ancre: cible, versCamera: versCamera.normalize() };
+  }
+
+  /**
+   * L'altitude du décor en un point quelconque de la carte.
+   *
+   * Le relief est décrit par tuile et par distance au centre : c'est
+   * exactement ce qu'il faut pour poser un objet qui ne tombe pas sur un
+   * emplacement du plateau. Hors des terres, c'est la surface de la mer —
+   * crête comprise, faute de quoi la houle passerait par-dessus les dés.
+   */
+  private hauteurAu(x: number, z: number): number {
+    const terrain = this.terrains.get(hexDe({ x, z }));
+    if (terrain === undefined) return SURFACE;
+    const centre = centreHex(hexDe({ x, z }));
+    const t = Math.hypot(x - centre.x, z - centre.z) / 0.955;
+    return SOL + hauteurRelative(terrain, t);
+  }
+
+  /**
    * Où se trouve un hexagone à l'écran, en pixels de la fenêtre.
    *
    * C'est le pont entre la scène et le reste de l'interface : les ressources
@@ -677,10 +761,12 @@ export class ScenePlateau {
 
     this.altitudes.clear();
     this.sommets.clear();
+    this.terrains.clear();
     for (const hex of etat.view.hexes) {
       if (hex.terrain === 'sea') continue;
       this.altitudes.set(hex.id, baseDe(hex.terrain));
       this.sommets.set(hex.id, sommetDe(hex.terrain));
+      this.terrains.set(hex.id, hex.terrain);
     }
 
     const m = new Matrix4();
@@ -1113,6 +1199,16 @@ export class ScenePlateau {
       for (const couche of this.couchesAnimees()) couche.animer(temps);
     }
 
+    /*
+     * Les dés, hors de cette borne.
+     *
+     * Elle est réécrite — et non repoussée — à chaque pose de pièce : une
+     * construction annoncée pendant que les dés roulent les figerait en
+     * l'air. Deux maillages qui s'interrogent à chaque image ne coûtent rien,
+     * et le module se tait de lui-même entre deux lancers.
+     */
+    this.des.animer(temps, this.camera);
+
     this.cadrage.appliquer(this.camera);
     this.renderer.render(this.scene, this.camera);
   };
@@ -1141,6 +1237,7 @@ export class ScenePlateau {
     this.cadreObserve?.disconnect();
     this.mer.detruire();
     this.ciel?.detruire();
+    this.des.detruire();
     for (const objet of this.aJeter) objet.dispose();
     this.matPulsant.dispose();
     this.renderer.dispose();

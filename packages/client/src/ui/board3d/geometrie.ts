@@ -56,6 +56,42 @@ export function centreHex(id: string): Point3 {
   };
 }
 
+/**
+ * L'hexagone qui recouvre un point de la scène — l'inverse de `centreHex`.
+ *
+ * Inverser la formule donne des coordonnées axiales fractionnaires, qu'on ne
+ * peut pas arrondir chacune de son côté : trois hexagones se rejoignent en
+ * chaque sommet, et deux arrondis indépendants désignent régulièrement une
+ * tuile qui n'est pas celle sous le doigt. On passe donc par les coordonnées
+ * cubiques, dont les trois composantes totalisent zéro, et l'on corrige celle
+ * qui a le plus souffert de l'arrondi — c'est la méthode habituelle, et la
+ * seule qui ne se trompe jamais près des bords.
+ *
+ * Sert à savoir sur quoi les dés tombent : la carte n'est pas plate, et un dé
+ * posé au niveau de la mer s'enfoncerait dans la première colline venue.
+ */
+export function hexDe(point: Point3): string {
+  const r = point.z / (TAILLE * 1.5);
+  const q = point.x / (TAILLE * Math.sqrt(3)) - r / 2;
+
+  const x = q;
+  const z = r;
+  const y = -x - z;
+
+  let rx = Math.round(x);
+  let ry = Math.round(y);
+  let rz = Math.round(z);
+  const dx = Math.abs(rx - x);
+  const dy = Math.abs(ry - y);
+  const dz = Math.abs(rz - z);
+
+  if (dx > dy && dx > dz) rx = -ry - rz;
+  else if (dy > dz) ry = -rx - rz;
+  else rz = -rx - ry;
+
+  return `${rx},${rz}`;
+}
+
 /** Barycentre des hexagones cités dans une clé de sommet ou d'arête. */
 export function barycentre(cle: string): Point3 {
   const centres = cle.split('|').map(centreHex);

@@ -20,13 +20,13 @@ import {
   GameConnection,
   newActionId,
 } from './net/connection.js';
-import { Board, type PoigneePlateau, colorOf } from './ui/Board.jsx';
+import { Board, type PoigneePlateau, colorOf, dureeDuJet } from './ui/Board.jsx';
 import { useCompact } from './ui/compact.js';
 import { Gains, type Vol, composerVols } from './ui/Gains.jsx';
 import { type CardRequest, DevCards } from './ui/DevCards.jsx';
 import { Discard } from './ui/Discard.jsx';
 import { GameOver } from './ui/GameOver.jsx';
-import { Dice } from './ui/Dice.jsx';
+import { DUREE_BANDEAU, Dice } from './ui/Dice.jsx';
 import { CostLine, type CostKind, Hint } from './ui/Hint.jsx';
 import { type Entry, Journal, describe } from './ui/Journal.jsx';
 import { Market } from './ui/Market.jsx';
@@ -199,6 +199,28 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
    */
   const [roll, setRoll] = useState<{ a: number; b: number; total: number }>();
   /**
+   * Le lancer que le plateau doit rejouer.
+   *
+   * Distinct de `roll`, et pour la raison qui vaut aussi pour la production :
+   * un lancer est un instant, alors que `lastRoll` est un état qui reste
+   * inscrit tout le tour. Le compteur `n` en fait un instant que React sait
+   * distinguer du précédent — sans lui, deux 4-3 de suite ne feraient rouler
+   * les dés qu'une fois.
+   */
+  const [jet, setJet] = useState<{ a: number; b: number; n: number }>();
+  /**
+   * Le temps que le reste de l'écran doit laisser aux dés.
+   *
+   * Une référence et non un état : elle est lue par les effets déclenchés
+   * dans le même battement — le bandeau, la récolte — et un état les ferait
+   * courir un rendu en retard. Elle vaut zéro quand rien ne roule, ce qui est
+   * le cas de toutes les mises à jour qui ne suivent pas un lancer, et sous
+   * `prefers-reduced-motion`.
+   */
+  const retardDes = useRef(0);
+  /** Les dés roulent : ce qui recouvrirait le plateau attend son tour. */
+  const [jetEnCours, setJetEnCours] = useState(false);
+  /**
    * Ce que le joueur s'apprête à poser. Rien n'est cliquable tant qu'il n'a
    * pas choisi : sur un plateau de cinquante tuiles, afficher tous les
    * emplacements de tous les types en même temps serait illisible.
@@ -254,6 +276,20 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
         const gains = events.flatMap((e) => (e.type === 'ResourcesProduced' ? e.gains : []));
         if (gains.length > 0) setProduction(gains);
 
+        /*
+         * Le lancer, qui règle la cadence de tout ce qui suit.
+         *
+         * La production arrive dans le même message que les dés : sans ce
+         * retard, les jetons sauteraient et les cartes voleraient pendant que
+         * les dés tournent encore, et le lancer n'annoncerait plus rien.
+         */
+        retardDes.current = 0;
+        for (const e of events) {
+          if (e.type !== 'DiceRolled') continue;
+          retardDes.current = dureeDuJet();
+          setJet((precedent) => ({ a: e.a, b: e.b, n: (precedent?.n ?? 0) + 1 }));
+        }
+
         const fresh = events.map(describe).filter((e): e is Entry => e !== undefined);
         if (fresh.length === 0) return;
         setJournal((current) => [...fresh.reverse(), ...current].slice(0, JOURNAL_LENGTH));
@@ -274,9 +310,51 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
     connection.current?.send({ actionId: newActionId(), type, ...extra });
   }, []);
 
+  /*
+   * Le bandeau ne dit le total qu'une fois les dés posés.
+   *
+   * Il roule pendant les six dernières dixièmes du lancer, si bien que les
+   * deux dés — celui de la carte et celui du coin de l'écran — s'arrêtent
+   * ensemble. L'afficher tout de suite aurait vendu la mèche : personne ne
+   * regarde tomber un dé dont il connaît déjà le résultat.
+   */
   useEffect(() => {
-    if (pub?.lastRoll) setRoll(pub.lastRoll);
+    const dernier = pub?.lastRoll;
+    if (!dernier) return undefined;
+
+    const attente = Math.max(0, retardDes.current - DUREE_BANDEAU);
+    if (attente === 0) {
+      setRoll(dernier);
+      return undefined;
+    }
+    const minuterie = window.setTimeout(() => setRoll(dernier), attente * 1000);
+    return () => window.clearTimeout(minuterie);
   }, [pub?.lastRoll]);
+
+  /*
+   * Les dés roulent sur la carte.
+   *
+   * La clé du roulement est faite de ce que tous les clients connaissent —
+   * le cycle, le joueur actif, les deux nombres — pour que les douze écrans
+   * montrent le même lancer et non douze trajectoires différentes arrivant
+   * au même total. Le résultat, lui, vient du moteur : rien ici ne tire quoi
+   * que ce soit.
+   */
+  useEffect(() => {
+    if (!jet || !pub) return undefined;
+    plateau.current?.lancerDes(jet.a, jet.b, `${pub.cycle}-${pub.activePlayer}-${jet.a}-${jet.b}`);
+
+    const attente = retardDes.current;
+    if (attente === 0) return undefined;
+    setJetEnCours(true);
+    const minuterie = window.setTimeout(() => setJetEnCours(false), attente * 1000);
+    return () => {
+      window.clearTimeout(minuterie);
+      setJetEnCours(false);
+    };
+    // `pub` est lu au passage : c'est l'arrivée du lancer qui déclenche.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jet]);
 
   const caps = useMemo(() => new Set(priv?.capabilities ?? []), [priv]);
   const order = useMemo(() => pub?.players.map((p) => p.id) ?? [], [pub]);
@@ -310,53 +388,68 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
     if (production.length === 0 || !pub || !priv) return undefined;
 
     /*
-     * Les hexagones qui ont produit.
+     * Rien ne bouge avant que les dés soient tombés.
      *
-     * Le chiffre sorti et la présence du voleur suffisent, et l'un comme
-     * l'autre sont publics : on ne redit pas ici la règle de production, on
-     * lit ce que le plateau montre déjà à tout le monde.
+     * La production arrive dans le même message que le lancer, et le jeton
+     * qui saute est censé répondre au nombre sorti : le faire sauter avant
+     * que le nombre soit lisible, c'est donner la réponse avant la question.
      */
-    const sorti = pub.lastRoll?.total;
-    const producteurs = sorti === undefined
-      ? []
-      : pub.hexes.filter((h) => h.token === sorti && !h.blocked);
-    plateau.current?.signalerProduction(producteurs.map((h) => h.id));
+    let fin = 0;
+    const recolter = (): void => {
+      /*
+       * Les hexagones qui ont produit.
+       *
+       * Le chiffre sorti et la présence du voleur suffisent, et l'un comme
+       * l'autre sont publics : on ne redit pas ici la règle de production, on
+       * lit ce que le plateau montre déjà à tout le monde.
+       */
+      const sorti = pub.lastRoll?.total;
+      const producteurs = sorti === undefined
+        ? []
+        : pub.hexes.filter((h) => h.token === sorti && !h.blocked);
+      plateau.current?.signalerProduction(producteurs.map((h) => h.id));
 
-    const miens = production.find((g) => g.player === priv.id)?.value;
-    if (!miens) return undefined;
-    setRecolte(miens as Record<string, number>);
+      const miens = production.find((g) => g.player === priv.id)?.value;
+      if (!miens) return;
+      setRecolte(miens as Record<string, number>);
 
-    /*
-     * D'où part chaque carte.
-     *
-     * De l'hexagone qui produit cette ressource **et** que touche l'une de
-     * mes constructions — un sommet porte dans son identifiant les trois
-     * hexagones qui s'y rejoignent, il n'y a donc rien à calculer. À défaut,
-     * la carte part du centre du plateau : mieux vaut un vol approximatif
-     * qu'un gain passé sous silence.
-     */
-    const miennes = new Set(
-      pub.buildings.filter((b) => b.owner === priv.id).flatMap((b) => b.vertex.split('|')),
-    );
-    const depart = (resource: string): { x: number; y: number } | undefined => {
-      const source = producteurs.find((h) => yieldOf(h.terrain as Terrain) === resource && miennes.has(h.id))
-        ?? producteurs.find((h) => yieldOf(h.terrain as Terrain) === resource);
-      const hex = source?.id ?? pub.hexes[Math.floor(pub.hexes.length / 2)]?.id;
-      return hex === undefined ? undefined : plateau.current?.projeterHex(hex);
+      /*
+       * D'où part chaque carte.
+       *
+       * De l'hexagone qui produit cette ressource **et** que touche l'une de
+       * mes constructions — un sommet porte dans son identifiant les trois
+       * hexagones qui s'y rejoignent, il n'y a donc rien à calculer. À défaut,
+       * la carte part du centre du plateau : mieux vaut un vol approximatif
+       * qu'un gain passé sous silence.
+       */
+      const miennes = new Set(
+        pub.buildings.filter((b) => b.owner === priv.id).flatMap((b) => b.vertex.split('|')),
+      );
+      const depart = (resource: string): { x: number; y: number } | undefined => {
+        const source = producteurs.find((h) => yieldOf(h.terrain as Terrain) === resource && miennes.has(h.id))
+          ?? producteurs.find((h) => yieldOf(h.terrain as Terrain) === resource);
+        const hex = source?.id ?? pub.hexes[Math.floor(pub.hexes.length / 2)]?.id;
+        return hex === undefined ? undefined : plateau.current?.projeterHex(hex);
+      };
+
+      const arrivee = (resource: string): { x: number; y: number } | undefined => {
+        const pile = document.querySelector(`[data-ressource="${resource}"]`);
+        if (!pile) return undefined;
+        const cadre = pile.getBoundingClientRect();
+        return { x: cadre.left + cadre.width / 2, y: cadre.top + cadre.height / 2 };
+      };
+
+      setVols(composerVols(miens as Record<string, number>, depart, arrivee, Date.now()));
+
+      // La pile cesse d'afficher son gain une fois les cartes arrivées.
+      fin = window.setTimeout(() => setRecolte({}), 2000);
     };
 
-    const arrivee = (resource: string): { x: number; y: number } | undefined => {
-      const pile = document.querySelector(`[data-ressource="${resource}"]`);
-      if (!pile) return undefined;
-      const cadre = pile.getBoundingClientRect();
-      return { x: cadre.left + cadre.width / 2, y: cadre.top + cadre.height / 2 };
+    const lancee = window.setTimeout(recolter, retardDes.current * 1000);
+    return () => {
+      window.clearTimeout(lancee);
+      window.clearTimeout(fin);
     };
-
-    setVols(composerVols(miens as Record<string, number>, depart, arrivee, Date.now()));
-
-    // La pile cesse d'afficher son gain une fois les cartes arrivées.
-    const fin = window.setTimeout(() => setRecolte({}), 2000);
-    return () => window.clearTimeout(fin);
     // `pub` et `priv` sont lus au passage, mais c'est l'arrivée d'une
     // production qui déclenche : les suivre relancerait l'animation à chaque
     // message du serveur, donc plusieurs fois par seconde.
@@ -688,7 +781,13 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
         />
       )}
 
-      {priv.mustDiscard > 0 && (
+      {/*
+        * La défausse recouvre l'écran, et c'est un sept qui l'ouvre : la
+        * montrer avant que les dés se posent, ce serait annoncer le résultat
+        * par la sanction. Elle attend donc la fin du roulement — le moteur,
+        * lui, a déjà tout enregistré.
+        */}
+      {priv.mustDiscard > 0 && !jetEnCours && (
         <Discard pub={pub} priv={priv} onDiscard={(resources) => send('DISCARD', { resources })} />
       )}
 

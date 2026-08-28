@@ -213,3 +213,116 @@ export function textureTerrain(terrain: string): Texture {
   cache.set(terrain, texture);
   return texture;
 }
+
+/**
+ * La disposition des points d'une face, en douzièmes de côté.
+ *
+ * Les mêmes coordonnées que les dés du bandeau (`ui/Dice.tsx`) : le dé qui
+ * roule sur le plateau et celui qui reste en haut de l'écran doivent porter
+ * le même dessin, sans quoi on croit lire deux jeux différents.
+ */
+const POINTS: Readonly<Record<number, readonly (readonly [number, number])[]>> = {
+  1: [[6, 6]],
+  2: [[3.5, 3.5], [8.5, 8.5]],
+  3: [[3.5, 3.5], [6, 6], [8.5, 8.5]],
+  4: [[3.5, 3.5], [8.5, 3.5], [3.5, 8.5], [8.5, 8.5]],
+  5: [[3.5, 3.5], [8.5, 3.5], [6, 6], [3.5, 8.5], [8.5, 8.5]],
+  6: [[3.5, 3.2], [8.5, 3.2], [3.5, 6], [8.5, 6], [3.5, 8.8], [8.5, 8.8]],
+};
+
+/**
+ * Une face de dé, en os poli.
+ *
+ * Les points sont creusés plutôt que peints : un disque sombre surmonté d'un
+ * croissant clair, qui est tout ce qu'il faut pour que l'œil y voie un trou.
+ * À la taille où le dé s'arrête sur la carte — deux centimètres d'écran — la
+ * différence entre un point plat et un point creusé est ce qui distingue un
+ * dé d'un cube à pois.
+ *
+ * Les points restent bien à l'intérieur de la face : la boîte est arrondie,
+ * et sa texture s'enroule sur le congé des arêtes. Un point posé au bord s'y
+ * étirerait.
+ */
+export function textureFaceDe(valeur: number): Texture | undefined {
+  const c = canevas(256);
+  if (!c) return undefined;
+  const { toile, ctx } = c;
+  const T = 256;
+  const pas = T / 12;
+
+  const os = ctx.createRadialGradient(T * 0.34, T * 0.3, T * 0.05, T / 2, T / 2, T * 0.78);
+  os.addColorStop(0, '#FDF8EC');
+  os.addColorStop(0.68, '#F0E6D2');
+  os.addColorStop(1, '#DCCEB4');
+  ctx.fillStyle = os;
+  ctx.fillRect(0, 0, T, T);
+
+  const rayon = pas * 1.05;
+  for (const [cx, cy] of POINTS[valeur] ?? []) {
+    const x = cx * pas;
+    const y = cy * pas;
+
+    ctx.fillStyle = valeur === 1 ? '#A3271B' : '#33291D';
+    ctx.beginPath();
+    ctx.arc(x, y, rayon, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Le croissant de lumière, en haut à gauche comme le soleil de la scène.
+    ctx.strokeStyle = 'rgba(255,255,255,.5)';
+    ctx.lineWidth = rayon * 0.28;
+    ctx.beginPath();
+    ctx.arc(x, y, rayon * 0.82, Math.PI * 0.75, Math.PI * 1.75);
+    ctx.stroke();
+  }
+
+  return enTexture(toile);
+}
+
+/**
+ * Le total d'un lancer, en grand, tel qu'il s'affiche au-dessus des dés.
+ *
+ * Pas de plaque sous le chiffre : les dés viennent de se poser juste en
+ * dessous, et un cartouche de plus au milieu de la carte ferait un troisième
+ * objet là où il n'y a qu'une chose à dire. Le nombre porte donc son propre
+ * contraste — une encre claire, un liseré sombre, une ombre portée — ce qui
+ * lui permet de rester lisible aussi bien sur la mer que sur le sable.
+ *
+ * Le sept est rouge. C'est la couleur que les jetons donnent déjà aux
+ * nombres qui sortent le plus, et c'est aussi celui qui ne rapporte rien à
+ * personne et fait bouger le voleur : les deux lectures disent la même chose,
+ * regarde ce nombre-là.
+ */
+export function textureTotal(valeur: number): Texture | undefined {
+  const c = canevas();
+  if (!c) return undefined;
+  const { toile, ctx } = c;
+  const T = DEFINITION;
+
+  ctx.clearRect(0, 0, T, T);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  // Deux chiffres tiennent dans la même largeur qu'un seul : le dix, le onze
+  // et le douze rétrécissent, comme sur les jetons.
+  ctx.font = `700 ${T * (valeur >= 10 ? 0.56 : 0.74)}px Georgia, "Times New Roman", serif`;
+
+  // L'ombre d'abord, portée vers le bas comme celle de tout le plateau : elle
+  // décolle le nombre du décor sans qu'aucun cadre n'ait à le faire.
+  ctx.shadowColor = 'rgba(24, 16, 8, .55)';
+  ctx.shadowBlur = T * 0.055;
+  ctx.shadowOffsetY = T * 0.02;
+
+  ctx.lineWidth = T * 0.055;
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = valeur === 7 ? '#4A1109' : '#2A2118';
+  ctx.strokeText(String(valeur), T / 2, T / 2);
+
+  // Le remplissage sans ombre : sinon elle se dépose aussi sous le chiffre et
+  // l'encre paraît sale.
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.fillStyle = valeur === 7 ? '#E8654E' : '#FBF3E2';
+  ctx.fillText(String(valeur), T / 2, T / 2);
+
+  return enTexture(toile);
+}
