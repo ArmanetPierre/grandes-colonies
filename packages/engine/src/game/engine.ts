@@ -864,7 +864,14 @@ function canOfferTrade(state: GameState, playerId: string): boolean {
  * contrepartie possible ne sert à rien. Pendant le tour, un échange est donc
  * recevable dès lors que le joueur actif en est l'une des deux parties.
  */
-function canAcceptTrade(state: GameState, playerId: string, offer: TradeOffer): boolean {
+/**
+ * Ce joueur peut-il accepter cette offre, maintenant ?
+ *
+ * Exporté parce que l'interface en a besoin : sans elle, un joueur passif ne
+ * voyait pas les offres que le joueur actif lui adressait, et la règle du
+ * contrat §4 restait lettre morte à l'écran.
+ */
+export function canAcceptTrade(state: GameState, playerId: string, offer: TradeOffer): boolean {
   if (state.phase === 'freeTrade') return true;
   if (state.phase !== 'activeTurn') return false;
 

@@ -24,6 +24,7 @@ import { Board, colorOf } from './ui/Board.jsx';
 import { type CardRequest, DevCards } from './ui/DevCards.jsx';
 import { Discard } from './ui/Discard.jsx';
 import { GameOver } from './ui/GameOver.jsx';
+import { type CostKind, Hint } from './ui/Hint.jsx';
 import { type Entry, Journal, describe } from './ui/Journal.jsx';
 import { RESOURCE_LABELS, ResourceIcon } from './ui/ResourceIcon.jsx';
 import { Lobby } from './ui/Lobby.jsx';
@@ -58,6 +59,63 @@ function formatTimer(ms: number | undefined): string {
 }
 
 const NAME_KEY = 'grand-colonies:name';
+
+/**
+ * Ce que chaque action fait, dit en une phrase.
+ *
+ * Le coût n'est pas écrit ici : il est lu dans la table du moteur, pour
+ * qu'une infobulle ne puisse pas mentir sur le prix réellement débité.
+ */
+const HINTS: Record<string, { text: string; cost?: CostKind; note?: string }> = {
+  road: {
+    text: 'Prolonge ton réseau vers de nouveaux emplacements. Le plus long réseau rapporte 2 points.',
+    cost: 'road',
+  },
+  maritime: {
+    text: 'Franchit la mer vers une autre île. Compte dans le même réseau que tes routes.',
+    cost: 'maritimeRoute',
+    note: 'Le premier à bâtir sur une île secondaire gagne 1 point.',
+  },
+  settlement: {
+    text: '1 point. Produit une ressource à chaque lancer sur ses hexagones voisins.',
+    cost: 'settlement',
+    note: 'Deux colonies ne peuvent pas se toucher.',
+  },
+  city: {
+    text: '2 points au lieu d\'1, et double la production de son emplacement.',
+    cost: 'city',
+    note: 'Remplace une de tes colonies, qui retourne dans ta réserve.',
+  },
+  metropolis: {
+    text: '3 points au lieu des 2 de la cité qu\'elle améliore.',
+    cost: 'metropolis',
+    note: 'Trois seulement pour toute la partie : premier arrivé, premier servi.',
+  },
+  monument: {
+    text: '2 points, sans occuper le moindre emplacement nouveau.',
+    cost: 'monument',
+    note: 'Un seul par joueur, sur une de tes cités.',
+  },
+  devCard: {
+    text: 'Chevalier, Invention, Monopole, Construction de routes ou Bâtisseur, au hasard.',
+    cost: 'devCard',
+    note: 'Jouable à partir du tour suivant, une carte par tour.',
+  },
+  roll: {
+    text: 'Chaque joueur récolte sur les hexagones qui portent le numéro sorti.',
+    note: 'Sur un 7, le voleur bouge et les mains trop pleines se défaussent.',
+  },
+  declare: {
+    text: 'Réserve un emplacement hors de ton tour. Tes ressources sont mises de côté aussitôt.',
+    note: 'La construction se résout en fin de cycle ; en cas de conflit, le joueur actif l\'emporte.',
+  },
+  endTurn: {
+    text: 'Passe la main et ouvre la fenêtre de commerce, pendant laquelle tout le monde négocie.',
+  },
+  endCycle: {
+    text: 'Résout les annonces de construction et donne la main au joueur suivant.',
+  },
+};
 
 /** Lignes de journal conservées. Au-delà, personne ne remonte. */
 const JOURNAL_LENGTH = 40;
@@ -341,7 +399,11 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
           ))}
         </aside>
 
-        {(caps.has('CAN_TRADE_PLAYER') || caps.has('CAN_TRADE_BANK')) && (
+        {/* Le panneau apparaît aussi quand une offre attend une réponse : le
+            joueur actif peut s'adresser à un passif (contrat §4), et jusqu'ici
+            celui-ci ne la voyait jamais. */}
+        {(caps.has('CAN_TRADE_PLAYER') || caps.has('CAN_TRADE_BANK')
+          || priv.acceptableOffers.length > 0) && (
           <Trade
             pub={pub}
             priv={priv}
@@ -466,19 +528,25 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
                    active={intent} setActive={setIntent} enabled={caps.has('CAN_BUILD')} />
           )}
           {caps.has('CAN_DECLARE_BUILD') && !caps.has('CAN_BUILD') && (
-            <button
-              className={`gc-action gc-action-quiet${declaring ? ' is-armed' : ''}`}
-              onClick={() => { setDeclaring((on) => !on); setIntent(null); }}
-            >
-              {declaring ? 'Annonce armée' : 'Annoncer'}
-              <small>{declaring ? 'choisis un emplacement' : 'hors de ton tour'}</small>
-            </button>
+            <Hint text={HINTS['declare']?.text ?? ''} note={HINTS['declare']?.note ?? ''}>
+              <button
+                className={`gc-action gc-action-quiet${declaring ? ' is-armed' : ''}`}
+                onClick={() => { setDeclaring((on) => !on); setIntent(null); }}
+              >
+                {declaring ? 'Annonce armée' : 'Annoncer'}
+                <small>{declaring ? 'choisis un emplacement' : 'hors de ton tour'}</small>
+              </button>
+            </Hint>
           )}
-          <Action label="Lancer les dés" enabled={caps.has('CAN_ROLL_DICE')} onClick={() => send('ROLL_DICE')} />
-          <Action label="Carte dév." enabled={caps.has('CAN_BUY_DEV_CARD')} onClick={() => send('BUY_DEV_CARD')}
+          <Action label="Lancer les dés" hint="roll"
+                  enabled={caps.has('CAN_ROLL_DICE')} onClick={() => send('ROLL_DICE')} />
+          <Action label="Carte dév." hint="devCard"
+                  enabled={caps.has('CAN_BUY_DEV_CARD')} onClick={() => send('BUY_DEV_CARD')}
                   reason="pas assez de ressources" />
-          <Action label="Fin d'action" enabled={caps.has('CAN_END_TURN')} onClick={() => send('END_TURN')} />
-          <Action label="Fin de cycle" enabled={caps.has('CAN_END_CYCLE')} onClick={() => send('END_CYCLE')} />
+          <Action label="Fin d'action" hint="endTurn"
+                  enabled={caps.has('CAN_END_TURN')} onClick={() => send('END_TURN')} />
+          <Action label="Fin de cycle" hint="endCycle"
+                  enabled={caps.has('CAN_END_CYCLE')} onClick={() => send('END_CYCLE')} />
         </div>
       </footer>
 
@@ -583,28 +651,36 @@ function Build({ label, kind, count, active, setActive, enabled }: {
   enabled: boolean;
 }) {
   const usable = enabled && count > 0;
+  const hint = HINTS[kind];
   return (
-    <button
-      className={`gc-action${active === kind ? ' is-armed' : ''}`}
-      disabled={!usable}
-      onClick={() => setActive(active === kind ? null : kind)}
-    >
-      {label}
-      {enabled && count === 0 && <small>aucun emplacement</small>}
-      {usable && <small>{count} emplacement{count > 1 ? 's' : ''}</small>}
-    </button>
+    <Hint text={hint?.text ?? ''} {...(hint?.cost ? { cost: hint.cost } : {})}
+          {...(hint?.note ? { note: hint.note } : {})}>
+      <button
+        className={`gc-action${active === kind ? ' is-armed' : ''}`}
+        disabled={!usable}
+        onClick={() => setActive(active === kind ? null : kind)}
+      >
+        {label}
+        {enabled && count === 0 && <small>aucun emplacement</small>}
+        {usable && <small>{count} emplacement{count > 1 ? 's' : ''}</small>}
+      </button>
+    </Hint>
   );
 }
 
 /** Un bouton qui dit pourquoi il est grisé — exigence du brief d'interface. */
-function Action({ label, enabled, onClick, reason }: {
-  label: string; enabled: boolean; onClick: () => void; reason?: string;
+function Action({ label, enabled, onClick, reason, hint }: {
+  label: string; enabled: boolean; onClick: () => void; reason?: string; hint?: string;
 }) {
+  const help = hint === undefined ? undefined : HINTS[hint];
   return (
-    <button className="gc-action" disabled={!enabled} onClick={onClick}>
-      {label}
-      {!enabled && reason && <small>{reason}</small>}
-    </button>
+    <Hint text={help?.text ?? ''} {...(help?.cost ? { cost: help.cost } : {})}
+          {...(help?.note ? { note: help.note } : {})}>
+      <button className="gc-action" disabled={!enabled} onClick={onClick}>
+        {label}
+        {!enabled && reason && <small>{reason}</small>}
+      </button>
+    </Hint>
   );
 }
 

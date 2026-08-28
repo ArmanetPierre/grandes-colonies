@@ -28,7 +28,9 @@ import {
   knightsPlayed,
   RESOURCES,
   canPlaceRoad,
+  canAcceptTrade,
   canRaiseMonument,
+  isAddressedTo,
   canUpgradeToCity,
   canUpgradeToMetropolis,
   metropolisesBuilt,
@@ -143,6 +145,15 @@ export interface PrivatePlayerView {
   /** Points réels, objectif secret compris — connus du seul intéressé. */
   readonly points: number;
   readonly capabilities: readonly Capability[];
+  /**
+   * Offres que ce joueur peut accepter à cet instant.
+   *
+   * Calculée par le serveur : la règle dépend de la phase et de qui est
+   * actif, et la dupliquer côté client l'aurait fait diverger. C'est elle qui
+   * permet d'afficher le commerce à un joueur passif, à qui le joueur actif
+   * adresse une offre.
+   */
+  readonly acceptableOffers: readonly string[];
 
   /**
    * Emplacements où ce joueur peut effectivement construire, calculés par le
@@ -318,6 +329,11 @@ export function privateView(state: GameState, playerId: PlayerId): PrivatePlayer
     objectiveComplete: (breakdown?.secretObjectives ?? 0) > 0,
     points: breakdown?.total ?? 0,
     capabilities,
+    acceptableOffers: state.offers
+      .filter((offer) => offer.from !== playerId
+        && isAddressedTo(offer, playerId)
+        && canAcceptTrade(state, playerId, offer))
+      .map((offer) => offer.id),
   };
 }
 

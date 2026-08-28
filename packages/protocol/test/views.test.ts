@@ -307,3 +307,62 @@ describe('victimes du voleur', () => {
     expect(Object.keys(view?.spots.robberVictims ?? {})).toHaveLength(0);
   });
 });
+
+describe('offres acceptables', () => {
+  /**
+   * Le contrat §4 permet au joueur actif de proposer à n'importe qui pendant
+   * son tour. L'interface, elle, cachait tout le panneau de commerce aux
+   * joueurs passifs : l'offre existait mais personne ne pouvait la voir.
+   */
+  it('signale au passif l offre que le joueur actif lui adresse', () => {
+    const state = startedGame();
+    dispatch(state, cmd('ROLL_DICE', 'p1'));
+    state.pendingRobber = false;
+    for (const p of state.players) p.mustDiscard = 0;
+
+    const active = playerOf(state, 'p1');
+    if (!active) throw new Error('joueur absent');
+    active.hand = counts({ wood: 3 });
+    const passive = playerOf(state, 'p5');
+    if (!passive) throw new Error('joueur absent');
+    passive.hand = counts({ ore: 3 });
+
+    dispatch(state, cmd('CREATE_TRADE', 'p1', {
+      to: 'p5', give: { wood: 2 }, receive: { ore: 1 },
+    }));
+
+    const view = privateView(state, 'p5');
+    // Il n'a aucune capacité de commerce, mais l'offre lui est ouverte.
+    expect(view?.capabilities).not.toContain('CAN_TRADE_PLAYER');
+    expect(view?.acceptableOffers).toHaveLength(1);
+  });
+
+  it('ne propose pas une offre adressée à quelqu un d autre', () => {
+    const state = startedGame();
+    dispatch(state, cmd('ROLL_DICE', 'p1'));
+    state.pendingRobber = false;
+    for (const p of state.players) p.mustDiscard = 0;
+
+    const active = playerOf(state, 'p1');
+    if (active) active.hand = counts({ wood: 3 });
+    dispatch(state, cmd('CREATE_TRADE', 'p1', {
+      to: 'p2', give: { wood: 2 }, receive: { ore: 1 },
+    }));
+
+    expect(privateView(state, 'p5')?.acceptableOffers).toHaveLength(0);
+    expect(privateView(state, 'p2')?.acceptableOffers).toHaveLength(1);
+  });
+
+  it('n offre jamais à un joueur sa propre proposition', () => {
+    const state = startedGame();
+    dispatch(state, cmd('ROLL_DICE', 'p1'));
+    state.pendingRobber = false;
+    for (const p of state.players) p.mustDiscard = 0;
+
+    const active = playerOf(state, 'p1');
+    if (active) active.hand = counts({ wood: 3 });
+    dispatch(state, cmd('CREATE_TRADE', 'p1', { give: { wood: 2 }, receive: { ore: 1 } }));
+
+    expect(privateView(state, 'p1')?.acceptableOffers).toHaveLength(0);
+  });
+});

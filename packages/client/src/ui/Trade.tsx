@@ -46,6 +46,9 @@ export function Trade({ pub, priv, canOffer, canBank, onOffer, onAccept, onCance
   const bankRate = priv.bankRates[give] ?? 4;
 
   const mine = pub.offers.filter((o) => o.from === priv.id);
+  // Le serveur dit lesquelles sont acceptables : la règle dépend de la phase
+  // et de qui est actif, la rejouer ici l'aurait fait diverger.
+  const acceptable = new Set(priv.acceptableOffers);
   const incoming = pub.offers.filter(
     (o) => o.from !== priv.id && (o.to === undefined || o.to === priv.id),
   );
@@ -54,6 +57,9 @@ export function Trade({ pub, priv, canOffer, canBank, onOffer, onAccept, onCance
     <aside className="gc-trade">
       <div className="gc-trade-head">Commerce</div>
 
+      {/* Sans droit de proposer ni d'échanger avec la banque, le formulaire
+          n'aurait aucun effet : on ne montre alors que les offres reçues. */}
+      {(canOffer || canBank) && (
       <div className="gc-trade-compose">
         <label>
           Je donne
@@ -107,6 +113,7 @@ export function Trade({ pub, priv, canOffer, canBank, onOffer, onAccept, onCance
           </button>
         </div>
       </div>
+      )}
 
       {incoming.length > 0 && (
         <div className="gc-trade-list">
@@ -114,18 +121,20 @@ export function Trade({ pub, priv, canOffer, canBank, onOffer, onAccept, onCance
           {incoming.map((offer) => {
             const cost = Object.entries(offer.receive as Record<string, number>);
             const affordable = cost.every(([r, n]) => held(r) >= n);
+            const open = acceptable.has(offer.id);
             return (
-              <div key={offer.id} className={`gc-offer${affordable ? '' : ' is-stale'}`}>
+              <div key={offer.id} className={`gc-offer${affordable && open ? '' : ' is-stale'}`}>
                 <span className="gc-offer-who">{nameOf(pub, offer.from)}</span>
                 <span className="gc-offer-terms">
                   {describe(offer.give)} ↔ {describe(offer.receive)}
                 </span>
                 <button
                   className="gc-action gc-action-mini"
-                  disabled={!affordable}
+                  disabled={!affordable || !open}
                   onClick={() => onAccept(offer.id)}
+                  title={open ? undefined : 'Réponse possible pendant la fenêtre de commerce'}
                 >
-                  {affordable ? 'Accepter' : 'Trop cher'}
+                  {!open ? 'Pas encore' : affordable ? 'Accepter' : 'Trop cher'}
                 </button>
               </div>
             );
