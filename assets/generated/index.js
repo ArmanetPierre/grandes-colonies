@@ -1,4 +1,5 @@
 window.ASSET_INDEX = {
+  "sheet_terrains": "sheets/sheet_terrains.jpg",
   "tile_forest": "tiles/tile_forest.jpg",
   "tile_pasture": "tiles/tile_pasture.jpg",
   "tile_field": "tiles/tile_field.jpg",

@@ -1,6 +1,7 @@
 {
-  "generatedAt": "2026-08-26T19:46:10.545Z",
+  "generatedAt": "2026-08-28T19:49:55.279Z",
   "files": {
+    "sheet_terrains": "sheets/sheet_terrains.jpg",
     "tile_forest": "tiles/tile_forest.jpg",
     "tile_pasture": "tiles/tile_pasture.jpg",
     "tile_field": "tiles/tile_field.jpg",
