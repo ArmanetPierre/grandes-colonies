@@ -31,6 +31,16 @@
   --gc-shadow: 0 2px 8px rgba(27, 19, 16, .22);
   --gc-shadow-lg: 0 10px 32px rgba(27, 19, 16, .38);
 
+  /*
+   * La frise à méandre, en SVG embarqué.
+   *
+   * C'est l'ornement grec par excellence, et le seul qui survive à une
+   * réduction : un motif figuratif à cette taille devient une tache. Le rail
+   * du bas court sur toute la largeur du motif pour que la répétition ne
+   * laisse pas de trou à la jointure.
+   */
+  --gc-meandre: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8'%3E%3Cpath d='M0 7.3h16M13.5 7.3V1.4H3.5v4h6' fill='none' stroke='%23A87C22' stroke-width='1.3'/%3E%3C/svg%3E");
+
   --gc-font-display: 'Marcellus', Georgia, serif;
   --gc-font-body: 'Cormorant Garamond', Georgia, serif;
   --gc-font-ui: 'Inter', system-ui, sans-serif;
@@ -190,22 +200,97 @@ body {
 .gc-limit.is-over { color: var(--gc-danger); font-weight: 600; }
 
 .gc-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+/*
+ * Le bouton comme une tablette de terre cuite gravée.
+ *
+ * Il était plat : un aplat de terracotta, du sans-serif, aucun état. Trois
+ * choses le rattachent à l'antique sans rien coûter à la lisibilité.
+ *
+ * La lettre d'abord, et c'est elle qui porte presque tout le travail. Le
+ * Marcellus est une capitale lapidaire, taillée pour la pierre ; en capitales
+ * espacées elle donne l'inscription. Le corps du texte garde sa graisse
+ * unique — Marcellus n'a qu'un poids, inutile d'en demander un second qui
+ * serait synthétisé et baverait.
+ *
+ * L'argile ensuite : un dégradé vertical très court, clair en haut, cuit en
+ * bas. Une terre cuite n'est jamais d'un seul ton, et c'est ce qui distingue
+ * une tuile d'un rectangle de couleur.
+ *
+ * Le filet d'or enfin, posé à l'intérieur du bord. C'est le liseré des vases
+ * à figures noires. Il reste à l'intérieur pour ne pas grossir le bouton :
+ * une bordure de plus décalerait toutes les grilles d'un pixel.
+ */
 .gc-action {
-  font-family: var(--gc-font-ui); font-size: 13px; font-weight: 600;
-  padding: 9px 15px; cursor: pointer;
-  background: var(--gc-accent); color: var(--gc-accent-ink);
-  border: 1px solid transparent; border-radius: 0;
+  font-family: var(--gc-font-display); font-size: 13px;
+  letter-spacing: .085em; text-transform: uppercase;
+  padding: 10px 16px; cursor: pointer;
+  color: var(--gc-accent-ink);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--gc-accent) 86%, #EBCDA4) 0%,
+    var(--gc-accent) 45%,
+    color-mix(in srgb, var(--gc-accent) 84%, #2B0A02) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--gc-accent) 58%, #2B0A02);
+  border-radius: 0;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--gc-gold) 50%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #F6E4C4 34%, transparent),
+    0 1px 0 rgba(27, 19, 16, .22);
+  /* La lettre creusée dans l'argile plutôt que posée dessus. */
+  text-shadow: 0 1px 0 rgba(43, 10, 2, .5);
+  transition: filter .12s ease, box-shadow .12s ease, transform .06s ease;
 }
+.gc-action:hover:not(:disabled) { filter: brightness(1.06) saturate(1.04); }
+/* Enfoncé : l'ombre passe dessous, le relief du haut s'efface. */
+.gc-action:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--gc-gold) 40%, transparent),
+    inset 0 2px 5px rgba(43, 10, 2, .42);
+}
+/*
+ * L'anneau d'or au clavier.
+ *
+ * `focus-visible` et non `focus` : au clic le contour n'apparaît pas, il ne
+ * sert qu'à qui navigue au clavier. Deux teintes superposées pour qu'il se
+ * détache aussi bien sur le parchemin que sur la terre cuite.
+ */
+.gc-action:focus-visible {
+  outline: 2px solid var(--gc-gold);
+  outline-offset: 2px;
+}
+/* Une tablette non cuite : plate, sans filet, sans lettre creusée. */
 .gc-action:disabled {
   background: var(--gc-raised); color: var(--gc-ink-soft);
   border-color: var(--gc-line); cursor: not-allowed; opacity: .7;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gc-line) 40%, transparent);
+  text-shadow: none;
 }
-.gc-action small { display: block; font-size: 9px; font-weight: 500; }
+/*
+ * Le sous-titre reprend la casse et la fonte de l'interface.
+ *
+ * Il porte un prix ou un décompte : des chiffres, qui se lisent mal en
+ * capitales lapidaires espacées, et qui n'ont rien d'une inscription.
+ */
+.gc-action small {
+  display: block; font-family: var(--gc-font-ui);
+  font-size: 9px; font-weight: 500;
+  letter-spacing: .01em; text-transform: none; text-shadow: none;
+}
 /* Un bouton armé attend un clic sur le plateau : il doit se distinguer
    d'un bouton simplement disponible. */
 .gc-action.is-armed {
-  background: var(--gc-second); color: var(--gc-accent-ink);
-  outline: 2px solid var(--gc-accent); outline-offset: 1px;
+  background: linear-gradient(180deg, #3D332B 0%, var(--gc-second) 55%, #1E1814 100%);
+  color: var(--gc-accent-ink);
+  border-color: #15100D;
+  /* Le filet passe à l'or plein : sur le fond sombre, la terracotta de
+     l'ancien contour se confondait avec le brun du bouton. */
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--gc-gold) 85%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--gc-gold) 40%, transparent);
+  outline: none;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .6);
 }
 
 .gc-notice {
@@ -269,7 +354,7 @@ body {
     margin-left: 0; width: 100%;
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
   }
-  .gc-action { padding: 8px 6px; font-size: 12px; min-height: 42px; }
+  .gc-action { padding: 8px 6px; font-size: 12px; min-height: 42px; letter-spacing: .02em; }
   .gc-action small { font-size: 8.5px; }
   .gc-res { padding: 3px 7px; font-size: 11px; }
 
@@ -306,13 +391,54 @@ body {
   display: grid; gap: 2px; font-size: 10.5px;
   text-transform: uppercase; letter-spacing: .06em; color: var(--gc-ink-soft);
 }
+/* Les listes du commerce, gravées comme le champ du nom mais à leur échelle :
+   elles vivent dans un panneau dense, l'ornement y serait du bruit. */
 .gc-trade-compose select {
-  font-family: var(--gc-font-ui); font-size: 13px; padding: 5px 6px;
-  background: var(--gc-raised); border: 1px solid var(--gc-line); color: var(--gc-ink);
+  font-family: var(--gc-font-ui); font-size: 13px; padding: 6px 24px 6px 8px;
+  color: var(--gc-ink);
+  /*
+   * Sans `appearance: none`, le système reprend la main : macOS redessine
+   * la liste avec ses coins arrondis et son chevron bleu, et le champ gravé
+   * redevient un widget d'OS au milieu du parchemin. On la remet donc à nu
+   * et on redessine le chevron — en or, comme le reste — dans le fond.
+   */
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6'%3E%3Cpath d='M0 0h9L4.5 6z' fill='%23A87C22'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-color: var(--gc-raised);
+  border: 1px solid var(--gc-line);
+  border-bottom: 2px solid color-mix(in srgb, var(--gc-gold) 45%, var(--gc-line));
+  border-radius: 0;
+  box-shadow: inset 0 1px 3px rgba(27, 19, 16, .11);
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+.gc-trade-compose select:focus {
+  outline: none;
+  border-color: var(--gc-gold);
+  box-shadow:
+    inset 0 1px 3px rgba(27, 19, 16, .11),
+    0 0 0 3px color-mix(in srgb, var(--gc-gold) 42%, transparent);
 }
 .gc-trade-buttons { display: grid; gap: 6px; margin-top: 3px; }
-.gc-action-quiet { background: var(--gc-raised); color: var(--gc-ink); border-color: var(--gc-line); }
-.gc-action-mini { padding: 4px 9px; font-size: 11px; }
+/* La variante calme : le marbre au lieu de l'argile cuite. Même taille, même
+   gravure, mais elle ne réclame pas le regard — c'est l'action de repli. */
+.gc-action-quiet {
+  color: var(--gc-ink);
+  background: linear-gradient(
+    180deg,
+    #FBF3E0 0%,
+    var(--gc-raised) 42%,
+    color-mix(in srgb, var(--gc-raised) 80%, var(--gc-line)) 100%
+  );
+  border-color: var(--gc-line);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--gc-gold) 26%, transparent),
+    inset 0 1px 0 #FFF9EA,
+    0 1px 0 rgba(27, 19, 16, .14);
+  text-shadow: 0 1px 0 rgba(255, 249, 234, .7);
+}
+.gc-action-mini { padding: 5px 10px; font-size: 11px; letter-spacing: .06em; }
 
 .gc-trade-list { display: grid; gap: 5px; }
 .gc-trade-sub { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--gc-ink-soft); }
@@ -364,10 +490,55 @@ body {
 .gc-join label {
   font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--gc-ink-soft);
 }
+/*
+ * Le champ creusé dans le parchemin, non posé dessus.
+ *
+ * L'ombre interne vient du haut, comme la lumière : c'est ce seul détail qui
+ * fait lire un creux plutôt qu'une plaque. Le trait d'or en pied tient lieu
+ * de réglure — la ligne sur laquelle on écrit — et donne au champ son point
+ * d'appui sans l'enfermer dans un cadre de plus.
+ */
 .gc-join input {
   font-family: var(--gc-font-body); font-size: 22px; text-align: center;
-  padding: 8px 14px; width: 260px;
-  background: var(--gc-raised); border: 1px solid var(--gc-line); color: var(--gc-ink);
+  padding: 9px 14px; width: 260px;
+  color: var(--gc-ink);
+  background: var(--gc-raised);
+  border: 1px solid var(--gc-line);
+  border-bottom: 2px solid color-mix(in srgb, var(--gc-gold) 62%, var(--gc-line));
+  border-radius: 0;
+  box-shadow: inset 0 2px 4px rgba(27, 19, 16, .13);
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+.gc-join input::placeholder { color: color-mix(in srgb, var(--gc-ink-soft) 55%, transparent); }
+
+/*
+ * La frise sous l'intitulé du champ.
+ *
+ * C'est le premier écran qu'un joueur voit, et le seul endroit assez calme
+ * pour porter un ornement : ailleurs il entrerait en concurrence avec les
+ * jetons et les cartes. Purement décoratif, donc `aria-hidden` implicite —
+ * un pseudo-élément n'est pas lu par les lecteurs d'écran.
+ */
+.gc-join::before {
+  content: ''; display: block;
+  width: 168px; height: 8px; margin-bottom: 2px;
+  background: var(--gc-meandre) repeat-x center;
+  opacity: .5;
+}
+
+/*
+ * L'or au clavier comme au doigt.
+ *
+ * Ici `focus` et non `focus-visible` : sur un champ de saisie, le contour
+ * n'est pas un repère de navigation mais l'indication que la frappe arrive
+ * là — elle doit se voir même quand on y est venu au clic.
+ */
+.gc-join input:focus {
+  outline: none;
+  border-color: var(--gc-gold);
+  box-shadow:
+    inset 0 2px 4px rgba(27, 19, 16, .13),
+    0 0 0 3px color-mix(in srgb, var(--gc-gold) 46%, transparent);
 }
 
 /* ── annonces en cours ───────────────────────────────────────────── */
@@ -941,7 +1112,11 @@ body {
 /* Deux colonnes de boutons pleine cible : à trois, « Voie maritime » se
    coupait en deux et la cible du doigt tombait sous les quarante pixels. */
 .gc-sheet-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-.gc-sheet-grid .gc-action { min-height: 46px; font-size: 12px; padding: 6px 8px; }
+/* En grille, l'espacement des capitales retombe : « Voie maritime » tient
+   sur une ligne à .085em de moins, et la cible reste au-dessus de 44 px. */
+.gc-sheet-grid .gc-action {
+  min-height: 46px; font-size: 12px; padding: 6px 8px; letter-spacing: .03em;
+}
 .gc-sheet-grid .gc-action small { font-size: 9px; }
 .gc-sheet-wide { width: 100%; min-height: 40px; }
 
