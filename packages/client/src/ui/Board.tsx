@@ -11,6 +11,8 @@
  * emplacements ; elle rend ici le rendu presque gratuit.
  */
 
+import { useLayoutEffect, useRef, useState } from 'react';
+
 import type { PublicGameView } from '@grand-colonies/protocol';
 
 /**
@@ -88,8 +90,48 @@ export function Board({
   const width = SIZE * Math.sqrt(3);
   const height = SIZE * 2;
 
+  /*
+   * Le plateau se met à l'échelle de la place qu'on lui laisse.
+   *
+   * Ses dimensions sont fixées par la géométrie — cinquante hexagones de
+   * trente-deux pixels font une carte de plus de mille — et sur un téléphone
+   * couché, où il ne reste que trois cents pixels de haut, on n'en voyait
+   * qu'un coin. Le facteur ne dépasse jamais 1 : sur grand écran le plateau
+   * garde sa taille de lecture plutôt que de s'étirer.
+   */
+  const boardWidth = maxX - minX;
+  const boardHeight = maxY - minY;
+  const frame = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const element = frame.current;
+    if (!element) return undefined;
+
+    const fit = (): void => {
+      const { width, height } = element.getBoundingClientRect();
+      if (width === 0 || height === 0) return;
+      setScale(Math.min(1, width / boardWidth, height / boardHeight));
+    };
+
+    fit();
+    // La place change à la rotation du téléphone comme à l'ouverture d'un
+    // panneau : on suit le conteneur plutôt que la fenêtre.
+    const observer = new ResizeObserver(fit);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [boardWidth, boardHeight]);
+
   return (
-    <div className="gc-board" style={{ width: maxX - minX, height: maxY - minY }}>
+    <div className="gc-board-fit" ref={frame}>
+    <div
+      className="gc-board"
+      style={{
+        width: boardWidth,
+        height: boardHeight,
+        transform: scale < 1 ? `scale(${scale})` : undefined,
+      }}
+    >
       {view.hexes.map((hex) => {
         const center = hexCenter(hex.id);
         return (
@@ -223,6 +265,7 @@ export function Board({
           />
         );
       })}
+    </div>
     </div>
   );
 }

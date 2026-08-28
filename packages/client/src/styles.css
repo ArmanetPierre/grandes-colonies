@@ -91,10 +91,20 @@ body {
 /* Le plateau peut dépasser : on le centre quand il tient, on laisse
    défiler quand il ne tient pas. */
 .gc-board-wrap {
-  flex: 1; overflow: auto; padding: 16px;
+  flex: 1; position: relative; overflow: hidden; padding: 16px;
+}
+.gc-board { position: relative; flex: none; transform-origin: center; }
+/*
+ * Le cadre qui mesure la place offerte au plateau.
+ *
+ * Détaché du flux : en flex, il grandissait avec son contenu — il mesurait
+ * 941 pixels dans une zone de 326 — et rapportait donc une place qui
+ * n'existait pas, ce qui annulait toute mise à l'échelle.
+ */
+.gc-board-fit {
+  position: absolute; inset: 16px;
   display: flex; align-items: center; justify-content: center;
 }
-.gc-board { position: relative; flex: none; margin: auto; }
 
 .gc-hex {
   position: absolute; background-size: cover; background-position: center;
@@ -210,7 +220,9 @@ body {
   /* Le plateau passe devant le commerce. Empilé après lui, il n'avait plus
      qu'un bandeau de quelques centimètres, alors que c'est l'élément qu'on
      regarde le plus. */
-  .gc-board-wrap { order: -1; flex: none; min-height: 48vh; padding: 8px; }
+  /* Le plateau prend la place que journal et commerce ne réclament pas :
+     figé à sa hauteur minimale, il laissait un vide beige sous lui. */
+  .gc-board-wrap { order: -1; flex: 1 0 48vh; padding: 8px; }
 
   /* Plus de hauteur propre ni de défilement interne : la colonne s'en charge. */
   .gc-trade { max-height: none; overflow-y: visible; }
@@ -662,4 +674,115 @@ body {
   .gc-market-terms { grid-column: 1 / -1; }
   .gc-market-target { grid-column: 1; }
   .gc-market-action { grid-column: 2; grid-row: 3; }
+}
+
+/* ── téléphone en paysage ──────────────────────────────────────────────
+   Le cas que la largeur ne détecte pas : un téléphone couché fait environ
+   812 × 375, donc plus large que le seuil mobile, et recevait la mise en
+   page de bureau écrasée sur 375 pixels de haut — en-tête et pied de page
+   mangeaient tout, le plateau disparaissait.
+
+   C'est la **hauteur** qui manque ici, pas la largeur. On échange donc les
+   deux : ce qui s'empilait verticalement passe en colonnes, et le plateau
+   récupère toute la hauteur disponible. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .gc-app {
+    display: grid;
+    grid-template-columns: 96px 1fr 186px;
+    /* Journal et commerce prennent ce qu'il leur faut ; joueurs et actions
+       occupent tout le reste. Deux rangées égales bridaient les colonnes
+       latérales à la moitié de la hauteur, pour rien. */
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "head    head  head"
+      "players board actions"
+      "journal board trade";
+    height: 100vh; overflow: hidden;
+  }
+
+  /* `display: contents` dissout le conteneur : ses enfants deviennent des
+     cases de la grille, ce qu'aucun `order` n'aurait permis puisqu'ils
+     doivent traverser deux colonnes différentes. */
+  .gc-main { display: contents; }
+
+  .gc-order {
+    grid-area: head; padding: 4px 10px; gap: 10px;
+    border-bottom: 1px solid var(--gc-line);
+  }
+  .gc-timer { font-size: 20px; }
+  .gc-phase { font-size: 9px; }
+  .gc-sentence { font-size: 13px; line-height: 1.15; }
+  .gc-who { font-size: 9.5px; }
+  .gc-roll { font-size: 13px; }
+
+  .gc-players {
+    grid-area: players; width: auto; display: block;
+    overflow-y: auto; border-right: 1px solid var(--gc-line); border-bottom: none;
+  }
+  /* Une seule ligne par joueur : à trois lignes, douze joueurs ne tenaient
+     pas dans la colonne. Le score passe en dessous, discret. */
+  .gc-player {
+    border-right: none; border-bottom: 1px solid var(--gc-line);
+    padding: 3px 5px; display: grid; grid-template-columns: auto 1fr; gap: 2px 4px;
+  }
+  .gc-player .gc-stat { grid-column: 1 / -1; font-size: 8px; }
+  .gc-player .gc-role { display: none; }
+  .gc-name { font-size: 10.5px; max-width: none; }
+  .gc-player .gc-chip { width: 8px; height: 8px; }
+
+  .gc-board-wrap { grid-area: board; order: 0; min-height: 0; padding: 4px; }
+  .gc-board-fit { inset: 4px; }
+
+  .gc-journal {
+    grid-area: journal; width: auto; max-height: none;
+    border-right: 1px solid var(--gc-line); border-top: 1px solid var(--gc-line);
+    padding: 5px 6px; overflow-y: auto;
+  }
+  .gc-journal-head { font-size: 8.5px; margin-bottom: 4px; }
+  .gc-journal-entry { font-size: 9px; }
+  .gc-journal { max-height: 34vh; }
+
+  /* La main, les cartes et les actions passent à droite, sous le pouce. */
+  /*
+   * `flex-wrap: nowrap` est indispensable : hérité de la mise en page de
+   * bureau, l'enroulement transformait la colonne en deux colonnes, et les
+   * boutons se peignaient par-dessus la main au lieu de la suivre.
+   */
+  .gc-footer {
+    grid-area: actions; flex-direction: column; flex-wrap: nowrap;
+    align-items: stretch; gap: 5px; padding: 5px 6px; overflow-y: auto;
+    border-top: none; border-left: 1px solid var(--gc-line);
+  }
+  .gc-hand { gap: 3px; }
+  .gc-res { padding: 2px 5px; font-size: 10px; }
+  .gc-limit { font-size: 9px; }
+  /* `display: grid` manquait : les colonnes étaient ignorées et la rangée
+     de boutons débordait de sa colonne. */
+  .gc-actions {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 4px; width: 100%; margin-left: 0;
+  }
+  .gc-action { padding: 6px 4px; font-size: 10.5px; min-height: 34px; }
+  .gc-action small { font-size: 7.5px; }
+
+  .gc-trade {
+    grid-area: trade; width: auto; max-height: 48vh;
+    border-left: 1px solid var(--gc-line); border-top: 1px solid var(--gc-line);
+    padding: 6px; overflow-y: auto; gap: 6px;
+  }
+  .gc-trade-head { font-size: 9px; }
+
+  /* Les cartes développement en bande étroite : elles ne doivent pas
+     repousser les actions hors de la colonne. */
+  .gc-devcards { flex-wrap: nowrap; overflow-x: auto; gap: 4px; }
+  .gc-card { width: 62px; }
+  .gc-card-title { font-size: 8px; }
+  .gc-card-effect { display: none; }
+  .gc-card-plate { padding: 3px 4px; }
+  .gc-card-corner { display: none; }
+
+  /* Une modale ne doit jamais dépasser une hauteur d'écran aussi courte. */
+  .gc-modal { max-height: 92vh; overflow-y: auto; padding: 12px 14px; }
+  .gc-modal-title { font-size: 18px; }
+  .gc-objectives { grid-template-columns: 1fr 1fr; }
 }
