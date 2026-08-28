@@ -159,10 +159,53 @@ body {
 }
 /* 6 et 8 sont les plus productifs : ils se signalent, comme sur un plateau. */
 .gc-token-hot { color: var(--gc-danger); }
-.gc-robber { position: absolute; inset: 0; background: rgba(20, 12, 8, .55); }
+/*
+ * Le voleur.
+ *
+ * Il n'était qu'un voile sombre posé sur la tuile — invisible parmi cinquante
+ * textures, et plus encore depuis que la mer alentour est bleu profond. Il a
+ * maintenant une silhouette : on le repère sans lire le plateau.
+ */
+.gc-robber {
+  position: absolute; inset: 0;
+  background: rgba(18, 11, 7, .58);
+  display: grid; place-items: center;
+}
+.gc-robber::after {
+  content: ''; width: 17px; height: 23px;
+  background: #14100D;
+  border: 2px solid var(--gc-accent);
+  /* Une silhouette de pion : tête ronde, corps évasé. */
+  clip-path: polygon(34% 0, 66% 0, 74% 20%, 62% 34%, 84% 66%, 92% 100%, 8% 100%, 16% 66%, 38% 34%, 26% 20%);
+  box-shadow: 0 0 0 2px rgba(20, 12, 8, .55);
+}
 /* Cible possible pour le voleur : cliquable et signalée. */
-.gc-hex-target { cursor: pointer; }
-.gc-hex-target:hover { filter: brightness(1.25) saturate(1.1); }
+/*
+ * Un hexagone qu'on peut viser.
+ *
+ * Le survol ne suffisait pas : il n'existe pas au doigt. Sur téléphone, le
+ * joueur lisait « Déplace le voleur » sans le moindre indice de l'endroit où
+ * appuyer. La cible se signale donc d'elle-même, comme les emplacements de
+ * construction.
+ */
+.gc-hex-target { cursor: pointer; position: relative; }
+/*
+ * Le contour est un tracé, pas une bordure.
+ *
+ * Une bordure CSS suit la boîte rectangulaire ; découpée ensuite en hexagone,
+ * il n'en restait que quatre arcs aux angles, éparpillés sur la carte comme
+ * des traits sans rapport. Un hexagone dessiné épouse la tuile.
+ */
+.gc-hex-target::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 86.6 100' preserveAspectRatio='none'%3E%3Cpolygon points='43.3,3 83.6,26.5 83.6,73.5 43.3,97 3,73.5 3,26.5' fill='none' stroke='%23A63A17' stroke-width='6' stroke-dasharray='11 7'/%3E%3C/svg%3E")
+      center / 100% 100% no-repeat,
+    rgba(166, 58, 23, .18);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  animation: gc-pulse 1.6s ease-in-out infinite;
+}
+.gc-hex-target:hover::before { background-color: rgba(166, 58, 23, .36); }
 
 .gc-road {
   position: absolute; width: 24px; height: 5px;

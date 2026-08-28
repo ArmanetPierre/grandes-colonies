@@ -23,7 +23,7 @@ const PORT = Number(process.env['PORT'] ?? 2567);
 /** L'illustration de fond, partagée avec le client. */
 const BACKGROUND = resolve(
   dirname(fileURLToPath(import.meta.url)),
-  '../../../packages/client/public/assets/backgrounds/bg_host.jpg',
+  '../../../assets/generated/backgrounds/bg_host.jpg',
 );
 
 /**
