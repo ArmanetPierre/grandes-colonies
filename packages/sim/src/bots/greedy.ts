@@ -1,11 +1,18 @@
 /**
- * Deux bots simples, suffisants pour mesurer.
+ * Deux bots simples — le repère, et le hasard.
  *
  * `GreedyBot` construit dès qu'il peut, par ordre de valeur en points.
  * `RandomBot` choisit au hasard parmi les coups légaux.
  *
  * Comparer les deux donne un repère utile : si le hasard gagne aussi souvent
  * que la cupidité, c'est que les décisions du jeu ne pèsent pas assez.
+ *
+ * Ils ne sont plus les adversaires de la soirée — c'est le pilote de
+ * `pilote/` qui joue, et il bat le cupide vingt-deux fois sur vingt-quatre.
+ * Ils restent ici pour deux raisons : ils sont rapides, ce qui rend les
+ * milliers de parties d'équilibrage tenables, et ils sont le **témoin**
+ * auquel se mesure tout ce qu'on écrira ensuite. Une mesure sans témoin ne
+ * dit rien.
  */
 
 import {

@@ -62,6 +62,17 @@ export interface GameOutcome {
   /** Conversions passées par un port à contrat (§11), qui n'y touchent pas. */
   readonly portTrades: number;
   /**
+   * Annonces de construction hors tour (§8) : déposées, abouties, remboursées.
+   *
+   * La mécanique n'était mesurée nulle part parce qu'aucun bot ne s'en
+   * servait. Elle l'est maintenant, et l'écart entre les deux derniers
+   * chiffres est ce qui dit si annoncer vaut la peine ou si la table se
+   * dispute les mêmes emplacements.
+   */
+  readonly buildsDeclared: number;
+  readonly buildsResolved: number;
+  readonly buildsRefunded: number;
+  /**
    * Cours de chaque ressource à la fin de la partie (§10).
    *
    * Sans lui, impossible de dire si le marché a réellement vécu ou s'il est
@@ -121,6 +132,9 @@ export function playGame(options: SimulationOptions): GameOutcome {
   let tradesAccepted = 0;
   let bankTrades = 0;
   let portTrades = 0;
+  let buildsDeclared = 0;
+  let buildsResolved = 0;
+  let buildsRefunded = 0;
   let handSamples = 0;
   let handTotal = 0;
   let peakHand = 0;
@@ -137,7 +151,18 @@ export function playGame(options: SimulationOptions): GameOutcome {
       if (event.type === 'TradeAccepted') tradesAccepted++;
       if (event.type === 'BankTraded') bankTrades++;
       if (event.type === 'PortTraded') portTrades++;
-      if (event.type === 'SettlementPlaced' || event.type === 'CityBuilt' || event.type === 'RoadPlaced') {
+      if (event.type === 'BuildDeclared') buildsDeclared++;
+      if (event.type === 'BuildRefunded') buildsRefunded++;
+      if (event.type === 'BuildResolved') buildsResolved++;
+      /*
+       * Une construction annoncée est une construction.
+       *
+       * Elle n'émet que `BuildResolved` : la compter à part faisait
+       * apparaître les bots qui annoncent comme s'ils bâtissaient moins que
+       * les autres, alors qu'ils bâtissaient plus tôt.
+       */
+      if (event.type === 'SettlementPlaced' || event.type === 'CityBuilt'
+          || event.type === 'RoadPlaced' || event.type === 'BuildResolved') {
         const index = players.findIndex((p) => p.id === event.player);
         if (index >= 0) builds[index] = (builds[index] ?? 0) + 1;
       }
@@ -237,6 +262,9 @@ export function playGame(options: SimulationOptions): GameOutcome {
     tradesAccepted,
     bankTrades,
     portTrades,
+    buildsDeclared,
+    buildsResolved,
+    buildsRefunded,
     marketRates: Object.fromEntries(
       RESOURCES.map((r) => [r, marketRate(config.market, state.market, r)]),
     ),

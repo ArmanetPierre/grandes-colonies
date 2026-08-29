@@ -17,6 +17,16 @@ import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
 
 import { defaultLandCount } from '@grand-colonies/engine';
+import {
+  type CaractereId,
+  type NiveauId,
+  CARACTERES,
+  CARACTERE_IDS,
+  NIVEAUX,
+  NIVEAU_IDS,
+  estCaractere,
+  niveauDe,
+} from '@grand-colonies/sim';
 import { readJournal } from '@grand-colonies/server';
 import { type GameSettings, GameServer, SETTINGS_LIMITS } from '@grand-colonies/server';
 
@@ -74,15 +84,45 @@ class BotTable {
   private child: ChildProcess | undefined;
   private wanted = 0;
   private failure: string | undefined;
+  /**
+   * Niveau et caractères, réglables depuis l'écran comme l'effectif.
+   *
+   * Ce sont eux qui décident si la soirée oppose des apprentis à des enfants
+   * ou des stratèges à des habitués. Les changer relance la table de bots,
+   * comme un changement de nombre : leur cervelle se construit au démarrage.
+   */
+  private niveau: NiveauId = 3;
+  private caracteres: CaractereId | 'varie' = 'varie';
 
   constructor(private readonly port: number) {}
 
-  get status(): { count: number; running: boolean; error?: string } {
+  get status(): {
+    count: number; running: boolean; niveau: NiveauId; niveauNom: string;
+    caracteres: string; error?: string;
+  } {
     return {
       count: this.wanted,
       running: this.child !== undefined && this.child.exitCode === null,
+      niveau: this.niveau,
+      niveauNom: NIVEAUX[this.niveau].nom,
+      caracteres: this.caracteres,
       ...(this.failure ? { error: this.failure } : {}),
     };
+  }
+
+  /** Change le niveau, et relance la table s'il a bougé. */
+  reglerNiveau(valeur: unknown): void {
+    const niveau = niveauDe(valeur).id;
+    if (niveau === this.niveau) return;
+    this.niveau = niveau;
+    if (this.wanted > 0) this.set(this.wanted);
+  }
+
+  reglerCaracteres(valeur: unknown): void {
+    const choix: CaractereId | 'varie' = estCaractere(valeur) ? valeur : 'varie';
+    if (choix === this.caracteres) return;
+    this.caracteres = choix;
+    if (this.wanted > 0) this.set(this.wanted);
   }
 
   /*
@@ -117,7 +157,9 @@ class BotTable {
     if (this.wanted === 0) return;
 
     const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-    const child = spawn(npx, ['tsx', 'scripts/bots.ts', String(this.wanted)], {
+    const arguments_ = ['tsx', 'scripts/bots.ts', String(this.wanted), `--niveau=${this.niveau}`];
+    if (this.caracteres !== 'varie') arguments_.push(`--caractere=${this.caracteres}`);
+    const child = spawn(npx, arguments_, {
       cwd: ROOT,
       stdio: 'inherit',
       detached: true,
@@ -185,6 +227,22 @@ export interface HostHandle {
 function withBalance(settings: GameSettings): GameSettings & { balanced: number } {
   return { ...settings, balanced: defaultLandCount(settings.playerCount) };
 }
+
+/**
+ * Ce que l'écran de l'hôte doit savoir des adversaires pour les proposer.
+ *
+ * Envoyé plutôt que recopié dans la page : les niveaux et les caractères
+ * vivent dans le paquet `sim`, et une seconde liste écrite à la main dans du
+ * HTML aurait divergé dès le premier caractère ajouté.
+ */
+const CATALOGUE_ADVERSAIRES = {
+  niveaux: NIVEAU_IDS.map((id) => ({
+    id, nom: NIVEAUX[id].nom, description: NIVEAUX[id].description,
+  })),
+  caracteres: CARACTERE_IDS.map((id) => ({
+    id, nom: CARACTERES[id].nom, description: CARACTERES[id].description,
+  })),
+};
 
 export async function startHost(playerCount = 8, port = PORT): Promise<HostHandle> {
   const seed = `partie-${Date.now()}`;
@@ -362,6 +420,12 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
                * nombre demandé dépasse ce que l'effectif peut tenir, même
                * quand la requête ne parle pas des bots.
                */
+              // Le niveau et les caractères d'abord : ils relancent la table
+              // d'eux-mêmes, et la relancer ensuite pour l'effectif la
+              // relancerait deux fois de suite.
+              if (body['botNiveau'] !== undefined) bots.reglerNiveau(body['botNiveau']);
+              if (body['botCaractere'] !== undefined) bots.reglerCaracteres(body['botCaractere']);
+
               const asked = typeof body['bots'] === 'number' ? Number(body['bots']) : bots.status.count;
               const fitted = Math.min(asked, outcome.settings.playerCount);
               if (fitted !== bots.status.count || typeof body['bots'] === 'number') bots.set(fitted);
@@ -381,6 +445,7 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
           started: server.session.isStarted,
           bots: bots.status,
           limits: SETTINGS_LIMITS,
+          adversaires: CATALOGUE_ADVERSAIRES,
         });
         return true;
       }
@@ -429,8 +494,14 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
 
   // Le nombre de bots demandé au lancement, s'il y en a un : la ligne de
   // commande reste utilisable, l'écran de l'hôte prend le relais ensuite.
+  // `BOT_NIVEAU=1 npm run play` ouvre la soirée sur des apprentis.
+  if (process.env['BOT_NIVEAU'] !== undefined) bots.reglerNiveau(process.env['BOT_NIVEAU']);
+  if (estCaractere(process.env['BOT_CARACTERE'])) bots.reglerCaracteres(process.env['BOT_CARACTERE']);
   const asked = Number(process.env['BOTS'] ?? 0);
   if (asked > 0) bots.set(Math.min(asked, playerCount));
+  if (asked > 0) {
+    console.log(`  Adversaires  ${asked}, niveau ${bots.status.niveau} (${bots.status.niveauNom})`);
+  }
 
   return {
     port,

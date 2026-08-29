@@ -74,15 +74,69 @@ courant n'en abîme que la dernière ligne, et la relecture l'ignore.
 | `PLAYERS=8 npm run play` | Huit joueurs au lieu de douze |
 | `BOARD=disque npm run play` | Plateau en disque : soirée plus courte (≈ 2 h 20 au lieu de 3 h 30 à douze) |
 | `BOTS=11 npm run play` | Onze adversaires automatiques, une place pour toi |
+| `BOT_NIVEAU=1 npm run play` | Adversaires débutants, de 1 à 4 (3 par défaut) |
+| `BOT_CARACTERE=corsaire npm run play` | Tous du même caractère, au lieu du panachage |
 | `TERRES=72 npm run play` | Soixante-douze hexagones de terre. Réglable aussi depuis l'écran hôte, de 19 à 130, indépendamment du nombre de joueurs |
 | `REPRENDRE=parties/xxx.jsonl npm run play` | Reprend une partie interrompue là où elle s'était arrêtée |
 | `PARTIES= npm run play` | N'écrit aucun journal de partie |
 
-Les bots passent par le même WebSocket que les joueurs et ne voient que ce
-qu'un joueur voit : ils ne peuvent pas tricher. Ils construisent par ordre de
-valeur en points et convertissent leur surplus, mais ne planifient pas et ne
-marchandent pas — un humain les bat sans peine, et c'est le but : ils sont là
-pour que la partie tourne.
+---
+
+## Les adversaires automatiques
+
+Ils passent par le même WebSocket que les joueurs et ne voient que ce qu'un
+joueur voit : leur vue publique et leur vue privée. **Ils ne peuvent pas
+tricher** — la géométrie du plateau et les inventaires de chacun sont
+publics, et c'est tout ce dont ils se servent.
+
+Deux réglages, indépendants, se règlent depuis l'écran de l'hôte pendant que
+la pièce se remplit.
+
+### Le niveau — ce qu'ils savent faire
+
+| | | |
+|---|---|---|
+| **1** | Apprenti | Joue des coups légaux sans les peser. Se laisse battre sans rancune. |
+| **2** | Colon | Regarde les jetons avant de poser, construit par ordre de valeur, propose des échanges simples. |
+| **3** | Aguerri | Exploite ses ports, annonce hors de son tour, joue ses cartes à propos, adresse ses offres à qui peut les honorer. |
+| **4** | Stratège | Freine celui qui mène dès qu'il touche au but, dispute les emplacements, garde sa main sous la limite. |
+
+L'échelle est mesurée, et elle n'est pas régulière. Sur quarante-huit parties
+à six joueurs, sièges alternés : le **colon bat l'apprenti quarante-trois
+fois à zéro**, et les anciens bots quarante-huit fois sur quarante-huit. Mais
+l'aguerri ne bat le colon que vingt fois à seize, et le stratège l'aguerri
+d'un cheveu. **Ce que le niveau 2 ajoute — peser les emplacements, viser un
+coût précis — vaut plus que tout ce qui vient après.**
+
+Une table forte joue un peu plus longtemps : tout le monde avance, le plateau
+se remplit, et c'est la place — pas le talent — qui décide alors de la durée.
+À niveau élevé, prévois plus de terres ou baisse le seuil de victoire.
+
+### Le caractère — ce qu'ils veulent
+
+Six, distribués à tour de rôle pour qu'aucun ne manque et qu'aucun ne soit là
+cinq fois. Le nom du bot le porte : **Ariane (négoce)** marchandera.
+
+| | |
+|---|---|
+| **Bâtisseur** | Prend le terrain tôt et le garde : colonies, routes, puis villes. |
+| **Marchand** | Propose sans arrêt, occupe les ports, et vit du cours plutôt que des dés. |
+| **Corsaire** | Chevaliers, voleur sur le meneur, et les emplacements qu'un autre convoitait. |
+| **Navigateur** | Quitte l'île centrale tôt, quitte à y laisser un tour d'avance. |
+| **Érudit** | Achète des cartes, vise le monument et la métropole, et attend son heure. |
+| **Prudent** | Ne garde jamais dix cartes, préfère une ville sûre à une colonie exposée. |
+
+Ce n'est pas un décor : à trois parties de mesure, le marchand dépose 1382
+offres d'échange et le corsaire 395 ; le bâtisseur annonce quatre-vingts
+constructions hors de son tour, l'érudit aucune.
+
+Leur cervelle vit dans [`packages/sim/src/pilote/`](packages/sim/src/pilote/),
+et c'est **exactement la même** en simulation et en soirée : ce qu'on éprouve
+en dix mille parties est ce qui s'assoit à la table.
+
+```bash
+npx tsx scripts/adversaires.ts     # duels par niveau, tables entières
+```
 
 ---
 
@@ -141,8 +195,9 @@ npm run assets    # met les images générées à la portée du client
 
 node docs/tisser.mjs        # réassemble la documentation depuis docs/_pages/
 
-npx tsx scripts/marche.ts   # mesure le marché contre un taux figé
-npx tsx scripts/ports.ts    # mesure les ports à contrat contre une côte sans eux
+npx tsx scripts/marche.ts       # mesure le marché contre un taux figé
+npx tsx scripts/ports.ts        # mesure les ports à contrat contre une côte sans eux
+npx tsx scripts/adversaires.ts  # départage les quatre niveaux d'adversaires
 ```
 
 Le plateau est rendu en Three.js, dans
@@ -207,7 +262,7 @@ ses terrains.
 | `packages/protocol` | Les vues publique et privée, et la sérialisation des événements. |
 | `packages/server` | Sièges, chronomètres, reconnexion, transport WebSocket. |
 | `packages/client` | L'écran des joueurs (React), et le plateau en 3D. |
-| `packages/sim` | Bots et simulation, pour mesurer l'équilibrage. |
+| `packages/sim` | Les adversaires automatiques, et la simulation qui les mesure. |
 | `apps/host` | L'écran de l'hôte : QR code et démarrage. |
 
 Le **marché dynamique** du §10 est branché : le taux bancaire n'est plus la

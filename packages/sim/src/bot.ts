@@ -1,10 +1,16 @@
 /**
  * Interface des bots et catalogue des coups légaux.
  *
- * Les bots n'ont pas besoin d'être intelligents. Leur rôle n'est pas de bien
- * jouer mais de **faire tourner des milliers de parties** pour détecter les
- * règles cassées, les blocages, et mesurer l'équilibrage. Un bot qui joue mal
- * mais qui joue vite vaut mieux ici qu'un bon joueur lent.
+ * Un `Bot` décide à partir du `GameState` complet : c'est l'interface du
+ * **simulateur**, qui tient l'état en mémoire et n'a personne à qui cacher
+ * quoi que ce soit. Les bots historiques de `bots/greedy.ts` s'en servent
+ * ainsi, et vont vite parce qu'ils ne regardent presque rien.
+ *
+ * Les adversaires de la soirée, eux, ne voient que deux vues et rien d'autre
+ * (`pilote/`). Ils rejoignent cette interface par un adaptateur —
+ * `bots/pilote.ts` — qui **restreint** ce qu'ils reçoivent avant de les
+ * laisser décider : c'est ce qui permet de mesurer en simulation exactement
+ * les adversaires qui joueront en réseau.
  */
 
 import {

@@ -69,18 +69,21 @@ npm run play</code></pre>
             <tr><td><code>PLAYERS=8 npm run play</code></td><td>Huit sièges au lieu de douze</td></tr>
             <tr><td><code>BOARD=disque npm run play</code></td><td>Plateau en disque : soirée plus courte, ≈ 2 h 20 au lieu de 3 h 30 à douze</td></tr>
             <tr><td><code>BOTS=11 npm run play</code></td><td>Onze adversaires automatiques, une place pour vous</td></tr>
+            <tr><td><code>BOT_NIVEAU=1 npm run play</code></td><td>Adversaires débutants, de 1 à 4 — 3 par défaut</td></tr>
           </tbody>
         </table>
       </div>
       <div class="note">
-        <div class="note-titre">Sur les bots</div>
+        <div class="note-titre">Sur les adversaires automatiques</div>
         <p>
           Ils passent par le même WebSocket que les joueurs et ne voient que
           ce qu’un joueur voit : <strong>ils ne peuvent pas tricher</strong>.
-          Ils construisent par ordre de valeur en points et convertissent leur
-          surplus, mais ne planifient pas et ne marchandent pas. Un humain les
-          bat sans peine — c’est le but : ils sont là pour que la partie
-          tourne, pas pour la gagner.
+          Ils ont quatre niveaux — de l’apprenti qui pose sa colonie sans
+          regarder les jetons au stratège qui met son voleur sur celui qui
+          mène — et six caractères, que leur nom porte :
+          <em>Ariane (négoce)</em> marchandera. Tout se règle depuis l’écran
+          de l’hôte, et la page <a href="adversaires.html">Les adversaires</a>
+          en dit le détail.
         </p>
       </div>
     </section>

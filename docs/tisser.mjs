@@ -26,6 +26,7 @@ const PAGES = [
   { f: 'voleur.html',       nom: 'Le sept et l’Errant',    groupe: 'Jouer' },
   { f: 'victoire.html',     nom: 'Gagner',                 groupe: 'Jouer' },
   { f: 'variantes.html',    nom: 'Variantes',              groupe: 'Jouer' },
+  { f: 'adversaires.html',  nom: 'Les adversaires',        groupe: 'Jouer' },
   { f: 'mecanismes.html',   nom: 'Sous le capot',          groupe: 'Coulisses' },
   { f: 'horizon.html',      nom: 'L’horizon',              groupe: 'Coulisses' },
   { f: 'glossaire.html',    nom: 'Glossaire',              groupe: 'Coulisses' },

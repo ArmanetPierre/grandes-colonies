@@ -129,6 +129,10 @@ export function renderHostPage(data: HostPageData): string {
   }
   .seg button:last-child { border-right:none; }
   .seg button.on { background:var(--accent); color:#F7F1E1; font-weight:600; }
+  /* Sept caractères ne tiennent pas sur une ligne d'écran d'ordinateur
+     portable : ceux-là s'enroulent plutôt que de déborder de la carte. */
+  .seg.wrap { flex-wrap:wrap; }
+  .seg.wrap button { border-bottom:1px solid var(--line); }
 
   .ghost {
     padding:6px 12px; font-size:11.5px; font-family:inherit; cursor:pointer;
@@ -221,7 +225,11 @@ ${tableViewMarkup()}
 <script>
   var LIMITS = ${JSON.stringify(data.limits)};
   var settings = null;
-  var bots = { count: 0, running: false };
+  var bots = { count: 0, running: false, niveau: 3, caracteres: 'varie' };
+  /* Niveaux et caractères des adversaires, envoyés par le serveur : les
+     recopier ici en aurait fait une seconde liste, à côté de celle du
+     paquet sim, avec tout le loisir de diverger. */
+  var adversaires = { niveaux: [], caracteres: [] };
   var started = false;
   /**
    * Une écriture est en vol.
@@ -252,6 +260,7 @@ ${tableViewMarkup()}
       });
       const body = await response.json();
       if (body.settings) { settings = body.settings; bots = body.bots || bots; }
+      if (body.adversaires) adversaires = body.adversaires;
       renderSettings();
     } catch { /* le serveur redémarre : le prochain sondage rattrapera */ }
     finally { pending--; }
@@ -270,10 +279,10 @@ ${tableViewMarkup()}
       + '</span></div>';
   }
 
-  function seg(label, note, choices, value, key, wide) {
+  function seg(label, note, choices, value, key, wide, wrap) {
     return '<div class="row' + (wide ? ' wide' : '') + '">'
       + '<span class="label">' + label + (note ? '<small>' + note + '</small>' : '') + '</span>'
-      + '<span class="seg" data-seg="' + key + '">'
+      + '<span class="seg' + (wrap ? ' wrap' : '') + '" data-seg="' + key + '">'
       + choices.map(function (c) {
           return '<button data-value="' + c[0] + '"'
             + (String(c[0]) === String(value) ? ' class="on"' : '') + '>' + c[1] + '</button>';
@@ -322,6 +331,17 @@ ${tableViewMarkup()}
     } else if (ratio < 0.8) {
       parts.push('terres <b>resserrées</b> — emplacements très disputés, production concentrée');
     }
+    /*
+     * Ce qu'un niveau élevé fait à la soirée, mesuré et non supposé.
+     *
+     * Quarante-huit parties à six joueurs : 192 cycles pour une table de
+     * colons, 209 pour une table de stratèges. Des adversaires forts avancent
+     * tous ensemble, le plateau se remplit, et c'est la place — pas le
+     * talent — qui décide alors de la durée.
+     */
+    if (bots.count > 0 && bots.niveau >= 4) {
+      parts.push('adversaires <b>redoutables</b> — parties un peu plus longues, prévois de la place');
+    }
     if (bots.error) parts.push('<span class="warn">' + escapeHtml(bots.error) + '</span>');
     return parts.join(' · ') + '.';
   }
@@ -343,6 +363,28 @@ ${tableViewMarkup()}
       + ' — l’équilibre à ' + settings.playerCount + ' joueurs est ' + base;
   }
 
+  /**
+   * Niveau et caractères, montrés seulement quand il y a des adversaires.
+   *
+   * Deux lignes de plus dans un pupitre qui en compte huit, pour un réglage
+   * qui ne veut rien dire à zéro bot : elles n'apparaissent qu'une fois la
+   * molette bougée, et disparaissent si on la ramène à zéro.
+   */
+  function reglagesAdversaires() {
+    if (bots.count === 0 || adversaires.niveaux.length === 0) return '';
+
+    const niveaux = adversaires.niveaux.map(function (n) { return [n.id, n.id + ' · ' + n.nom]; });
+    const courant = adversaires.niveaux.filter(function (n) { return n.id === bots.niveau; })[0];
+
+    const caracteres = [['varie', 'Variés']].concat(
+      adversaires.caracteres.map(function (c) { return [c.id, c.nom]; }));
+
+    return seg('Niveau', courant ? courant.description : 'de l’apprenti au stratège',
+               niveaux, bots.niveau, 'botNiveau', true)
+      + seg('Caractères', 'variés : chacun le sien, à tour de rôle',
+            caracteres, bots.caracteres, 'botCaractere', true, true);
+  }
+
   function renderSettings() {
     if (!settings) return;
     document.getElementById('total').textContent = settings.playerCount;
@@ -357,7 +399,7 @@ ${tableViewMarkup()}
         + (settings.boardKind === 'disc' ? 'disque' : 'archipel')
         + ' de ' + settings.landCount + ' terres · '
         + settings.victoryTarget + ' points · tour de ' + settings.activeTurnSeconds + ' s'
-        + (bots.count ? ' · ' + bots.count + ' adversaires automatiques' : '')
+        + (bots.count ? ' · ' + bots.count + ' adversaires niveau ' + bots.niveau : '')
         + '<br>Les réglages sont figés une fois la partie lancée.';
       return;
     }
@@ -366,6 +408,7 @@ ${tableViewMarkup()}
         step('Joueurs', 'sièges à la table', settings.playerCount, LIMITS.playerCount, 'playerCount')
       + step('Adversaires automatiques', 'ils prennent les sièges libres', bots.count,
              { min: 0, max: settings.playerCount }, 'bots')
+      + reglagesAdversaires()
       + seg('Plateau', 'huit joueurs et plus', [['archipelago','Archipel'],['disc','Disque']],
             settings.boardKind, 'boardKind')
       + step('Taille du plateau', tailleNote(), settings.landCount, LIMITS.landCount, 'landCount', 4)
@@ -425,6 +468,7 @@ ${tableViewMarkup()}
       if (pending === 0) {
         settings = state.settings;
         bots = state.bots || bots;
+        if (state.adversaires) adversaires = state.adversaires;
         // Dans les deux sens : une partie rouverte doit rendre au bouton
         // son libellé et aux réglages leurs molettes, sans recharger.
         if (state.started !== started) {

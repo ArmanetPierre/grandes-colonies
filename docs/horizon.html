@@ -59,6 +59,7 @@
         <li><a href="voleur.html">Le sept et l’Errant</a></li>
         <li><a href="victoire.html">Gagner</a></li>
         <li><a href="variantes.html">Variantes</a></li>
+        <li><a href="adversaires.html">Les adversaires</a></li>
       </ul>
     </div>
     <div class="sommaire-groupe">
@@ -278,20 +279,22 @@
       </p>
       <ul class="liste">
         <li>
-          <strong>Les annonces hors tour.</strong> C’est la plus grosse
-          mécanique du jeu, et les bots ne l’utilisent jamais : ils
-          n’annoncent pas hors de leur tour. Toutes les mesures de durée et
-          d’équilibre l’ignorent donc complètement.
+          <strong>Les annonces hors tour.</strong> Longtemps ignorées de
+          toutes les mesures, faute d’un bot qui les joue. Les adversaires du
+          niveau 3 les jouent désormais, et le premier résultat est
+          inattendu : elles n’augmentent pas le nombre de constructions, elles
+          les <em>avancent</em> — et une table où tout le monde annonce sature
+          le plateau plus tôt, donc joue plus longtemps. Reste à confirmer en
+          partie réelle, où la pression du temps change tout.
         </li>
         <li>
-          <strong>Le port minier.</strong> Zéro usage mesuré : les bots n’y
-          touchent pas, parce que l’or ne leur sert qu’à la métropole.
-          L’exemption de marché dont il bénéficie — la décision la plus
-          discutable du lot — n’a été validée que par le raisonnement.
-        </li>
-        <li>
-          <strong>Le choix de l’objectif secret.</strong> Les bots gardent
-          celui qu’on leur attribue sans regarder s’il colle à leur position.
+          <strong>Le port minier.</strong> Il servait à zéro reprise tant
+          qu’aucun bot ne savait pourquoi il voudrait de l’or. Les stratèges
+          qui visent la métropole s’en servent — <em>une fois</em> sur quatre
+          parties mesurées, contre cent quarante-huit pour le port
+          commercial. L’exemption de marché dont il bénéficie, la décision la
+          plus discutable du lot, n’est donc toujours pas validée par le
+          chiffre : ce n’est plus un port mort, c’est un port rare.
         </li>
         <li>
           <strong>La fenêtre de commerce de 30 secondes.</strong> À douze
@@ -309,7 +312,8 @@
         Le détail chiffré de toutes ces mesures est dans
         <a href="../SIMULATION_FINDINGS.md">SIMULATION_FINDINGS.md</a>. Elles
         disent où se situe le <strong>plancher</strong> du jeu, pas son plafond :
-        les bots sont volontairement simples, et un humain fait mieux partout.
+        un adversaire automatique regarde un coup en avant, jamais deux, et ne
+        bluffe pas — un humain attentif fait mieux.
       </p>
     </section>
 

@@ -5,6 +5,7 @@
   "type": "module",
   "main": "./src/index.ts",
   "dependencies": {
-    "@grand-colonies/engine": "*"
+    "@grand-colonies/engine": "*",
+    "@grand-colonies/protocol": "*"
   }
 }

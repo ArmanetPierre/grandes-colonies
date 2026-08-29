@@ -449,3 +449,142 @@ endroit ; la contrainte des deux natures différentes le ramène à sa place.
   lorsqu'il ne peut plus rien bâtir. Un humain qui tient ce port irait le
   chercher.
 - Le port royal n'existe pas : il attend l'Influence.
+
+---
+
+## Huitième tour : des adversaires qui jouent
+
+Les sept tours précédents ont mesuré le jeu avec des bots qui construisaient
+par ordre de valeur en points sans jamais regarder un jeton, sans plan, sans
+proposer un seul échange. C'était assumé — ils étaient là pour faire tourner
+des milliers de parties, pas pour bien jouer. Mais cela laissait une question
+ouverte : **ce qu'on mesurait était-il le jeu, ou la maladresse des bots ?**
+
+Le paquet `sim` porte désormais un pilote complet
+(`packages/sim/src/pilote/`), à quatre niveaux et six caractères. Il ne
+reçoit que la vue publique et la vue privée d'un joueur — pas le `GameState`
+— et c'est **exactement le même code** qui joue en réseau le soir venu et qui
+tourne ici en simulation.
+
+### L'échelle des niveaux
+
+`scripts/adversaires.ts`, 48 parties à 6 joueurs, sièges alternés d'une
+partie à l'autre pour que l'ordre du tour ne fausse rien.
+
+| Duel | Victoires | Points moyens | Cycles |
+|---|---|---|---|
+| niveau 2 contre l'ancien bot | **48 — 0** | 10,5 contre 2,7 | 108 |
+| niveau 2 contre niveau 1 | **43 — 0** | 10,7 contre 3,7 | 150 |
+| niveau 4 contre niveau 1 | **43 — 0** | 11,1 contre 3,7 | 152 |
+| niveau 3 contre niveau 2 | **20 — 16** | 9,9 contre 9,1 | 193 |
+| niveau 4 contre niveau 3 | **32 — 27** ¹ | 10,0 contre 9,8 | 183 |
+
+¹ cumul de deux familles de graines, 80 parties : 15 — 17 sur l'une, 17 — 10
+sur l'autre. L'écart entre les deux dit ce que vaut la mesure — à une
+trentaine de parties décidées par famille, un duel serré ne se tranche pas.
+
+**L'échelle n'est pas régulière, et c'est le fait le plus utile du tour.**
+Entre le premier et le deuxième niveau il y a un gouffre : quarante-trois à
+zéro. Entre le troisième et le quatrième, à peine un avantage. Ce que le
+deuxième niveau ajoute — peser les emplacements, viser un coût précis — vaut
+plus que tout ce qui vient après.
+
+C'est d'abord la mesure de ce que **la mise en place** coûte. Une colonie
+posée sur le premier sommet de la liste, triée par identifiant, tombe en
+moyenne sur des jetons médiocres, et la partie est perdue avant le premier
+lancer. Rien de ce qu'un joueur fait ensuite ne rattrape cela.
+
+### Le problème du faiseur de rois, chiffré
+
+Le quatrième niveau devait se distinguer en visant le meneur : voleur posé
+sur lui, et plus un échange qui l'arrange. Mesuré, il **perdait** contre le
+troisième — huit victoires à quinze sur trente-deux parties — là où le même
+niveau visant simplement la main la plus grosse gagnait quatorze à neuf.
+
+Le geste est table-optimal et individuellement coûteux : le voleur posé sur
+le meneur ne rapporte rien à celui qui le pose, il rend service aux dix
+autres. C'est le problème du faiseur de rois, et il ne se règle pas en
+cessant de freiner celui qui gagne — un jeu où personne ne le freine se
+décide au cinquième cycle. Il se règle en ne le freinant **que lorsque c'est
+urgent** : quand il est à quatre points du but, ou qu'il a pris trois points
+d'avance. Avec cette condition, viser le meneur ne coûte plus rien —
+treize à treize contre la visée cupide — et le comportement reste visible à
+la table.
+
+### Trois mécaniques sortent de l'ombre
+
+Quatre parties à six joueurs au niveau 4, événements comptés :
+
+| Mécanique | Avant | Maintenant |
+|---|---|---|
+| Choix de l'objectif secret | jamais fait | 24 sur 24 (tous les joueurs) |
+| Annonces hors tour (§8) | jamais jouées | 46 déposées, 46 abouties, 0 remboursée |
+| Port minier (§11) | zéro usage | 1 — contre 148 pour le port commercial |
+| Monopole | joué sur ce qui manque | 19, visés sur ce que la table détient |
+| Métropoles bâties | rares | 6 |
+
+Le port minier reste donc **un port rare plutôt qu'un port mort** : un
+adversaire ne s'en sert que lorsqu'il vise une métropole et qu'il lui manque
+de l'or. L'exemption de marché du §11 n'est toujours pas validée par le
+chiffre.
+
+### Les annonces hors tour n'ajoutent pas de constructions, elles les avancent
+
+Douze parties avec et sans, tout le reste égal : **91 constructions contre
+92**. Même total, plus tôt. La mécanique du §8 ne fait donc pas construire
+davantage une table, elle décale ce qu'elle aurait bâti de toute façon — ce
+qui est exactement ce qu'elle promettait, et ce qui n'avait jamais été
+vérifié faute d'un bot qui l'exerce.
+
+Une mise en garde de méthode, apprise en chemin : deux variantes de bot ne
+jouent pas la même partie à graine égale. Elles consomment le hasard
+différemment, donc divergent dès le premier tirage. Une première mesure
+donnait aux annonces quatre-vingts cycles de retard ; la même mesure, après
+d'autres réglages sans rapport, leur donnait vingt-cinq cycles d'avance.
+Seules les grandeurs **cumulées sur beaucoup de parties** — constructions,
+victoires — résistent à cela ; la durée d'une partie, non.
+
+### Le niveau et la durée d'une soirée
+
+48 parties par ligne, à 6 joueurs, tous les sièges au même niveau :
+
+| Niveau | Cycles | Conclues | Offres (acceptées) | Banque | Annonces | Défausses |
+|---|---|---|---|---|---|---|
+| 1 — Apprenti | 229 | 38/48 | 0 | 148 | 0 | 26 |
+| 2 — Colon | **192** | 36/48 | 324 (26 %) | 164 | 0 | 48 |
+| 3 — Aguerri | 206 | 34/48 | 362 (19 %) | 182 | 13 | 57 |
+| 4 — Stratège | 209 | 34/48 | 362 (17 %) | 215 | 14 | 56 |
+
+Une table forte joue un peu plus longtemps qu'une table moyenne, et conclut
+un peu moins souvent. La cause n'est pas le talent : c'est que tout le monde
+avance, que le plateau se remplit, et qu'un joueur ayant posé ses cinq
+colonies, ses quatre villes et son monument plafonne autour de treize points,
+titres compris. La partie cesse alors de progresser **faute de place**, et
+non faute de ressources — le même mur que le tour sur les échelles de
+plateau avait déjà rencontré.
+
+Pour l'hôte, la conséquence est pratique : à niveau élevé, prévoir plus de
+terres ou baisser le seuil de victoire. C'est dit sur son écran, sous les
+molettes.
+
+### Le taux d'acceptation des échanges
+
+19 % des offres aboutissent, contre 3 % à la première version du pilote. Le
+correctif n'était pas de proposer davantage mais de **juger une offre en
+valeur continue** plutôt que par un seuil binaire. La première version
+n'acceptait que ce qui comblait exactement le coût visé : la table proposait
+sans arrêt et n'échangeait jamais. Une carte vaut ce qu'elle vaut — le trou
+du plan d'abord, la pénurie de terrain ensuite, presque rien quand on en a
+déjà cinq — et deux cartes contre une passent alors presque toujours.
+
+### Ce que ces mesures ne disent toujours pas
+
+- **Le plancher, pas le plafond.** Un stratège regarde un coup en avant,
+  jamais deux. Il ne bluffe pas, ne coalise pas, et ne renonce jamais à un
+  échange pour empêcher un autre de le faire.
+- **Les parties simulées ne connaissent pas le temps.** Le pilote décide
+  toujours avant l'expiration du chronomètre ; en soirée, la fenêtre de
+  commerce de trente secondes contraint tout autrement.
+- **Six caractères ne font pas six styles humains.** Ils font six jeux de
+  poids, ce qui suffit à les distinguer à la table — le marchand dépose 1382
+  offres là où le corsaire en dépose 395 — mais pas à imiter quelqu'un.

@@ -204,28 +204,37 @@
     </section>
 
     <section id="bots">
-      <h2>Les bots</h2>
+      <h2>Les adversaires automatiques</h2>
       <p class="intro">
         Ils passent par le même WebSocket que les joueurs et ne voient que ce
-        qu’un joueur voit.
+        qu’un joueur voit. Le détail de leurs niveaux et de leurs caractères
+        est sur la page <a href="adversaires.html">Les adversaires</a> ; ce
+        qui suit est la partie fabrication.
       </p>
       <p>
         <strong>Ils ne peuvent pas tricher</strong> : ils reçoivent la vue
         publique et leur vue privée, comme tout le monde, et n’ont aucun accès
-        à l’état du moteur. Ils construisent par ordre de valeur en points et
-        convertissent leur surplus, mais ne planifient pas et ne marchandent
-        pas.
+        à l’état du moteur. C’est une conséquence de la fabrication, pas une
+        promesse — le serveur ne leur envoie rien d’autre, et un adversaire
+        qui voudrait consulter la pioche n’aurait nulle part où regarder.
       </p>
       <p>
-        Un humain les bat sans peine, et c’est le but : ils sont là pour que la
-        partie tourne quand un siège est vide, pas pour la gagner. Ils servent
-        aussi à mesurer — des milliers de parties simulées, dont sont sortis
-        la dotation de vingt routes, la part de trois quarts de l’île centrale,
-        et les bornes du marché.
+        La contrainte a une conséquence heureuse : puisqu’un adversaire ne sait
+        lire que ces deux vues, <strong>le même code sert en soirée et en
+        simulation</strong>. Le simulateur, lui, tient l’état complet — il le
+        <em>restreint</em> avant de laisser le bot décider. Ce qu’on éprouve
+        en dix mille parties est donc exactement ce qui s’assoit à la table,
+        et non un cousin.
       </p>
-      <pre class="schema"><code>npx tsx scripts/marche.ts   # mesure le marché contre un taux figé
-npx tsx scripts/ports.ts    # mesure les ports à contrat contre une côte sans eux
-npx tsx scripts/echelles.ts # mesure l'effet de la taille du plateau</code></pre>
+      <p>
+        C’est ce qui donne leur valeur aux mesures d’équilibrage : la dotation
+        de vingt routes, la part de trois quarts de l’île centrale et les
+        bornes du marché en sont sorties.
+      </p>
+      <pre class="schema"><code>npx tsx scripts/marche.ts       # mesure le marché contre un taux figé
+npx tsx scripts/ports.ts        # mesure les ports à contrat contre une côte sans eux
+npx tsx scripts/echelles.ts     # mesure l'effet de la taille du plateau
+npx tsx scripts/adversaires.ts  # départage les quatre niveaux d'adversaires</code></pre>
     </section>
 
     <section id="images">

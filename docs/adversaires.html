@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Les adversaires — Grand Colonies</title>
+<meta name="description" content="Les joueurs automatiques : quatre niveaux, six caractères, et ce qu’ils voient exactement du plateau.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="barre">
+  <div class="barre-inner">
+    <a class="marque" href="index.html">Grand <span>Colonies</span></a>
+    <button class="bascule ouvre-sommaire" type="button" aria-expanded="false">Sommaire</button>
+    <div class="barre-espace"></div>
+    <a class="barre-lien" href="regles.html">Manuel en une page</a>
+    <button class="bascule bascule-registre" type="button">Registre</button>
+  </div>
+</header>
+
+<header class="bandeau">
+  <div class="bandeau-inner">
+    <div class="eyebrow">Jouer · 9</div>
+    <h1>Les adversaires</h1>
+    <p class="chapeau">
+      On peut remplir la table de joueurs automatiques : pour jouer seul, pour
+      compléter une soirée à sept, ou pour tenir la place d’un invité parti.
+      Ils ont un <em>niveau</em>, qui dit ce qu’ils savent faire, et un
+      <em>caractère</em>, qui dit ce qu’ils veulent.
+    </p>
+  </div>
+</header>
+
+<div class="page">
+<nav class="sommaire" aria-label="Sommaire de la documentation">
+    <div class="sommaire-groupe">
+      <ul>
+        <li><a href="index.html">Accueil</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Le monde</div>
+      <ul>
+        <li><a href="monde.html">Le récit</a></li>
+        <li><a href="archipel.html">L’archipel</a></li>
+        <li><a href="terres.html">Les terres</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Jouer</div>
+      <ul>
+        <li><a href="premiers-pas.html">Premiers pas</a></li>
+        <li><a href="cycle.html">Le cycle</a></li>
+        <li><a href="construction.html">Bâtir</a></li>
+        <li><a href="commerce.html">Commercer</a></li>
+        <li><a href="cartes.html">Les cartes</a></li>
+        <li><a href="voleur.html">Le sept et l’Errant</a></li>
+        <li><a href="victoire.html">Gagner</a></li>
+        <li><a href="variantes.html">Variantes</a></li>
+        <li><a href="adversaires.html" aria-current="page">Les adversaires</a>
+          <ul class="ancres">
+            <li><a href="#regle-du-jeu">Ils jouent au même jeu que vous</a></li>
+            <li><a href="#niveaux">Les quatre niveaux</a></li>
+            <li><a href="#caracteres">Les six caractères</a></li>
+            <li><a href="#reglage">Les régler</a></li>
+            <li><a href="#mesure">Ce qu’ils servent à mesurer</a></li>
+          </ul></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Coulisses</div>
+      <ul>
+        <li><a href="mecanismes.html">Sous le capot</a></li>
+        <li><a href="horizon.html">L’horizon</a></li>
+        <li><a href="glossaire.html">Glossaire</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">À emporter</div>
+      <ul>
+        <li><a href="regles.html">Manuel en une page</a></li>
+      </ul>
+    </div>
+  </nav>
+  <main>
+
+    <section id="regle-du-jeu">
+      <h2>Ils jouent au même jeu que vous</h2>
+      <p class="intro">
+        C’est la contrainte dont tout le reste découle : un adversaire
+        automatique passe par la même connexion qu’un invité et reçoit
+        exactement les deux mêmes vues — l’état visible de tous, et sa propre
+        main.
+      </p>
+      <p>
+        Il ne connaît donc pas la pioche, ni les cartes développement des
+        autres, ni leur objectif secret. Il connaît en revanche <strong>les
+        inventaires de chacun</strong>, parce que ce jeu les rend publics
+        (voir <a href="commerce.html">Commercer</a>) — et c’est ce qui lui
+        permet de vous adresser une offre qui a une chance d’aboutir plutôt
+        que de proposer au hasard.
+      </p>
+      <div class="note">
+        <div class="note-titre">Pourquoi ils ne peuvent pas tricher</div>
+        <p>
+          Ce n’est pas une promesse, c’est une conséquence : le serveur ne
+          leur envoie rien de plus. Un adversaire qui voudrait consulter la
+          pioche n’aurait nulle part où regarder. La séparation est faite à la
+          source, dans le serveur, et vaut pour tous les clients — y compris
+          un client modifié.
+        </p>
+      </div>
+    </section>
+
+    <section id="niveaux">
+      <h2>Les quatre niveaux</h2>
+      <p class="intro">
+        Le niveau n’ouvre jamais un droit que le jeu refuse. Il ouvre des
+        <strong>facultés</strong> : regarder la valeur d’un emplacement plutôt
+        que prendre le premier, planifier la construction suivante, proposer
+        un échange, viser le meneur.
+      </p>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Ce que chaque niveau ajoute</caption>
+          <thead><tr><th class="num">Niveau</th><th>Nom</th><th>Ce qu’il sait faire</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td>Apprenti</td><td>Des coups légaux, sans les peser. Il pose sa colonie sans regarder les jetons, n’échange avec personne, et se laisse battre sans rancune.</td></tr>
+            <tr><td class="num">2</td><td>Colon</td><td>Pèse les emplacements, planifie sa prochaine construction et convertit vers son coût exact, choisit son objectif secret, propose des échanges simples.</td></tr>
+            <tr><td class="num">3</td><td>Aguerri</td><td>Exploite ses ports, adresse ses offres à qui peut les honorer, annonce hors de son tour, garde sa main sous la limite, joue ses cartes à propos.</td></tr>
+            <tr><td class="num">4</td><td>Stratège</td><td>Freine celui qui mène dès qu’il touche au but — voleur posé sur lui, et plus un échange qui l’arrange —, dispute les emplacements, et ne se trompe plus.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        L’écart est mesuré et non supposé. Vingt-quatre parties à six joueurs,
+        sièges alternés d’une partie à l’autre pour que l’ordre du tour ne
+        fausse rien :
+      </p>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Duels, 48 parties à 6 joueurs</caption>
+          <thead><tr><th>Duel</th><th class="num">Victoires</th><th class="num">Points moyens</th></tr></thead>
+          <tbody>
+            <tr><td>Colon contre les anciens bots</td><td class="num">48 — 0</td><td class="num">10,5 contre 2,7</td></tr>
+            <tr><td>Colon contre apprenti</td><td class="num">43 — 0</td><td class="num">10,7 contre 3,7</td></tr>
+            <tr><td>Stratège contre apprenti</td><td class="num">43 — 0</td><td class="num">11,1 contre 3,7</td></tr>
+            <tr><td>Aguerri contre colon</td><td class="num">20 — 16</td><td class="num">9,9 contre 9,1</td></tr>
+            <tr><td>Stratège contre aguerri</td><td class="num">32 — 27</td><td class="num">10,0 contre 9,8</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        L’échelle n’est pas régulière, et c’est ce qu’il faut savoir avant de
+        régler la molette : entre le premier et le deuxième niveau il y a un
+        gouffre, entre le troisième et le quatrième à peine un avantage. Ce
+        que le deuxième niveau ajoute — <strong>peser les emplacements</strong>
+        et viser un coût précis — vaut plus que tout ce qui vient après. Une
+        colonie posée sans regarder les jetons perd la partie avant le premier
+        lancer, et rien de ce qu’on fait ensuite ne la rattrape.
+      </p>
+      <div class="note">
+        <div class="note-titre">Une table forte joue un peu plus longtemps</div>
+        <p>
+          Sur les mêmes quarante-huit parties : 192 cycles pour une table de
+          colons, 209 pour une table de stratèges. Ce n’est pas un défaut des
+          stratèges — c’est que tout le monde avance, que le plateau se
+          remplit, et qu’un joueur ayant posé ses cinq colonies, ses quatre
+          villes et son monument plafonne autour de treize points. La partie
+          cesse alors de progresser faute de <strong>place</strong>, pas faute
+          de ressources. Donnez-leur plus de terres, ou baissez le seuil de
+          victoire.
+        </p>
+      </div>
+    </section>
+
+    <section id="caracteres">
+      <h2>Les six caractères</h2>
+      <p class="intro">
+        Un adversaire n’a pas besoin d’être imprévisible pour être
+        intéressant : il a besoin d’être <strong>reconnaissable</strong>. Ce
+        qui rend une soirée vivante n’est pas que les bots jouent bien, c’est
+        qu’on apprenne au bout de trois cycles lequel marchande et lequel met
+        son voleur sur celui qui mène.
+      </p>
+      <div class="grille">
+        <div class="tuile-lien">
+          <span class="tuile-num">bâtisse</span>
+          <span class="tuile-nom">Bâtisseur</span>
+          <span class="tuile-texte">Prend le terrain tôt et le garde : colonies, routes, puis villes. Annonce hors de son tour pour vous couper l’emplacement.</span>
+        </div>
+        <div class="tuile-lien">
+          <span class="tuile-num">négoce</span>
+          <span class="tuile-nom">Marchand</span>
+          <span class="tuile-texte">Demande à la table avant de payer le cours, et occupe les ports. Il vous proposera un échange dès qu’une seule carte lui manque.</span>
+        </div>
+        <div class="tuile-lien">
+          <span class="tuile-num">abordage</span>
+          <span class="tuile-nom">Corsaire</span>
+          <span class="tuile-texte">Chevaliers, voleur sur le meneur, et les emplacements qu’un autre convoitait. Il ne dérange la table qu’à la dernière extrémité.</span>
+        </div>
+        <div class="tuile-lien">
+          <span class="tuile-num">voile</span>
+          <span class="tuile-nom">Navigateur</span>
+          <span class="tuile-texte">Quitte l’île centrale tôt, quitte à y laisser un tour d’avance. Les routes maritimes et les têtes de pont valent plus cher à ses yeux.</span>
+        </div>
+        <div class="tuile-lien">
+          <span class="tuile-num">étude</span>
+          <span class="tuile-nom">Érudit</span>
+          <span class="tuile-texte">Achète des cartes, vise le monument et la métropole, et attend son heure. Il n’annonce jamais rien hors de son tour.</span>
+        </div>
+        <div class="tuile-lien">
+          <span class="tuile-num">prudence</span>
+          <span class="tuile-nom">Prudent</span>
+          <span class="tuile-texte">Ne garde jamais dix cartes — il achète une carte développement plutôt que de risquer le sept — et préfère une ville sûre à une colonie exposée.</span>
+        </div>
+      </div>
+      <p>
+        Le mot entre parenthèses est celui que porte leur nom dans la liste
+        des joueurs : <strong>Ariane (négoce)</strong> marchandera.
+        Les caractères sont distribués à tour de rôle, pour qu’aucun ne manque
+        et qu’aucun ne soit là cinq fois — une table où quatre corsaires se
+        disputent le même voleur ne ressemble à rien.
+      </p>
+      <p>
+        Ce n’est pas un décor. Sur trois parties de mesure, le marchand dépose
+        <strong>1382</strong> offres d’échange et passe 122 fois par la
+        banque ; le corsaire dépose <strong>395</strong> offres et convertit
+        148 fois. Les deux jouent la même partie par deux chemins différents.
+      </p>
+    </section>
+
+    <section id="reglage">
+      <h2>Les régler</h2>
+      <p class="intro">
+        Depuis l’écran de l’hôte, pendant que la pièce se remplit. Le nombre,
+        le niveau et les caractères se changent tant que la partie n’est pas
+        lancée ; les adversaires se reconnectent aussitôt.
+      </p>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Depuis la ligne de commande</caption>
+          <thead><tr><th>Commande</th><th>Effet</th></tr></thead>
+          <tbody>
+            <tr><td><code>BOTS=11 npm run play</code></td><td>Onze adversaires, une place pour vous</td></tr>
+            <tr><td><code>BOT_NIVEAU=1 npm run play</code></td><td>Des apprentis — pour une table d’enfants, ou pour apprendre</td></tr>
+            <tr><td><code>BOT_CARACTERE=corsaire npm run play</code></td><td>Tous du même caractère, au lieu du panachage</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <div class="note-titre">Un siège abandonné</div>
+        <p>
+          Un joueur absent depuis <strong>deux tours de table</strong> peut
+          être confié à un adversaire automatique, depuis la fiche de son
+          siège sur l’écran de l’hôte. Il prend le niveau et le caractère
+          réglés pour la table, et joue la position telle qu’il la trouve.
+        </p>
+      </div>
+    </section>
+
+    <section id="mesure">
+      <h2>Ce qu’ils servent à mesurer</h2>
+      <p class="intro">
+        Les adversaires de la soirée et ceux de la simulation sont
+        <strong>le même code</strong>. Ce n’est pas une commodité de
+        fabrication : c’est ce qui donne un sens aux mesures.
+      </p>
+      <p>
+        Le simulateur joue des milliers de parties en mémoire pour éprouver
+        l’équilibrage — une victoire à quinze points est-elle atteignable à
+        douze joueurs ? le marché bouge-t-il vraiment ? les ports à contrat
+        servent-ils ? Si les bots mesurés étaient des cousins de ceux qui
+        jouent, on mesurerait un autre jeu.
+      </p>
+      <p>
+        Leur arrivée a d’ailleurs réveillé trois mécaniques que le moteur
+        portait sans que personne ne les exerce : les <strong>annonces hors
+        tour</strong>, le <strong>port minier</strong> et le <strong>choix de
+        l’objectif secret</strong>, dont aucune mesure d’équilibrage ne tenait
+        compte jusqu’ici. Le détail est dans
+        <a href="../SIMULATION_FINDINGS.md">SIMULATION_FINDINGS.md</a>.
+      </p>
+      <p>
+        Cela dit ce que les mesures valent : elles donnent le
+        <strong>plancher</strong> du jeu. Un stratège regarde un coup en
+        avant, jamais deux, et ne bluffe pas — un humain attentif fait mieux.
+      </p>
+    </section>
+
+<nav class="fil" aria-label="Pages voisines">
+    <a href="variantes.html">
+      <span class="fil-sens">Page précédente</span>
+      <span class="fil-nom">Variantes</span>
+    </a>
+    <a href="mecanismes.html" class="suivant">
+      <span class="fil-sens">Page suivante</span>
+      <span class="fil-nom">Sous le capot</span>
+    </a>
+  </nav>
+  </main>
+</div>
+
+<footer class="pied">
+  <div class="pied-inner">
+    <p><strong>Grand Colonies</strong> — variante de Catan pour 8 à 12 joueurs, jouable en réseau
+    local. Projet personnel, sans affiliation avec les éditeurs de Catan, Seafarers,
+    Cities&nbsp;&amp;&nbsp;Knights, Traders&nbsp;&amp;&nbsp;Barbarians ou Explorers&nbsp;&amp;&nbsp;Pirates,
+    dont il s’inspire.</p>
+    <p>Le récit de l’Archipel est une fiction : il n’a aucun effet sur les règles.
+    Les règles font foi telles qu’elles sont écrites ici, et le
+    <a href="../RULES_CONTRACT.md">contrat de règles</a> fait foi sur le code.</p>
+  </div>
+</footer>
+<script src="doc.js"></script>
+</body>
+</html>
