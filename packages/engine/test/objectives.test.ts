@@ -32,6 +32,7 @@ const context = (board: Board, over: Partial<ObjectiveContext> = {}): ObjectiveC
   gold: 0,
   territoriesExplored: 0,
   contractsHonoured: 0,
+  tradingPosts: 0,
   ...over,
 });
 
@@ -44,6 +45,9 @@ describe('objectifs secrets', () => {
     expect(available).not.toContain('explorer');
     expect(available).not.toContain('diplomat');
     expect(available).not.toContain('magnate');
+    // Le « grand commerçant » compte des ports **ou des comptoirs**, et les
+    // comptoirs n'existent pas : les ports seuls ne mènent jamais à cinq.
+    expect(available).not.toContain('merchant');
   });
 
   it('déclare tout de même les objectifs à venir', () => {
@@ -102,5 +106,51 @@ describe('objectifs secrets', () => {
 
     holding = playCard(holding, 'knight');
     expect(isObjectiveComplete('warlord', context(board, { devCards: holding }))).toBe(true);
+  });
+});
+
+/**
+ * Le « grand commerçant » du §21 : cinq ports ou comptoirs.
+ *
+ * Il est déclaré mais éteint — la moitié de son décompte, les comptoirs du
+ * §12, n'existe pas encore. Ces épreuves fixent ce qu'il comptera le jour où
+ * on l'allumera, pour que le rallumage soit un seul booléen à changer.
+ */
+describe('grand commerçant', () => {
+  /** Un plateau dont les `count` premiers sommets portent un port. */
+  function withPorts(count: number, owner: string | null = 'p1'): Board {
+    const positions = hexesWithin(ORIGIN, 3);
+    const hexes = new Map<string, HexData>();
+    for (const p of positions) hexes.set(hexKey(p), { terrain: 'forest', token: 5 });
+
+    // Les sommets se lisent sur un plateau nu, puis on le reconstruit avec
+    // ses ports : la carte des ports est fixée à la construction.
+    const vertices = [...new Board({ positions, hexes }).graph.vertices].sort().slice(0, count);
+    const board = new Board({
+      positions, hexes,
+      ports: new Map(vertices.map((v) => [v, { kind: 'generic' as const }])),
+    });
+
+    if (owner) for (const v of vertices) board.setBuilding(v, { kind: 'settlement', owner });
+    return board;
+  }
+
+  it('compte les ports que le joueur occupe', () => {
+    expect(isObjectiveComplete('merchant', context(withPorts(4)))).toBe(false);
+    expect(isObjectiveComplete('merchant', context(withPorts(5)))).toBe(true);
+  });
+
+  it('ne compte pas un port que personne n occupe', () => {
+    expect(isObjectiveComplete('merchant', context(withPorts(9, null)))).toBe(false);
+  });
+
+  it('ne compte pas le port du voisin', () => {
+    expect(isObjectiveComplete('merchant', context(withPorts(9, 'p2')))).toBe(false);
+  });
+
+  it('additionnera les comptoirs aux ports le jour où ils existeront', () => {
+    const board = withPorts(3);
+    expect(isObjectiveComplete('merchant', context(board, { tradingPosts: 1 }))).toBe(false);
+    expect(isObjectiveComplete('merchant', context(board, { tradingPosts: 2 }))).toBe(true);
   });
 });

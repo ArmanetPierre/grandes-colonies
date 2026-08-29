@@ -464,6 +464,44 @@ ni déclaré : contrairement aux jetons de défenseur du §8, il n'y a rien à
 garder au chaud — un type de port inutilisé ne se contente pas d'être inerte,
 il occupe un sommet de côte.
 
+### Le « grand commerçant » du §21 attend les comptoirs
+
+Le §21 propose un objectif secret « posséder **5 ports ou comptoirs** ». Les
+ports existent désormais ; les comptoirs du §12, non — et c'est la moitié du
+décompte qui manque, pas un détail.
+
+Mesuré plutôt que supposé, sur des parties jouées par des bots à qui on fait
+viser les sommets de port : **un joueur seul à les convoiter en décroche
+deux**, presque toujours. Trois arrive dans 1 % des cas à douze joueurs, et
+cinq jamais, sur aucun effectif. La côte n'en porte qu'une dizaine,
+l'écartement en réserve les voisins, et douze joueurs se les disputent.
+
+| Effectif | 1 seul joueur les vise | Un tiers de la table les vise |
+|---|---|---|
+| 12 joueurs | 1,95 port · ≥2 dans 95 % | 1,07 · ≥2 dans 15 %, ≥3 dans 1 % |
+| 8 joueurs | 2,00 port · ≥2 dans 100 % | 1,43 · ≥2 dans 47 % |
+| 4 joueurs | 2,25 port · ≥3 dans 15 % | 2,10 · ≥3 dans 10 % |
+
+L'objectif est donc **déclaré mais éteint**, comme l'explorateur et le
+diplomate. Il compte déjà les ports et additionne un `tradingPosts` resté à
+zéro : le jour où les comptoirs arriveront, il n'y aura qu'un booléen à
+retourner. Baisser le seuil à deux aurait été inventer une règle plutôt que
+d'en finir une.
+
+### Les bots ne visent pas les ports — le §11 n'est donc pas mesuré
+
+Une lacune de mesure, pas de règle, mais elle vaut d'être écrite. Les bots
+posent leur colonie sur le premier sommet légal venu, sans regarder ni les
+jetons ni les ports. Résultat : à douze joueurs, **85 % des joueurs finissent
+la partie sans aucun port**, et jamais aucun n'en tient deux — sur une côte
+qui en porte dix.
+
+Tout ce que `scripts/ports.ts` compare — avec et sans les ports à contrat —
+se joue donc sur une quinzaine d'échanges par partie et ne départage rien.
+Le §11 est complet dans le moteur et dans les deux interfaces ; il reste
+invisible à l'équilibrage tant que les bots ne convoitent pas les sommets de
+port.
+
 ---
 
 ## 12. Journal des décisions
@@ -514,3 +552,4 @@ il occupe un sommet de côte.
 | 2026-08-28 | Port royal | **Non semé** — il attend l'Influence, et un port inutilisé occupe une côte |
 | 2026-08-29 | Ports sur l'écran de table | **Dessinés**, sur l'eau du sommet — les contrats en couleur d'accent |
 | 2026-08-29 | L'or dans le panneau de commerce | **Proposé** — la bande en chiffrait le prix, les menus le cachaient |
+| 2026-08-29 | Objectif « grand commerçant » | **Déclaré, éteint** — cinq ports sont hors d'atteinte sans les comptoirs (mesuré : deux au mieux) |

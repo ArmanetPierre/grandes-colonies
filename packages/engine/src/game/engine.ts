@@ -1303,6 +1303,9 @@ export function objectiveDone(state: GameState, player: PlayerState): boolean {
     gold: amount(player.hand, 'gold'),
     territoriesExplored: 0,
     contractsHonoured: 0,
+    // Les comptoirs du §12 n'existent pas : le « grand commerçant » ne
+    // compte donc pour l'instant que ses ports.
+    tradingPosts: 0,
   });
 }
 

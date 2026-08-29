@@ -5,8 +5,8 @@
  * qui lui rapporte 2 points s'il est rempli. Il reste caché jusqu'à la fin :
  * c'est une information privée, jamais envoyée aux autres clients.
  *
- * Le game design en propose six, mais quatre dépendent de systèmes qui
- * n'existent pas encore — ports, exploration, barbares, contrats. Seuls ceux
+ * Le game design en propose six, mais plusieurs dépendent de systèmes qui
+ * n'existent pas encore — exploration, comptoirs, contrats. Seuls ceux
  * réellement mesurables aujourd'hui sont proposés en jeu ; les autres sont
  * déclarés mais désactivés, pour qu'il suffise de les rendre disponibles le
  * jour où leur système arrivera.
@@ -14,6 +14,7 @@
 
 import type { Board, PlayerId } from './board/board.js';
 import { type DevCardHolding, knightsPlayed } from './devCards.js';
+import { portsOf } from './ports.js';
 
 export const OBJECTIVE_IDS = [
   'architect',    // 8 bâtiments
@@ -24,6 +25,7 @@ export const OBJECTIVE_IDS = [
   'explorer',     // 5 territoires découverts — nécessite l'exploration
   'magnate',      // 12 or — nécessite l'or
   'diplomat',     // 3 contrats honorés — nécessite les contrats
+  'merchant',     // 5 ports ou comptoirs — nécessite les comptoirs
 ] as const;
 
 export type ObjectiveId = (typeof OBJECTIVE_IDS)[number];
@@ -38,6 +40,8 @@ export interface ObjectiveContext {
   readonly gold: number;
   readonly territoriesExplored: number;
   readonly contractsHonoured: number;
+  /** Comptoirs commerciaux du §12. Toujours zéro : ils n'existent pas encore. */
+  readonly tradingPosts: number;
 }
 
 export interface Objective {
@@ -120,6 +124,30 @@ export const OBJECTIVES: Readonly<Record<ObjectiveId, Objective>> = Object.freez
     description: 'Honorer 3 contrats',
     available: false,
     isComplete: (c) => c.contractsHonoured >= 3,
+  },
+
+  /**
+   * Grand commerçant : « posséder 5 ports ou comptoirs » (§21).
+   *
+   * Les ports existent, les comptoirs non — et c'est la moitié du décompte
+   * qui manque, pas un détail. Mesuré sur des parties jouées par des bots à
+   * qui on fait viser les sommets de port : un joueur seul à les convoiter
+   * en décroche **deux**, presque toujours ; trois arrive dans 1 % des cas à
+   * douze joueurs, et cinq jamais, sur aucun effectif. La côte n'en porte
+   * qu'une dizaine, l'écartement en réserve les voisins, et douze joueurs se
+   * les disputent.
+   *
+   * Le seuil du §21 est donc hors d'atteinte tant que les comptoirs manquent.
+   * Le baisser à deux ou trois aurait été inventer une règle plutôt que d'en
+   * finir une : l'objectif est déclaré, il compte déjà les ports, et il
+   * s'allumera le jour où les comptoirs viendront compléter son décompte.
+   */
+  merchant: {
+    id: 'merchant',
+    title: 'Grand commerçant',
+    description: 'Posséder 5 ports ou comptoirs',
+    available: false,
+    isComplete: (c) => portsOf(c.board, c.player).length + c.tradingPosts >= 5,
   },
 });
 
