@@ -11,7 +11,7 @@ import { dispatch } from '../src/game/engine.js';
 import { type GameState, createGame, playerOf } from '../src/game/state.js';
 import { bankRate } from '../src/game/trade.js';
 import { marketRate } from '../src/market.js';
-import { type Port, hasPort, portKindsOf } from '../src/ports.js';
+import { PORT_KINDS, type Port, hasPort, portKindsOf } from '../src/ports.js';
 import { settlementSpots } from '../src/placement.js';
 import { amount, counts } from '../src/resources.js';
 
@@ -250,5 +250,34 @@ describe('semis des ports sur le plateau', () => {
       .reduce((sum, k) => sum + (counts.get(k) ?? 0), 0);
     const total = [...counts.values()].reduce((a, b) => a + b, 0);
     expect(particuliers * 3).toBeLessThanOrEqual(total);
+  });
+});
+
+/**
+ * Le catalogue des types de ports.
+ *
+ * `PortKind` est un type : il ne se parcourt pas à l'exécution. Chaque
+ * endroit qui doit traiter « tous les ports » — le semis, les panneaux du
+ * plateau, ceux de l'écran de table — en tenait sa propre copie, et un type
+ * ajouté sans mettre les autres à jour s'affichait sous son nom anglais.
+ */
+describe('catalogue des types de ports', () => {
+  it('couvre tout ce que le semis peut poser', () => {
+    const seen = new Set<string>();
+    for (const scale of ['normal', 'grand', 'immense'] as const) {
+      for (let seed = 0; seed < 12; seed++) {
+        const board = archipelagoBoard(
+          new SeededRandom(`catalogue-${scale}-${seed}`),
+          archipelagoOptionsFor(12, scale),
+        );
+        for (const [, port] of board.ports ?? []) seen.add(port.kind);
+      }
+    }
+    expect(seen.size).toBeGreaterThan(0);
+    for (const kind of seen) expect(PORT_KINDS as readonly string[]).toContain(kind);
+  });
+
+  it('ne se répète pas', () => {
+    expect(new Set(PORT_KINDS).size).toBe(PORT_KINDS.length);
   });
 });

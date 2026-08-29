@@ -33,6 +33,29 @@ export const TERRAIN_COLORS: Readonly<Record<string, string>> = {
   unexplored: '#5B5348',
 };
 
+/**
+ * Ce qu'un port annonce, en deux lignes (§11).
+ *
+ * L'écran de table se lit à trois mètres : le taux en gros, la marchandise
+ * en petit. Les trois ports à contrat ne se distinguent pas par leur taux —
+ * il vaut deux comme celui d'un port spécialisé — mais par leur seconde
+ * ligne, qui porte l'échange en toutes lettres.
+ */
+export const PORT_LABELS: Readonly<Record<string, { rate: string; goods: string }>> = {
+  generic: { rate: '3:1', goods: 'Tout' },
+  wood: { rate: '2:1', goods: 'Bois' },
+  brick: { rate: '2:1', goods: 'Argile' },
+  wool: { rate: '2:1', goods: 'Laine' },
+  grain: { rate: '2:1', goods: 'Blé' },
+  ore: { rate: '2:1', goods: 'Minerai' },
+  merchant: { rate: '2:1', goods: 'Marchand' },
+  mining: { rate: '2→1', goods: 'Minerai → Or' },
+  commercial: { rate: '2→1', goods: 'Deux sortes' },
+};
+
+/** Les ports à contrat du §11 : ils ne remisent pas le cours, ils s'y soustraient. */
+export const CONTRACT_PORT_KINDS: readonly string[] = ['merchant', 'mining', 'commercial'];
+
 /** Les mêmes douze couleurs que le client, dans le même ordre. */
 export const PLAYER_COLORS: readonly string[] = [
   '#A63A17', '#2D6E8E', '#5F7038', '#B8862B', '#7B3457', '#2E8B7A',
@@ -171,6 +194,8 @@ export function tableViewScript(): string {
   return `
   const TERRAIN = ${JSON.stringify(TERRAIN_COLORS)};
   const COLORS = ${JSON.stringify(PLAYER_COLORS)};
+  const PORTS = ${JSON.stringify(PORT_LABELS)};
+  const CONTRACTS = ${JSON.stringify(CONTRACT_PORT_KINDS)};
   const SIZE = 26;
 
   const hexCenter = (id) => {
@@ -189,6 +214,25 @@ export function tableViewScript(): string {
     const a = (Math.PI / 180) * (60 * i - 30);
     return (c.x + SIZE * Math.cos(a)).toFixed(1) + ',' + (c.y + SIZE * Math.sin(a)).toFixed(1);
   }).join(' ');
+
+  /**
+   * Le panneau d'un port, poussé vers l'eau que touche son sommet.
+   *
+   * Un sommet est le trio d'hexagones qui s'y rejoignent : il suffit de
+   * regarder lesquels sont de la mer et de pousser le panneau dans leur
+   * direction. Pousser « vers l'extérieur du plateau » marche sur une côte
+   * convexe et enfonce le panneau sous la terre voisine dès que la côte
+   * rentre — et un archipel n'est fait que de côtes qui rentrent.
+   */
+  const portAnchor = (vertex, seas) => {
+    const c = centroid(vertex);
+    const water = vertex.split('|').filter((id) => seas.has(id)).map(hexCenter);
+    if (water.length === 0) return c;
+    const mx = water.reduce((s, p) => s + p.x, 0) / water.length - c.x;
+    const my = water.reduce((s, p) => s + p.y, 0) / water.length - c.y;
+    const n = Math.hypot(mx, my) || 1;
+    return { x: c.x + (mx / n) * SIZE * 0.95, y: c.y + (my / n) * SIZE * 0.95 };
+  };
 
   const colorOf = (id, order) => COLORS[Math.max(0, order.indexOf(id)) % COLORS.length];
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
@@ -213,6 +257,32 @@ export function tableViewScript(): string {
         parts.push('<text x="' + c.x + '" y="' + (c.y + 4.5) + '" text-anchor="middle" font-size="13" font-weight="700" fill="' +
           (hot ? '#A63A17' : '#1B1310') + '">' + hex.token + '</text>');
       }
+    }
+
+    /*
+     * Les ports, sur l'eau qui borde leur sommet.
+     *
+     * Ils manquaient à cet écran, alors qu'ils sont des positions de course :
+     * on ne négocie pas de la même façon selon qui tient le port marchand, et
+     * c'est ici que la table le lit. Dessinés après les tuiles et avant les
+     * pièces, pour qu'une colonie posée sur un port reste au-dessus de lui.
+     */
+    const seas = new Set(view.hexes.filter((h) => h.terrain === 'sea').map((h) => h.id));
+    for (const port of view.ports || []) {
+      const sign = PORTS[port.kind] || { rate: '2:1', goods: port.kind };
+      const a = portAnchor(port.vertex, seas);
+      minX = Math.min(minX, a.x - 24); maxX = Math.max(maxX, a.x + 24);
+      minY = Math.min(minY, a.y - 14); maxY = Math.max(maxY, a.y + 14);
+      // Les ports à contrat portent la couleur d'accent : il n'y en a qu'un
+      // de chaque sur le plateau, et leur taux seul ne les distingue pas.
+      const rare = CONTRACTS.indexOf(port.kind) >= 0;
+      parts.push('<rect x="' + (a.x - 22) + '" y="' + (a.y - 12) + '" width="44" height="24" rx="4" fill="' +
+        (rare ? '#8C5A2B' : '#6B5640') + '" stroke="' + (rare ? '#F0D9A8' : 'rgba(20,14,10,.55)') +
+        '" stroke-width="1.2"/>');
+      parts.push('<text x="' + a.x + '" y="' + (a.y - 1) + '" text-anchor="middle" font-size="11" ' +
+        'font-weight="700" fill="#F7F1E1">' + esc(sign.rate) + '</text>');
+      parts.push('<text x="' + a.x + '" y="' + (a.y + 9) + '" text-anchor="middle" font-size="' +
+        (sign.goods.length > 8 ? 6 : 7.5) + '" fill="#F0E4CC">' + esc(sign.goods) + '</text>');
     }
 
     for (const road of view.roads) {

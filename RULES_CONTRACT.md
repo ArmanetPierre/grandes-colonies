@@ -432,6 +432,15 @@ types s'y répètent.
 Ils sont plafonnés au tiers des ports du plateau : sur une côte de six, en
 mettre trois ferait un plateau où le commerce ordinaire est l'exception.
 
+### Les ports sur l'écran de table
+
+Ils y manquaient. L'écran commun montrait les tuiles, les routes et les
+pièces, mais pas les ports — alors que ce sont des positions de course, et
+que c'est autour de cet écran qu'on négocie à voix haute. Un panneau se pose
+désormais sur l'eau que borde chaque sommet de port, et les trois ports à
+contrat y portent la couleur d'accent : leur taux ne les distingue pas d'un
+2:1 ordinaire, seule leur seconde ligne le fait.
+
 ### Le port royal reste à faire
 
 Le §11 lui donne « un bonus d'Influence aux joueurs qui contrôlent sa
@@ -488,3 +497,4 @@ il occupe un sommet de côte.
 | 2026-08-28 | Contrats et cours | **Sans effet sur le marché** — deux entrées pour une sortie l'auraient fait dériver |
 | 2026-08-28 | Semis des ports particuliers | **Un seul de chaque par plateau**, plafonnés au tiers des ports |
 | 2026-08-28 | Port royal | **Non semé** — il attend l'Influence, et un port inutilisé occupe une côte |
+| 2026-08-29 | Ports sur l'écran de table | **Dessinés**, sur l'eau du sommet — les contrats en couleur d'accent |

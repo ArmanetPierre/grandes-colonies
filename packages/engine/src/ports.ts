@@ -23,6 +23,19 @@ export type PortKind =
   | 'mining'     // port minier : 2 minerai contre 1 or, hors marché
   | 'commercial'; // port commercial : 2 ressources différentes contre 1 au choix
 
+/**
+ * Tous les types de ports, à l'exécution.
+ *
+ * Le type union seul ne se parcourt pas : sans cette liste, chaque endroit
+ * qui doit traiter « tous les ports » — le semis, les panneaux du plateau,
+ * ceux de l'écran de table — en tenait sa propre copie, et un type ajouté
+ * ici s'affichait ailleurs sous son nom anglais sans que rien ne le signale.
+ */
+export const PORT_KINDS = [
+  'generic', 'wood', 'brick', 'wool', 'grain', 'ore',
+  'merchant', 'mining', 'commercial',
+] as const satisfies readonly PortKind[];
+
 export interface Port {
   readonly kind: PortKind;
 }
