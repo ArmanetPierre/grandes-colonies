@@ -67,6 +67,26 @@ describe('bornes des réglages', () => {
     expect(normaliseSettings({ boardKind: 'triangle' as never }).boardKind).toBe('archipelago');
     expect(normaliseSettings({ boardKind: 'disc' }).boardKind).toBe('disc');
   });
+
+  /**
+   * Le plancher des terres suit l'effectif, et non des bornes fixes.
+   *
+   * Un plateau trop petit ne rend pas la partie serrée : il l'empêche. Chaque
+   * joueur pose deux colonies, la règle d'écartement stérilise les sommets
+   * voisins, et à douze joueurs sur dix-neuf terres la mise en place bloque
+   * faute d'emplacement — mesuré, pas supposé.
+   */
+  it('refuse un plateau trop petit pour l effectif', () => {
+    expect(normaliseSettings({ playerCount: 12, landCount: 19 }).landCount).toBe(24);
+    expect(normaliseSettings({ playerCount: 4, landCount: 19 }).landCount).toBe(19);
+    // Le plafond, lui, ne dépend de personne.
+    expect(normaliseSettings({ playerCount: 4, landCount: 9999 }).landCount).toBe(130);
+  });
+
+  it('accepte une grande table sur un petit plateau et l inverse', () => {
+    expect(normaliseSettings({ playerCount: 12, landCount: 30 }).landCount).toBe(30);
+    expect(normaliseSettings({ playerCount: 4, landCount: 120 }).landCount).toBe(120);
+  });
 });
 
 describe('configuration dérivée', () => {
@@ -143,6 +163,12 @@ describe('mise en place', () => {
   });
 });
 
+/** Les hexagones de terre du plateau en place — la mer ne compte pas. */
+function landOf(server: GameServer): number {
+  return server.session.publicView().hexes
+    .filter((h) => h.terrain !== 'sea' && h.terrain !== 'unexplored').length;
+}
+
 describe('reconfiguration en salon', () => {
   it('applique les réglages et refait le plateau', async () => withServer(async (_url, server) => {
     const before = server.session.publicView().hexes.length;
@@ -152,6 +178,42 @@ describe('reconfiguration en salon', () => {
     expect(server.settings.playerCount).toBe(12);
     expect(server.session.allSeats()).toHaveLength(12);
     expect(server.session.publicView().hexes.length).not.toBe(before);
+  }));
+
+  /**
+   * Le réglage de taille agit à tous les effectifs.
+   *
+   * C'était le défaut : sous huit joueurs la partie tombait sur le plateau
+   * classique, qui ne prend pas de taille, et le réglage était jeté en
+   * silence. L'écran de l'hôte affichait un plateau immense sur dix-neuf
+   * tuiles.
+   */
+  it('applique la taille demandée même sous huit joueurs', async () => withServer(async (_url, server) => {
+    expect(server.settings.playerCount).toBe(4);
+    const classic = server.session.publicView().hexes.length;
+
+    server.reconfigure({ landCount: 60 });
+
+    expect(server.settings.landCount).toBe(60);
+    expect(server.session.publicView().hexes.length).toBeGreaterThan(classic);
+    expect(landOf(server)).toBe(60);
+  }));
+
+  /**
+   * Le plateau suit l'effectif tant qu'on ne l'a pas réglé soi-même.
+   *
+   * Les deux moitiés comptent autant : sans la première, passer de quatre à
+   * douze joueurs garderait dix-neuf terres et douze personnes se
+   * marcheraient dessus ; sans la seconde, une taille choisie à la main
+   * serait effacée au prochain ajustement d'effectif.
+   */
+  it('recale la taille sur l effectif, sauf si l hôte l a fixée', async () => withServer(async (_url, server) => {
+    server.reconfigure({ playerCount: 12 });
+    expect(server.settings.landCount).toBe(48);
+
+    server.reconfigure({ landCount: 70 });
+    server.reconfigure({ playerCount: 8 });
+    expect(server.settings.landCount).toBe(70);
   }));
 
   it('rend son siège à qui était déjà là, avec un jeton neuf', async () => withServer(async (url, server) => {

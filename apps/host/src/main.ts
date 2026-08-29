@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 import QRCode from 'qrcode';
 
+import { defaultLandCount } from '@grand-colonies/engine';
 import { type GameSettings, GameServer, SETTINGS_LIMITS } from '@grand-colonies/server';
 
 import { renderHostPage } from './hostPage.js';
@@ -171,6 +172,19 @@ export interface HostHandle {
   close(): Promise<void>;
 }
 
+/**
+ * Les réglages, augmentés de la taille qui équilibrerait l'effectif.
+ *
+ * L'écran de l'hôte en a besoin pour dire « vaste » ou « serré » plutôt qu'un
+ * nombre nu, qui ne veut rien dire seul : soixante terres sont vastes à
+ * quatre joueurs et serrées à douze. Calculée ici et non dans la page —
+ * l'y refaire aurait créé une seconde version du §4, à côté de
+ * `baseLandCount`, avec tout le loisir de diverger.
+ */
+function withBalance(settings: GameSettings): GameSettings & { balanced: number } {
+  return { ...settings, balanced: defaultLandCount(settings.playerCount) };
+}
+
 export async function startHost(playerCount = 8, port = PORT): Promise<HostHandle> {
   const seed = `partie-${Date.now()}`;
   const code = readableCode(seed);
@@ -189,11 +203,21 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
   // cycles à douze joueurs sur le disque, contre 216 sur l'archipel.
   const boardKind = process.env['BOARD'] === 'disque' ? 'disc' as const : 'archipelago' as const;
 
+  /*
+   * `TERRES=72` pour ouvrir directement sur un plateau à soixante-douze
+   * hexagones. Le réglage de l'écran hôte fait la même chose ; c'est le point
+   * de départ qu'on fixe ici, pour n'avoir rien à régler quand la pièce se
+   * remplit. Sans elle, la taille équilibrée pour l'effectif (§4).
+   */
+  const terres = Number(process.env['TERRES']);
+  const boardSize = Number.isFinite(terres) && terres > 0 ? terres : defaultLandCount(playerCount);
+
   const bots = new BotTable(port);
 
   const server: GameServer = new GameServer({
     seed,
     boardKind,
+    boardSize,
     playerNames: Array.from({ length: playerCount }, (_, i) => `Joueur ${i + 1}`),
     onRequest: (req, res) => {
       if (req.url === '/' || req.url === '/hote') {
@@ -262,7 +286,9 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
               const fitted = Math.min(asked, outcome.settings.playerCount);
               if (fitted !== bots.status.count || typeof body['bots'] === 'number') bots.set(fitted);
               sendJson(res, 200, {
-                settings: outcome.settings, started: server.session.isStarted, bots: bots.status,
+                settings: withBalance(outcome.settings),
+                started: server.session.isStarted,
+                bots: bots.status,
               });
             })
             .catch((error: unknown) => sendJson(res, 400, {
@@ -271,7 +297,7 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
           return true;
         }
         sendJson(res, 200, {
-          settings: server.settings,
+          settings: withBalance(server.settings),
           started: server.session.isStarted,
           bots: bots.status,
           limits: SETTINGS_LIMITS,
@@ -311,7 +337,8 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
   console.log(`  Écran hôte   http://${host}:${port}`);
   console.log(`  Joueurs      ${url}`);
   console.log(`  Code         ${code}`);
-  console.log(`  Plateau      ${boardKind === 'disc' ? 'disque' : 'archipel'}`);
+  console.log(`  Plateau      ${boardKind === 'disc' ? 'disque' : 'archipel'}, ${server.settings.landCount} terres`);
+  console.log(`  Sièges       ${playerCount}`);
   console.log('');
 
   // Le nombre de bots demandé au lancement, s'il y en a un : la ligne de

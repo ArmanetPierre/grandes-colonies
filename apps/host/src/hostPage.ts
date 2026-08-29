@@ -257,10 +257,13 @@ ${tableViewMarkup()}
     finally { pending--; }
   }
 
-  function step(label, note, value, bounds, onChange) {
+  // Le pas vaut un par défaut. La taille du plateau court de 19 à 130 : à un
+  // hexagone par clic, la traverser en demanderait cent onze.
+  function step(label, note, value, bounds, onChange, pas) {
+    const d = pas || 1;
     return '<div class="row">'
       + '<span class="label">' + label + (note ? '<small>' + note + '</small>' : '') + '</span>'
-      + '<span class="step" data-step="' + onChange + '">'
+      + '<span class="step" data-step="' + onChange + '" data-pas="' + d + '">'
       +   '<button data-delta="-1"' + (value <= bounds.min ? ' disabled' : '') + '>−</button>'
       +   '<span class="value">' + value + '</span>'
       +   '<button data-delta="1"' + (value >= bounds.max ? ' disabled' : '') + '>+</button>'
@@ -298,7 +301,11 @@ ${tableViewMarkup()}
       : '<b>' + humans + '</b> place' + (humans > 1 ? 's' : '') + ' pour des joueurs réels');
     parts.push('limite de main <b>' + handLimit + '</b>');
     if (settings.playerCount >= 11) parts.push('<b>deux voleurs</b>');
-    if (settings.playerCount < 8) parts.push('plateau classique — l’archipel demande huit joueurs');
+    if (settings.playerCount < 8 && settings.landCount === 19) {
+      parts.push('plateau classique — les dix-neuf tuiles d’origine');
+    } else if (settings.playerCount < 8) {
+      parts.push('plateau généré — l’archipel est prévu pour huit joueurs et plus');
+    }
     else if (settings.boardKind === 'disc') parts.push('partie plus courte qu’en archipel');
     /*
      * Ce que l'échelle change vraiment, mesuré en simulation.
@@ -307,13 +314,33 @@ ${tableViewMarkup()}
      * joueurs sur quarante-huit terres, la table est engorgée — on se bloque
      * les emplacements. De la place, et chacun construit.
      */
-    if (settings.playerCount >= 8 && settings.boardScale !== 'normal') {
-      parts.push(settings.boardScale === 'immense'
-        ? 'terres <b>doublées</b> — parties nettement plus courtes, plus de routes en réserve'
-        : 'terres <b>agrandies</b> — plus de place, moins d’emplacements disputés');
+    const ratio = settings.balanced ? settings.landCount / settings.balanced : 1;
+    if (ratio >= 2) {
+      parts.push('terres <b>doublées</b> — parties nettement plus courtes, plus de routes en réserve');
+    } else if (ratio > 1.25) {
+      parts.push('terres <b>agrandies</b> — plus de place, moins d’emplacements disputés');
+    } else if (ratio < 0.8) {
+      parts.push('terres <b>resserrées</b> — emplacements très disputés, production concentrée');
     }
     if (bots.error) parts.push('<span class="warn">' + escapeHtml(bots.error) + '</span>');
     return parts.join(' · ') + '.';
+  }
+
+  /**
+   * Ce que vaut la taille choisie, rapportée à celle qui équilibre l'effectif.
+   *
+   * Le nombre seul ne dit rien : soixante terres sont vastes à quatre joueurs
+   * et serrées à douze. L'écart au §4 est ce qui se lit d'un coup d'œil, et
+   * c'est le serveur qui fournit la référence — la recalculer ici en aurait
+   * fait une seconde vérité, à côté de baseLandCount.
+   */
+  function tailleNote() {
+    const base = settings.balanced;
+    if (!base) return 'hexagones de terre';
+    const ecart = Math.round((settings.landCount / base) * 100);
+    if (ecart >= 95 && ecart <= 105) return 'hexagones · équilibre du jeu pour ' + settings.playerCount + ' joueurs';
+    return 'hexagones · ' + (ecart > 105 ? 'vaste' : 'serré')
+      + ' — l’équilibre à ' + settings.playerCount + ' joueurs est ' + base;
   }
 
   function renderSettings() {
@@ -326,10 +353,9 @@ ${tableViewMarkup()}
       document.getElementById('reroll').disabled = true;
       const locked = document.getElementById('locked');
       locked.hidden = false;
-      const TAILLES = { normal: '', grand: ' agrandi', immense: ' immense' };
       locked.innerHTML = settings.playerCount + ' joueurs · '
         + (settings.boardKind === 'disc' ? 'disque' : 'archipel')
-        + (TAILLES[settings.boardScale] || '') + ' · '
+        + ' de ' + settings.landCount + ' terres · '
         + settings.victoryTarget + ' points · tour de ' + settings.activeTurnSeconds + ' s'
         + (bots.count ? ' · ' + bots.count + ' adversaires automatiques' : '')
         + '<br>Les réglages sont figés une fois la partie lancée.';
@@ -342,8 +368,7 @@ ${tableViewMarkup()}
              { min: 0, max: settings.playerCount }, 'bots')
       + seg('Plateau', 'huit joueurs et plus', [['archipelago','Archipel'],['disc','Disque']],
             settings.boardKind, 'boardKind')
-      + seg('Taille', 'terres à explorer', [['normal','Normale'],['grand','Grande'],['immense','Immense']],
-            settings.boardScale, 'boardScale')
+      + step('Taille du plateau', tailleNote(), settings.landCount, LIMITS.landCount, 'landCount', 4)
       + seg('Victoire', 'points à atteindre', [[10,'10'],[12,'12'],[15,'15'],[18,'18']],
             settings.victoryTarget, 'victoryTarget')
       + seg('Mise en place', 'secondes par pose', [[20,'20 s'],[30,'30 s'],[45,'45 s'],[60,'60 s']],
@@ -362,7 +387,7 @@ ${tableViewMarkup()}
     const stepper = button.closest('[data-step]');
     if (stepper) {
       const key = stepper.dataset.step;
-      const delta = Number(button.dataset.delta);
+      const delta = Number(button.dataset.delta) * Number(stepper.dataset.pas || 1);
       if (key === 'bots') apply({ bots: bots.count + delta });
       else {
         const next = {};

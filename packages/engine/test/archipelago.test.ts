@@ -16,7 +16,10 @@ import { Board } from '../src/board/board.js';
 import { hexKey } from '../src/board/axial.js';
 import { hexesOfEdge, verticesOfEdge } from '../src/board/graph.js';
 import { landMasses, mainIsland } from '../src/board/islands.js';
-import { archipelagoBoard, archipelagoOptionsFor, xxlOptionsFor } from '../src/board/presets.js';
+import {
+  archipelagoBoard, archipelagoOptionsFor, defaultLandCount, landCountFor,
+  minLandFor, xxlOptionsFor,
+} from '../src/board/presets.js';
 import { canPlaceSettlement } from '../src/placement.js';
 import { SeededRandom } from '../src/rng.js';
 import { COSTS, addCounts } from '../src/resources.js';
@@ -332,5 +335,64 @@ describe('échelles de plateau', () => {
         expect(mass.hexes.length).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+/**
+ * La taille du plateau, réglée au chiffre.
+ *
+ * Elle était un multiplicateur à trois crans sur une base tirée de
+ * l'effectif : sous huit joueurs elle n'avait aucun effet, et au-dessus la
+ * base saturant à quarante-quatre, huit, neuf et dix joueurs recevaient le
+ * même plateau. On demande désormais un nombre, et il est servi.
+ */
+describe('taille de plateau réglable', () => {
+  it('sert le nombre de terres demandé, à tout effectif', () => {
+    for (const players of [4, 8, 12]) {
+      expect(landCountFor(players, 60)).toBe(60);
+    }
+  });
+
+  it('garde les préréglages, qui restent relatifs à l effectif', () => {
+    expect(landCountFor(12, 'normal')).toBe(48);
+    expect(landCountFor(12, 'immense')).toBeGreaterThan(landCountFor(12, 'grand'));
+  });
+
+  /**
+   * Sous huit joueurs, le plateau classique reste le défaut.
+   *
+   * Le §4 dimensionne pour les tables de huit à douze : appliquer ses
+   * quarante-quatre terres à une table de quatre disperse tellement les
+   * joueurs que la production s'effondre.
+   */
+  it('laisse les petites tables sur les dix-neuf tuiles d origine', () => {
+    expect(defaultLandCount(4)).toBe(19);
+    expect(defaultLandCount(7)).toBe(19);
+    expect(defaultLandCount(8)).toBe(44);
+    expect(defaultLandCount(12)).toBe(48);
+  });
+
+  /**
+   * Le plancher n'est pas un garde-fou de confort : sous lui, la mise en
+   * place se bloque faute d'emplacements assez écartés.
+   */
+  it('relève un plateau trop petit pour asseoir tout le monde', () => {
+    expect(landCountFor(12, 19)).toBe(minLandFor(12));
+    expect(minLandFor(12)).toBe(24);
+    expect(minLandFor(4)).toBe(19);
+  });
+
+  /** Déserts, or et îles suivent la surface réelle, pas le préréglage. */
+  it('dose les terrains rares sur la surface obtenue', () => {
+    const petit = archipelagoOptionsFor(12, 24);
+    const grand = archipelagoOptionsFor(12, 120);
+    expect(grand.gold).toBeGreaterThan(petit.gold ?? 0);
+    expect(grand.islands).toBeGreaterThan(petit.islands ?? 0);
+    // Jamais zéro île : un archipel sans terre ne se génère pas.
+    expect(petit.islands).toBeGreaterThanOrEqual(1);
+  });
+
+  it('vaut aussi pour le plateau en disque', () => {
+    expect(xxlOptionsFor(8, 90).landCount).toBe(90);
   });
 });

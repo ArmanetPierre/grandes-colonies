@@ -16,15 +16,19 @@ import {
   type CommandResult,
   type DomainEvent,
   type GameConfig,
-  type BoardScale,
+  type BoardInit,
+  type BoardSize,
   type GameState,
   type PlayerId,
   archipelagoBoard,
   archipelagoOptionsFor,
   classicBoard,
+  CLASSIC_LAND_COUNT,
   createGame,
   defaultConfig,
+  defaultLandCount,
   dispatch,
+  landCountFor,
   nextDefaultCommand,
   SeededRandom,
   usesXxlBoard,
@@ -76,12 +80,14 @@ export interface SessionOptions {
    */
   readonly boardKind?: 'archipelago' | 'disc';
   /**
-   * Taille des terres, au-delà de celle que l'effectif appelle.
+   * Taille des terres : un préréglage, ou un nombre d'hexagones.
    *
-   * Variante et non correction : le §4 dimensionne le plateau sur le nombre
-   * de joueurs, et c'est cette taille-là qui équilibre la partie.
+   * Le §4 dimensionne le plateau sur le nombre de joueurs, et c'est cette
+   * taille-là qui équilibre la partie — elle reste la valeur par défaut. La
+   * régler au chiffre est une variante assumée, pour une table qui veut de
+   * la place à explorer plutôt qu'une course serrée.
    */
-  readonly boardScale?: BoardScale;
+  readonly boardSize?: BoardSize;
   /** Horloge injectable — les tests n'attendent jamais réellement. */
   readonly now?: () => number;
 }
@@ -89,6 +95,38 @@ export interface SessionOptions {
 export interface SubmitOutcome {
   readonly result: CommandResult;
   readonly events: readonly DomainEvent[];
+}
+
+/**
+ * Quel plateau, pour cet effectif et cette taille.
+ *
+ * Le plateau classique n'est plus le seul recours des petites tables : il
+ * n'est retenu que si l'hôte a laissé la taille sur ses dix-neuf tuiles
+ * d'origine. C'est ce qui manquait — sous huit joueurs, le réglage de taille
+ * partait dans `classicBoard`, qui ne le prend pas, et n'avait aucun effet
+ * visible. Dès que la taille demandée s'en écarte, on génère, quel que soit
+ * le nombre de joueurs.
+ *
+ * L'inverse vaut aussi : à huit joueurs et plus on génère toujours, même à
+ * dix-neuf terres, parce que l'archipel du §4 — une île centrale disputée et
+ * deux ou trois îles que seule la voile relie — est ce qui fait la partie à
+ * cet effectif, et que le plateau classique n'a pas de quoi asseoir douze
+ * joueurs.
+ */
+function boardFor(
+  rng: SeededRandom,
+  count: number,
+  options: { readonly boardKind?: 'archipelago' | 'disc'; readonly boardSize?: BoardSize },
+): BoardInit {
+  // Sans taille demandée, celle qui convient à l'effectif : le plateau
+  // classique pour les petites tables, le §4 au-delà.
+  const asked = options.boardSize === undefined
+    ? defaultLandCount(count)
+    : landCountFor(count, options.boardSize);
+  if (!usesXxlBoard(count) && asked === CLASSIC_LAND_COUNT) return classicBoard(rng);
+  return options.boardKind === 'disc'
+    ? xxlBoard(rng, xxlOptionsFor(count, asked))
+    : archipelagoBoard(rng, archipelagoOptionsFor(count, asked));
 }
 
 /** Tours de table d'absence avant de proposer un remplacement par un bot. */
@@ -124,11 +162,7 @@ export class GameSession {
     const players = options.playerNames.map((name, i) => ({ id: `p${i + 1}`, name }));
     this.state = createGame({
       players,
-      // À huit joueurs et plus, l'archipel du §4 : une île centrale disputée
-      // et deux ou trois îles majeures, que seule la voile relie.
-      board: !usesXxlBoard(count) ? classicBoard(boardRng)
-        : options.boardKind === 'disc' ? xxlBoard(boardRng, xxlOptionsFor(count, options.boardScale))
-        : archipelagoBoard(boardRng, archipelagoOptionsFor(count, options.boardScale)),
+      board: boardFor(boardRng, count, options),
       config,
       seed: `${options.seed}:game`,
     });

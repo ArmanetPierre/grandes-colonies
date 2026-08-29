@@ -35,6 +35,15 @@ const CLASSIC_TERRAINS: readonly Terrain[] = [
   'desert',
 ];
 
+/**
+ * Les dix-neuf tuiles du plateau d'origine.
+ *
+ * Nommé plutôt que laissé en littéral : c'est la valeur qui décide si l'on
+ * sert le plateau classique ou si l'on génère, et un `19` nu au milieu de ce
+ * test ne dirait pas de quoi il parle.
+ */
+export const CLASSIC_LAND_COUNT = CLASSIC_TERRAINS.length;
+
 const CENTER: Axial = { q: 0, r: 0 };
 
 /**
@@ -227,11 +236,89 @@ export function baseLandCount(playerCount: number): number {
   return Math.min(52, Math.max(44, playerCount * 4));
 }
 
-export function xxlOptionsFor(playerCount: number, scale: BoardScale = 'normal'): XxlOptions {
+/**
+ * La taille servie quand l'hôte n'en demande aucune.
+ *
+ * Ce n'est pas `baseLandCount` en dessous de huit joueurs : le §4 dimensionne
+ * pour les tables de huit à douze, et appliquer ses quarante-quatre terres à
+ * une table de quatre disperse tellement les joueurs que la production
+ * s'effondre — chacun ne touche que six tuiles sur quarante-quatre. Le
+ * plateau classique reste donc le défaut des petites tables, comme avant que
+ * la taille soit réglable. Ce qui change, c'est qu'on peut désormais le
+ * quitter.
+ */
+export function defaultLandCount(playerCount: number): number {
+  return usesXxlBoard(playerCount) ? baseLandCount(playerCount) : CLASSIC_LAND_COUNT;
+}
+
+/**
+ * Bornes du nombre de terres réglable à la main.
+ *
+ * En deçà de dix-neuf, on passe sous le plateau de Catan classique et il ne
+ * reste plus assez de sommets pour asseoir même quatre joueurs. Au-delà de
+ * cent trente, la génération tient toujours mais la traversée devient si
+ * longue que les îles lointaines ne sont jamais atteintes.
+ */
+export const LAND_LIMITS = { min: 19, max: 130 } as const;
+
+/**
+ * Le plus petit plateau où la mise en place tient encore.
+ *
+ * Chaque joueur pose deux colonies, et la règle d'écartement en stérilise les
+ * sommets voisins : la capacité d'un plateau tourne autour d'une colonie par
+ * hexagone de terre. En deçà, la mise en place **se bloque** — les derniers
+ * joueurs n'ont plus où poser et la partie ne démarre jamais.
+ *
+ * Mesuré plutôt que supposé, sur huit plateaux tirés par effectif : la
+ * capacité tombe sous le nécessaire à vingt terres pour onze joueurs et
+ * vingt et une pour douze. On retient le double de l'effectif, qui laisse une
+ * marge à toutes les tables sans rien interdire d'utile — la valeur par
+ * défaut à douze joueurs est de quarante-huit.
+ */
+export function minLandFor(playerCount: number): number {
+  return Math.max(CLASSIC_LAND_COUNT, playerCount * 2);
+}
+
+/**
+ * Combien de terres, qu'on ait demandé une échelle ou un nombre.
+ *
+ * Les deux formes coexistent volontairement : les préréglages restent la
+ * façon de dire « comme prévu pour cet effectif, en plus grand », et servent
+ * aux scripts de mesure ; le nombre est ce que règle l'hôte, qui veut une
+ * taille à lui et non un multiple de ce que son effectif appelle.
+ *
+ * Le plancher dépend de l'effectif : c'est le seul endroit que traversent
+ * toutes les demandes, donc le seul où l'interdit tient vraiment.
+ */
+export function landCountFor(playerCount: number, size: BoardSize = 'normal'): number {
+  const asked = typeof size === 'number'
+    ? Math.round(size)
+    : Math.round(baseLandCount(playerCount) * scaleFactor(size));
+  const floor = Math.max(LAND_LIMITS.min, minLandFor(playerCount));
+  return Math.min(LAND_LIMITS.max, Math.max(floor, asked));
+}
+
+/** Une taille de plateau : un préréglage, ou un nombre de terres. */
+export type BoardSize = BoardScale | number;
+
+/**
+ * Ce que cette surface vaut, rapportée à celle que l'effectif appelle.
+ *
+ * C'est ce rapport — et non le préréglage — qui dose déserts, or et îles.
+ * Les faire suivre l'échelle nommée les aurait laissés au nombre du plateau
+ * normal dès qu'on règle la taille au chiffre, et l'or aurait disparu dans
+ * un plateau deux fois plus grand où il cesse d'être une raison de naviguer.
+ */
+function spread(playerCount: number, landCount: number): number {
+  return landCount / baseLandCount(playerCount);
+}
+
+export function xxlOptionsFor(playerCount: number, size: BoardSize = 'normal'): XxlOptions {
   // Le game design prévoit 44 à 52 hexagones selon l'effectif (§4).
-  const factor = scaleFactor(scale);
+  const landCount = landCountFor(playerCount, size);
+  const factor = spread(playerCount, landCount);
   return {
-    landCount: Math.round(baseLandCount(playerCount) * factor),
+    landCount,
     // Déserts et or suivent la surface : gardés au nombre prévu pour un
     // plateau normal, ils disparaîtraient dans un plateau deux fois plus
     // grand, où l'or cesserait d'être une raison de naviguer.
@@ -329,12 +416,13 @@ export interface ArchipelagoOptions {
 
 export function archipelagoOptionsFor(
   playerCount: number,
-  scale: BoardScale = 'normal',
+  size: BoardSize = 'normal',
 ): ArchipelagoOptions {
-  const factor = scaleFactor(scale);
+  const landCount = landCountFor(playerCount, size);
+  const factor = spread(playerCount, landCount);
   const islands = playerCount >= 11 ? 3 : 2;
   return {
-    landCount: Math.round(baseLandCount(playerCount) * factor),
+    landCount,
     /*
      * Plus de terres, plus d'îles — et non des îles démesurées.
      *
@@ -343,7 +431,7 @@ export function archipelagoOptionsFor(
      * l'exploration. Six au plus : les centres suivent les six directions
      * axiales, au-delà deux îles se superposeraient.
      */
-    islands: Math.min(DIRECTIONS.length, Math.round(islands * factor)),
+    islands: Math.min(DIRECTIONS.length, Math.max(1, Math.round(islands * factor))),
     deserts: Math.round((playerCount >= 11 ? 4 : 3) * factor),
     gold: Math.round((playerCount >= 10 ? 3 : 2) * factor),
   };

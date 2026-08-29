@@ -26,7 +26,8 @@ import {
 import { WebSocketServer, type WebSocket } from 'ws';
 
 import {
-  type BoardScale, type Command, type DomainEvent, type GameConfig, defaultConfig,
+  type BoardSize, type Command, type DomainEvent, type GameConfig,
+  defaultConfig, defaultLandCount, LAND_LIMITS, landCountFor, minLandFor,
 } from '@grand-colonies/engine';
 import { redactAllFor, toWireAll } from '@grand-colonies/protocol';
 
@@ -80,14 +81,16 @@ export interface GameServerOptions {
   /** Forme du plateau : archipel (défaut) ou disque. */
   readonly boardKind?: 'archipelago' | 'disc';
   /**
-   * Taille des terres : normale (défaut), grande ou immense.
+   * Taille des terres : un préréglage, ou un nombre d'hexagones.
    *
    * Comme `boardKind`, c'est un point de départ et non une décision figée :
    * l'écran de l'hôte la change tant que la partie n'est pas lancée. Sans
-   * elle, ouvrir une soirée sur un plateau immense demandait de construire le
-   * serveur en normal puis de le reconfigurer aussitôt.
+   * elle, ouvrir une soirée sur un vaste plateau demandait de construire le
+   * serveur au format normal puis de le reconfigurer aussitôt.
+   *
+   * Omise, la taille équilibrée pour l'effectif s'applique (§4).
    */
-  readonly boardScale?: BoardScale;
+  readonly boardSize?: BoardSize;
 }
 
 const DEFAULT_TICK_MS = 250;
@@ -103,8 +106,22 @@ const DEFAULT_TICK_MS = 250;
 export interface GameSettings {
   readonly playerCount: number;
   readonly boardKind: 'archipelago' | 'disc';
-  /** Taille des terres : normale, grande, immense. */
-  readonly boardScale: BoardScale;
+  /**
+   * Nombre d'hexagones de terre, réglé au chiffre.
+   *
+   * C'était une échelle à trois crans — normale, grande, immense — multipliant
+   * la taille que le §4 tire de l'effectif. Deux défauts s'ensuivaient : sous
+   * huit joueurs le réglage n'avait **aucun** effet, la partie tombant sur le
+   * plateau classique de dix-neuf tuiles qui ne prend pas d'échelle ; et
+   * au-dessus, la base saturant à quarante-quatre jusqu'à onze joueurs, huit,
+   * neuf et dix joueurs recevaient exactement le même plateau. On ne pouvait
+   * pas demander « soixante-douze terres à huit joueurs ».
+   *
+   * C'est donc un nombre, et il ne dépend plus de l'effectif. La valeur
+   * équilibrée du §4 reste le point de départ — `baseLandCount` — mais elle
+   * se quitte.
+   */
+  readonly landCount: number;
   /** Points à atteindre pour l'emporter. */
   readonly victoryTarget: number;
   readonly setupSeconds: number;
@@ -121,6 +138,7 @@ export interface GameSettings {
  */
 export const SETTINGS_LIMITS = {
   playerCount: { min: 4, max: 12 },
+  landCount: LAND_LIMITS,
   victoryTarget: { min: 6, max: 30 },
   setupSeconds: { min: 15, max: 300 },
   activeTurnSeconds: { min: 20, max: 600 },
@@ -130,7 +148,9 @@ export const SETTINGS_LIMITS = {
 export const DEFAULT_SETTINGS: GameSettings = Object.freeze({
   playerCount: 8,
   boardKind: 'archipelago',
-  boardScale: 'normal',
+  // La taille du §4 pour huit joueurs. Elle suit l'effectif tant que l'hôte
+  // n'y touche pas — voir `reconfigure`.
+  landCount: defaultLandCount(8),
   victoryTarget: 15,
   /*
    * Trente secondes pour poser, et non soixante.
@@ -154,12 +174,22 @@ export function normaliseSettings(asked: Partial<GameSettings>): GameSettings {
   const base = { ...DEFAULT_SETTINGS, ...asked };
   const n = (value: unknown, fallback: number): number =>
     (typeof value === 'number' && Number.isFinite(value) ? value : fallback);
+  const playerCount = clamp(n(base.playerCount, DEFAULT_SETTINGS.playerCount),
+    SETTINGS_LIMITS.playerCount.min, SETTINGS_LIMITS.playerCount.max);
   return {
-    playerCount: clamp(n(base.playerCount, DEFAULT_SETTINGS.playerCount),
-      SETTINGS_LIMITS.playerCount.min, SETTINGS_LIMITS.playerCount.max),
+    playerCount,
     boardKind: base.boardKind === 'disc' ? 'disc' : 'archipelago',
-    boardScale: base.boardScale === 'grand' || base.boardScale === 'immense'
-      ? base.boardScale : 'normal',
+    /*
+     * Le plancher suit l'effectif, et non les seules bornes fixes.
+     *
+     * Servir ici une valeur que le moteur relèverait ensuite ferait mentir
+     * l'écran de l'hôte : il annoncerait dix-neuf terres pour douze joueurs
+     * là où la partie s'en donnerait vingt-quatre. On borne donc au même
+     * plancher, pour que le chiffre affiché soit celui qui sera joué.
+     */
+    landCount: clamp(n(base.landCount, DEFAULT_SETTINGS.landCount),
+      Math.max(SETTINGS_LIMITS.landCount.min, minLandFor(playerCount)),
+      SETTINGS_LIMITS.landCount.max),
     victoryTarget: clamp(n(base.victoryTarget, DEFAULT_SETTINGS.victoryTarget),
       SETTINGS_LIMITS.victoryTarget.min, SETTINGS_LIMITS.victoryTarget.max),
     setupSeconds: clamp(n(base.setupSeconds, DEFAULT_SETTINGS.setupSeconds),
@@ -169,6 +199,18 @@ export function normaliseSettings(asked: Partial<GameSettings>): GameSettings {
     tradingWindowSeconds: clamp(n(base.tradingWindowSeconds, DEFAULT_SETTINGS.tradingWindowSeconds),
       SETTINGS_LIMITS.tradingWindowSeconds.min, SETTINGS_LIMITS.tradingWindowSeconds.max),
   };
+}
+
+/**
+ * La taille demandée, ramenée à un nombre de terres.
+ *
+ * Sans demande, celle que le §4 prévoit pour l'effectif : c'est le point de
+ * départ équilibré, et il vaut mieux qu'un chiffre fixe qui serait juste pour
+ * huit joueurs et faux pour tous les autres.
+ */
+function landCountOf(size: BoardSize | undefined, playerCount: number): number {
+  if (size === undefined) return defaultLandCount(playerCount);
+  return typeof size === 'number' ? size : landCountFor(playerCount, size);
 }
 
 /**
@@ -216,6 +258,16 @@ export class GameServer {
   private seed: string;
   /** Compté pour que deux parties ouvertes dans la même milliseconde diffèrent. */
   private rebuilds = 0;
+  /**
+   * L'hôte a-t-il fixé la taille du plateau lui-même ?
+   *
+   * Tant que non, elle suit l'effectif : passer de quatre à douze joueurs
+   * doit agrandir les terres, sans quoi douze personnes se marchent dessus
+   * sur un plateau de quatre. Dès que oui, elle ne bouge plus — un chiffre
+   * choisi à la main qu'un ajustement d'effectif effacerait serait pire que
+   * pas de réglage du tout.
+   */
+  private landCountPinned = false;
   /** Configuration imposée à la construction, qui prime sur les réglages. */
   private readonly configOverride: GameConfig | undefined;
   private readonly http: HttpServer;
@@ -232,10 +284,14 @@ export class GameServer {
     this.tickMs = options.tickMs ?? DEFAULT_TICK_MS;
     this.seed = options.seed ?? `partie-${Date.now()}`;
     this.configOverride = options.config;
+    this.landCountPinned = options.boardSize !== undefined;
     this.settingsValue = {
       ...normaliseSettings({
         ...(options.boardKind ? { boardKind: options.boardKind } : {}),
-        ...(options.boardScale ? { boardScale: options.boardScale } : {}),
+        // Sans taille demandée, celle que le §4 prévoit pour cet effectif —
+        // et non les quarante-quatre terres du réglage par défaut, qui
+        // vaudraient pour huit joueurs quel que soit le vrai nombre.
+        landCount: landCountOf(options.boardSize, names.length),
       }),
       // L'effectif suit les noms reçus, sans bornage : un test peut monter
       // une table de deux, l'écran de l'hôte reste borné de son côté.
@@ -255,7 +311,7 @@ export class GameServer {
       playerNames: names,
       config: options.config ?? configFor(this.settingsValue),
       ...(options.boardKind ? { boardKind: options.boardKind } : {}),
-      boardScale: this.settingsValue.boardScale,
+      boardSize: this.settingsValue.landCount,
     });
 
     const handle = options.onRequest;
@@ -306,7 +362,29 @@ export class GameServer {
     if (this.current.isStarted) {
       return { ok: false, reason: 'la partie a déjà commencé' };
     }
-    return this.rebuild(normaliseSettings({ ...this.settingsValue, ...asked }), asked.newBoard === true);
+
+    /*
+     * Le plateau suit l'effectif — jusqu'à ce qu'on le règle soi-même.
+     *
+     * Changer le nombre de joueurs sans parler de la taille laissait le
+     * plateau tel quel : passer de quatre à douze joueurs gardait dix-neuf
+     * terres, et douze personnes se marchaient dessus sans qu'aucun écran ne
+     * le signale. On recale donc sur la valeur du §4 — mais uniquement quand
+     * la requête ne mentionne pas la taille. Dès qu'elle la mentionne, elle
+     * l'emporte et ne bougera plus : c'est une décision de l'hôte, pas un
+     * défaut à recalculer.
+     */
+    if (asked.landCount !== undefined) this.landCountPinned = true;
+
+    const follows = !this.landCountPinned && asked.playerCount !== undefined;
+    const wanted = follows
+      ? { ...asked, landCount: defaultLandCount(asked.playerCount) }
+      : asked;
+
+    return this.rebuild(
+      normaliseSettings({ ...this.settingsValue, ...wanted }),
+      asked.newBoard === true,
+    );
   }
 
   /**
@@ -323,6 +401,7 @@ export class GameServer {
    */
   newGame(asked: Partial<GameSettings> = {}):
   { ok: true; settings: GameSettings } | { ok: false; reason: string } {
+    if (asked.landCount !== undefined) this.landCountPinned = true;
     return this.rebuild(normaliseSettings({ ...this.settingsValue, ...asked }), true);
   }
 
@@ -350,7 +429,7 @@ export class GameServer {
       playerNames: seatNames(next.playerCount),
       config: this.configOverride ?? configFor(next),
       boardKind: next.boardKind,
-      boardScale: next.boardScale,
+      boardSize: next.landCount,
     });
     this.settingsValue = next;
     this.seatOf.clear();
