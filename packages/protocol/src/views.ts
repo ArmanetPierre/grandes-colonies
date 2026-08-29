@@ -32,6 +32,8 @@ import {
   type VertexId,
   activeObjective,
   bankRate,
+  barbarianStrength,
+  defenceOf,
   getCapabilities,
   heldCount,
   knightsPlayed,
@@ -164,6 +166,23 @@ export interface PublicGameView {
   readonly longestRouteHolder: PlayerId | undefined;
   readonly largestArmyHolder: PlayerId | undefined;
   readonly deckRemaining: number;
+  /**
+   * La piste de menace barbare (§16), et ce qu'elle coûterait maintenant.
+   *
+   * Publique en entier, et notamment la force et la défense actuelles : c'est
+   * de les voir se croiser qu'on décide de jouer un chevalier plutôt que de
+   * le garder pour la puissance militaire. Une menace qu'on découvrirait le
+   * jour de l'invasion ne changerait aucune décision.
+   */
+  readonly barbarians: {
+    readonly progress: number;
+    readonly trackLength: number;
+    readonly attacks: number;
+    /** Ce que la table a bâti de pillable. */
+    readonly strength: number;
+    /** Ce que les chevaliers déjà joués opposent. */
+    readonly defence: number;
+  };
   readonly winner: PlayerId | undefined;
   readonly handLimit: number;
   readonly victoryTarget: number;
@@ -353,6 +372,16 @@ export function publicView(state: GameState, connectivity?: Connectivity): Publi
     longestRouteHolder: state.longestRouteHolder,
     largestArmyHolder: state.largestArmyHolder,
     deckRemaining: state.deck.length,
+    barbarians: {
+      progress: state.barbarians.progress,
+      trackLength: state.config.barbarians.trackLength,
+      attacks: state.barbarians.attacks,
+      strength: barbarianStrength(state.board, state.config.barbarians),
+      defence: state.players.reduce(
+        (sum, p) => sum + defenceOf(knightsPlayed(p.devCards), state.config.barbarians),
+        0,
+      ),
+    },
     winner: state.winner,
     handLimit: state.config.handLimit,
     victoryTarget: state.config.victory.target,

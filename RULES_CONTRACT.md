@@ -256,6 +256,35 @@ joueur bloqué, celui qui a des ressources et plus aucun sommet libre. « Une
 de chaque » l'oblige à passer par le commerce, ce qui fait vivre la table au
 lieu de l'assécher.
 
+### Les barbares (§16)
+
+La piste de menace avance d'une case tous les **5 cycles**, sur **8 cases**.
+Au bout, les barbares attaquent, puis la piste repart de zéro.
+
+**La force vient de la table, la défense de chacun.** Elle compte 1 par cité et
+2 par métropole, toutes couleurs confondues : ce sont les villes qui appellent
+l'invasion, pas les points — un joueur peut mener par ses routes, ses titres ou
+son objectif sans rien avoir bâti qui se pille. La défense compte 1 par
+chevalier joué, individuellement.
+
+**Conséquences.** Le meilleur défenseur reçoit un jeton « Défenseur de Catan »
+— 1 point de victoire et 1 point d'Influence — que l'attaque soit repoussée ou
+non : le §16 récompense l'effort, pas le résultat. Personne n'est couronné si
+nul n'a joué de chevalier ; récompenser un zéro partagé n'aurait aucun sens.
+
+Si la défense totale ne suffit pas, le plus faible défenseur **ayant une cité**
+la voit retomber en colonie. Chercher le maillon faible parmi tous les joueurs
+aurait pu désigner quelqu'un sans cité, et l'attaque n'aurait alors rien coûté
+à personne. La cité retourne à sa réserve et une colonie en sort : le joueur
+perd le point, pas la pièce. Rien n'est jamais détruit — le §20 exclut toute
+élimination.
+
+Les égalités sont tranchées par l'ordre des joueurs et non par un tirage : le
+hasard rendrait la partie irrejouable depuis son journal.
+
+> Mesuré sur douze parties simulées : environ cinq invasions par partie, sept
+> sur dix repoussées, et une cité perdue toutes les trois ou quatre invasions.
+
 ### Ce qui reste inerte
 
 `majorExploration` (1 point) demeure dans le barème sans être attribué : il

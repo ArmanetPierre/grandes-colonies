@@ -60,6 +60,7 @@ import {
   hasPort,
 } from '../ports.js';
 import { influenceOf } from '../influence.js';
+import { barbarianStrength, defenceOf, resolveInvasion } from '../barbarians.js';
 import { type TradeOffer, bankRate, checkOffer, isAddressedTo } from './trade.js';
 
 const reject = (reason: RejectionReason, detail?: string): CommandResult =>
@@ -1258,6 +1259,9 @@ function endCycle(state: GameState, playerId: string): CommandResult {
   state.offers = [];
 
   events.push(...refreshRouteTitle(state));
+  // Les barbares avancent avant le décompte : une cité perdue doit se voir
+  // dans le score du cycle où elle tombe, pas au suivant.
+  events.push(...advanceBarbarians(state));
   events.push({ type: 'CycleEnded', cycle: state.cycle });
 
   const won = checkVictory(state);
@@ -1355,6 +1359,106 @@ export function playerPoints(state: GameState, playerId: string): VictoryBreakdo
     majorExplorations: player.explorations,
     defenderTokens: player.barbarianDefences,
   }, state.config.victory);
+}
+
+// ── barbares ───────────────────────────────────────────────────────────────
+
+/**
+ * Fait avancer la piste de menace, et déclenche l'invasion au bout (§16).
+ *
+ * Appelé en fin de cycle, une seule fois par cycle : `lastStepCycle` garde la
+ * trace du dernier passage, parce que la fin de cycle peut être atteinte par
+ * plusieurs chemins — le joueur qui termine son tour, ou le chronomètre qui
+ * expire — et la piste avancerait deux fois.
+ */
+function advanceBarbarians(state: GameState): DomainEvent[] {
+  const config = state.config.barbarians;
+  const track = state.barbarians;
+
+  if (config.trackLength <= 0 || config.cyclesPerStep <= 0) return [];
+  if (track.lastStepCycle === state.cycle) return [];
+  track.lastStepCycle = state.cycle;
+
+  // La piste n'avance qu'un cycle sur `cyclesPerStep` : à douze joueurs, une
+  // case par cycle ferait arriver les barbares avant le premier tour complet.
+  if (state.cycle % config.cyclesPerStep !== 0) return [];
+
+  track.progress++;
+  if (track.progress < config.trackLength) {
+    return [{
+      type: 'BarbariansAdvanced',
+      progress: track.progress,
+      trackLength: config.trackLength,
+    }];
+  }
+
+  return [
+    { type: 'BarbariansAdvanced', progress: track.progress, trackLength: config.trackLength },
+    ...invade(state),
+  ];
+}
+
+/**
+ * L'invasion elle-même.
+ *
+ * La force vient de ce que **toute la table** a bâti, la défense de ce que
+ * chacun a joué en chevaliers. Si elle ne suffit pas, le plus faible
+ * défenseur perd une cité — elle retombe en colonie plutôt que de
+ * disparaître : rayer un joueur du plateau pour une invasion qu'il n'a pas
+ * déclenchée serait hors de proportion, et le §20 exclut toute élimination.
+ */
+function invade(state: GameState): DomainEvent[] {
+  const config = state.config.barbarians;
+  const track = state.barbarians;
+
+  track.progress = 0;
+  track.attacks++;
+
+  const strength = barbarianStrength(state.board, config);
+  const defences = new Map(
+    state.players.map((p) => [p.id, defenceOf(knightsPlayed(p.devCards), config)]),
+  );
+  const cityOf = (player: string): VertexId | undefined => {
+    for (const [vertex, b] of state.board.allBuildings()) {
+      if (b.owner === player && b.kind === 'city') return vertex;
+    }
+    return undefined;
+  };
+
+  const outcome = resolveInvasion(strength, defences, (p) => cityOf(p) !== undefined);
+  const events: DomainEvent[] = [];
+
+  // Le champion est récompensé qu'on ait tenu ou non : il a fourni la plus
+  // grande défense, et le §16 ne conditionne pas le jeton à la victoire.
+  if (outcome.champion !== undefined) {
+    const hero = playerOf(state, outcome.champion);
+    if (hero) hero.barbarianDefences++;
+  }
+
+  let lostCity: VertexId | undefined;
+  let victim: string | undefined;
+  if (!outcome.repelled && outcome.weakest !== undefined) {
+    victim = outcome.weakest;
+    lostCity = cityOf(victim);
+    if (lostCity !== undefined) {
+      state.board.setBuilding(lostCity, { kind: 'settlement', owner: victim });
+      const loser = playerOf(state, victim);
+      // La cité retourne à la réserve du joueur, et une colonie en sort :
+      // sans cela il perdrait la pièce en plus du point.
+      if (loser) { loser.citiesLeft++; loser.settlementsLeft--; }
+    }
+  }
+
+  events.push({
+    type: 'BarbariansAttacked',
+    strength,
+    defence: outcome.defence,
+    repelled: outcome.repelled,
+    champion: outcome.champion,
+    victim,
+    lostCity,
+  });
+  return events;
 }
 
 // ── titres et victoire ─────────────────────────────────────────────────────

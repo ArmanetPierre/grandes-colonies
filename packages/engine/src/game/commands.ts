@@ -113,6 +113,24 @@ export type DomainEvent =
   | { readonly type: 'ObjectiveChosen'; readonly player: PlayerId }
   | { readonly type: 'ObjectiveRevealed'; readonly player: PlayerId; readonly objective: ObjectiveId; readonly complete: boolean }
   | { readonly type: 'CycleEnded'; readonly cycle: number }
+  /** La piste de menace avance d'une case (§16). */
+  | { readonly type: 'BarbariansAdvanced'; readonly progress: number; readonly trackLength: number }
+  /**
+   * Les barbares attaquent. Tout y est dit d'un coup — force, défense, issue,
+   * et qui paie ou qui gagne — parce que c'est un seul événement de table :
+   * le raconter en morceaux le rendrait illisible dans le journal comme à
+   * l'écran.
+   */
+  | {
+      readonly type: 'BarbariansAttacked';
+      readonly strength: number;
+      readonly defence: number;
+      readonly repelled: boolean;
+      readonly champion: PlayerId | undefined;
+      /** Absent si l'attaque est repoussée : personne ne perd rien. */
+      readonly victim: PlayerId | undefined;
+      readonly lostCity: VertexId | undefined;
+    }
   | { readonly type: 'GameWon'; readonly player: PlayerId; readonly points: number };
 
 /** Pourquoi une commande a été refusée. */

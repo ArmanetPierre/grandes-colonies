@@ -51,6 +51,12 @@ export interface GameOutcome {
   readonly activeTurns: readonly number[];
   /** Constructions posées par chaque joueur. */
   readonly builds: readonly number[];
+  /** Invasions barbares survenues (§16). */
+  readonly barbarianAttacks: number;
+  /** Celles que les chevaliers de la table ont repoussées. */
+  readonly barbariansRepelled: number;
+  /** Cités rétrogradées en colonies faute de défense. */
+  readonly citiesLost: number;
   /** Nombre de fois où un joueur a dû défausser sur un 7. */
   readonly discards: number;
   /** Offres d'échange proposées entre joueurs. */
@@ -139,6 +145,9 @@ export function playGame(options: SimulationOptions): GameOutcome {
   let handTotal = 0;
   let peakHand = 0;
   let cyclesOverLimit = 0;
+  let barbarianAttacks = 0;
+  let barbariansRepelled = 0;
+  let citiesLost = 0;
 
   let actionId = 0;
   const next = () => `s${actionId++}`;
@@ -154,6 +163,11 @@ export function playGame(options: SimulationOptions): GameOutcome {
       if (event.type === 'BuildDeclared') buildsDeclared++;
       if (event.type === 'BuildRefunded') buildsRefunded++;
       if (event.type === 'BuildResolved') buildsResolved++;
+      if (event.type === 'BarbariansAttacked') {
+        barbarianAttacks++;
+        if (event.repelled) barbariansRepelled++;
+        if (event.lostCity !== undefined) citiesLost++;
+      }
       /*
        * Une construction annoncée est une construction.
        *
@@ -265,6 +279,9 @@ export function playGame(options: SimulationOptions): GameOutcome {
     buildsDeclared,
     buildsResolved,
     buildsRefunded,
+    barbarianAttacks,
+    barbariansRepelled,
+    citiesLost,
     marketRates: Object.fromEntries(
       RESOURCES.map((r) => [r, marketRate(config.market, state.market, r)]),
     ),

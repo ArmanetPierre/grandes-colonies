@@ -19,6 +19,7 @@ import type { GameConfig } from './config.js';
 import type { BuildIntent } from './buildIntent.js';
 import type { TradeOffer } from './trade.js';
 import { type ObjectiveId, availableObjectives } from '../objectives.js';
+import { type BarbarianState, initialBarbarians } from '../barbarians.js';
 
 /**
  * Les phases d'un cycle, telles que fixées par RULES_CONTRACT.md §1.
@@ -85,6 +86,9 @@ export interface GameState {
   market: MarketState;
   deck: DevCardKind[];
   rng: SeededRandom;
+
+  /** Piste de menace barbare (§16). */
+  barbarians: BarbarianState;
 
   longestRouteHolder: PlayerId | undefined;
   largestArmyHolder: PlayerId | undefined;
@@ -200,6 +204,7 @@ export function createGame(options: NewGameOptions): GameState {
     market: createMarket(),
     deck: [],
     rng,
+    barbarians: initialBarbarians(),
     longestRouteHolder: undefined,
     largestArmyHolder: undefined,
     winner: undefined,

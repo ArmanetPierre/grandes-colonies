@@ -78,6 +78,9 @@ export function tableViewMarkup(): string {
       <div class="table-phase"><span id="t-cycle"></span> · <span id="t-phase"></span></div>
       <div class="table-turn"><span id="t-active"></span></div>
       <div class="table-roll" id="t-roll"></div>
+      <!-- La piste barbare : elle concerne toute la table d'un coup, donc
+           elle vit dans l'en-tête commun et non sur une fiche de joueur. -->
+      <div class="table-barb" id="t-barb"></div>
       <!-- Le retour aux réglages : discret pendant la partie, franc une fois
            qu'elle est finie, parce que c'est là qu'on veut en relancer une. -->
       <!-- Les gestes d'une soirée réelle : suspendre, rallonger, refaire. -->
@@ -110,6 +113,19 @@ export function tableViewStyles(): string {
     font-family:'Marcellus',Georgia,serif; font-size:22px; color:var(--accent);
     min-width:96px; text-align:right;
   }
+  .table-barb {
+    font-family:'Inter',sans-serif; font-size:11px; color:var(--soft);
+    display:flex; align-items:center; gap:7px; letter-spacing:.08em;
+  }
+  .table-barb b { font-family:'Marcellus',Georgia,serif; font-size:15px; letter-spacing:0; }
+  .barb-track { display:flex; gap:3px; }
+  .barb-cell { width:9px; height:9px; background:var(--line); border-radius:1px; }
+  .barb-cell.on { background:var(--accent); }
+  /* La dernière case est la mort : elle se signale avant d'être atteinte. */
+  .barb-cell.last { background:#8B2E2E; }
+  /* Défense insuffisante : la table est à découvert, et doit le savoir. */
+  .table-barb.is-weak b { color:#B4432B; }
+
   .table-again {
     font-family:'Inter',sans-serif; font-size:12px; font-weight:600; cursor:pointer;
     padding:7px 13px; background:var(--raised); border:1px solid var(--line); color:var(--soft);
@@ -386,6 +402,28 @@ export function tableViewScript(): string {
       pause.textContent = view.paused ? 'Reprendre' : 'Pause';
       pause.classList.toggle('is-paused', Boolean(view.paused));
       document.getElementById('t-veil').hidden = !view.paused;
+
+      /*
+       * La menace, et ce qu'elle coûterait maintenant.
+       *
+       * On affiche défense/force plutôt que la seule position sur la piste :
+       * savoir que les barbares approchent n'aide pas si l'on ignore si la
+       * table tiendra. C'est ce rapport qui décide un joueur à sortir un
+       * chevalier plutôt qu'à le garder pour la puissance militaire.
+       */
+      const b = view.barbarians;
+      if (b) {
+        const cells = [];
+        for (let i = 0; i < b.trackLength; i++) {
+          const dernier = i === b.trackLength - 1;
+          cells.push('<span class="barb-cell' + (i < b.progress ? ' on' : '')
+            + (dernier ? ' last' : '') + '"></span>');
+        }
+        const barb = document.getElementById('t-barb');
+        barb.classList.toggle('is-weak', b.defence < b.strength);
+        barb.innerHTML = '<span>BARBARES</span><span class="barb-track">' + cells.join('')
+          + '</span><b>' + b.defence + '/' + b.strength + '</b>';
+      }
 
       drawBoard(view);
       drawPlayers(view, seats);
