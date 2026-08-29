@@ -300,6 +300,8 @@ export class GameServer {
   private readonly tickMs: number;
   private readonly journalDir: string | undefined;
   private journal: JournalWriter | undefined;
+  /** Chemin du journal en cours d'écriture, pour qui veut le relire. */
+  private journalPathValue: string | undefined;
   /**
    * Commandes déjà couchées dans le journal.
    *
@@ -361,6 +363,7 @@ export class GameServer {
         this.journalledNames.set(seat.playerId, seat.name);
       }
       this.journal = JournalWriter.continuing(options.restore);
+      this.journalPathValue = options.restore.path;
 
       /*
        * Une partie reprise revient **en pause**.
@@ -401,6 +404,17 @@ export class GameServer {
       if (playerId !== undefined) ids.add(playerId);
     }
     return ids;
+  }
+
+  /**
+   * Le journal que cette partie est en train d'écrire.
+   *
+   * `undefined` tant que la partie n'est pas lancée, ou quand aucun dossier de
+   * journaux n'a été fourni — les tests montent des dizaines de serveurs et
+   * n'ont pas à laisser de fichiers derrière eux.
+   */
+  get journalPath(): string | undefined {
+    return this.journalPathValue;
   }
 
   /** Les réglages en vigueur — ceux que l'écran de l'hôte affiche. */
@@ -496,6 +510,7 @@ export class GameServer {
     });
     this.settingsValue = next;
     this.journal = undefined;
+    this.journalPathValue = undefined;
     this.journalled = 0;
     this.journalledNames.clear();
     this.seatOf.clear();
@@ -554,7 +569,8 @@ export class GameServer {
   private openJournal(): void {
     if (this.journalDir === undefined) return;
     const gameId = `${this.seed}-${this.rebuilds}`;
-    this.journal = new JournalWriter(join(this.journalDir, `${gameId}.jsonl`), {
+    this.journalPathValue = join(this.journalDir, `${gameId}.jsonl`);
+    this.journal = new JournalWriter(this.journalPathValue, {
       gameId,
       startedAt: Date.now(),
       recipe: this.current.recipe,

@@ -65,6 +65,26 @@ les invités ne connaissent pas, et le WebSocket des joueurs refuse toute
 commande `GM_` quel que soit le client. Elles sont journalisées comme les
 autres : une partie truquée se rejoue truquée.
 
+### Mesurer une partie
+
+```bash
+npx tsx scripts/mesures.ts            # la partie la plus récente
+npx tsx scripts/mesures.ts parties/partie-xxx.jsonl
+```
+
+Durée, cycles, cycle médian, échanges proposés et acceptés, annonces de
+construction, tours joués d'office, et par joueur : ses gestes et surtout sa
+**plus longue attente**. C'est celle-là qui compte — à douze joueurs on attend
+forcément, et un total d'inactivité ne dirait rien, alors que la plus longue
+attente dit le moment précis où quelqu'un a décroché.
+
+L'écran hôte sert les mêmes chiffres sur `/api/metrics`.
+
+Tout est relu depuis le journal, pas depuis des compteurs vivants : une
+question qu'on ne s'était pas posée pendant la partie — « combien de temps
+entre une annonce et sa résolution ? » — se répond après coup, sur les parties
+déjà jouées.
+
 ### Si le serveur tombe
 
 Chaque partie écrit son journal dans `parties/` : la graine, la

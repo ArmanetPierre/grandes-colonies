@@ -27,7 +27,7 @@ import {
   estCaractere,
   niveauDe,
 } from '@grand-colonies/sim';
-import { readJournal } from '@grand-colonies/server';
+import { measure, readJournal } from '@grand-colonies/server';
 import { type GameSettings, GameServer, SETTINGS_LIMITS } from '@grand-colonies/server';
 
 import { renderHostPage } from './hostPage.js';
@@ -383,6 +383,22 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
        * WebSocket, dont le chemin refuse les commandes `GM_`. Rien ici ne
        * vérifie donc une identité — il n'y en a pas à vérifier.
        */
+      /*
+       * Les mesures de la partie en cours (Phase 8).
+       *
+       * Servies depuis le journal et non depuis des compteurs vivants : le
+       * journal garde tout, y compris ce qu'on n'avait pas pensé à mesurer.
+       */
+      if (req.url === '/api/metrics') {
+        const chemin = server.journalPath;
+        const journal = chemin ? readJournal(chemin) : undefined;
+        if (!journal) {
+          sendJson(res, 404, { error: 'aucun journal pour cette partie' });
+          return true;
+        }
+        sendJson(res, 200, measure(journal));
+        return true;
+      }
       if (req.url === '/api/gm' && req.method === 'POST') {
         void readJson(req)
           .then((body) => {
