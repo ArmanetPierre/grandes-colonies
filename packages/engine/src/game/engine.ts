@@ -59,6 +59,7 @@ import {
   MINING_PORT_TRADE,
   hasPort,
 } from '../ports.js';
+import { influenceOf } from '../influence.js';
 import { type TradeOffer, bankRate, checkOffer, isAddressedTo } from './trade.js';
 
 const reject = (reason: RejectionReason, detail?: string): CommandResult =>
@@ -1236,7 +1237,11 @@ function endCycle(state: GameState, playerId: string): CommandResult {
 
   const events: DomainEvent[] = [];
 
-  const { built, refunded, frozen } = resolveIntents(state.intents, activePlayer(state).id);
+  const { built, refunded, frozen } = resolveIntents(
+    state.intents,
+    activePlayer(state).id,
+    (player) => playerInfluence(state, player),
+  );
   for (const intent of built) events.push(...applyIntent(state, intent));
   for (const intent of refunded) {
     refund(state, intent);
@@ -1310,6 +1315,27 @@ export function objectiveDone(state: GameState, player: PlayerState): boolean {
 }
 
 /**
+ * L'Influence d'un joueur (§17).
+ *
+ * Dérivée de ses sources et non accumulée, exactement comme les points : un
+ * compteur incrémenté à chaque événement diverge dès qu'une partie est
+ * rejouée depuis son journal, ou qu'un port change de main.
+ */
+export function playerInfluence(state: GameState, playerId: string): number {
+  const player = playerOf(state, playerId);
+  if (!player) return 0;
+
+  return influenceOf(state.board, playerId, state.config.influence, {
+    barbarianDefences: player.barbarianDefences,
+    secretObjectivesCompleted: objectiveDone(state, player) ? 1 : 0,
+    // Les comptoirs du §12 et les contrats du §19 n'existent pas encore :
+    // leur place est tenue, ils ne rapportent rien.
+    tradingPosts: 0,
+    brokenContracts: 0,
+  }).total;
+}
+
+/**
  * Le décompte complet d'un joueur, objectif secret compris.
  *
  * C'est le seul point d'entrée à utiliser pour afficher ou mesurer un score :
@@ -1327,6 +1353,7 @@ export function playerPoints(state: GameState, playerId: string): VictoryBreakdo
     metropolises: metropolisesBuilt(state, playerId),
     monuments: player.hasMonument ? 1 : 0,
     majorExplorations: player.explorations,
+    defenderTokens: player.barbarianDefences,
   }, state.config.victory);
 }
 

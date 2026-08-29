@@ -103,6 +103,8 @@ const MARCHANDISE: Readonly<Record<string, string>> = {
   // Les deux ports à contrat du §11 : leur ligne du bas dit l'échange entier,
   // parce que leur taux seul ne suffit pas à les distinguer d'un 2:1 ordinaire.
   mining: 'Minerai → Or', commercial: 'Deux sortes',
+  // Le port royal n'échange rien : il donne de l'Influence (§17).
+  royal: 'Influence',
 };
 
 /**
@@ -112,7 +114,12 @@ const MARCHANDISE: Readonly<Record<string, string>> = {
  * pas le taux qui distingue les ports à contrat — c'est la ligne du dessous,
  * et c'est pour cela qu'elle porte l'échange en toutes lettres.
  */
-const TAUX: Readonly<Record<string, string>> = { generic: '3:1' };
+const TAUX: Readonly<Record<string, string>> = {
+  generic: '3:1',
+  // Une couronne plutôt qu'un taux : le port royal ne commerce pas, et
+  // afficher « 2:1 » y ferait attendre un échange qui n'existe pas.
+  royal: '\u{1F451}',
+};
 
 /**
  * Le panneau d'un port.

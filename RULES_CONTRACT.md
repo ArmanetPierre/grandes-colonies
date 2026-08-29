@@ -86,12 +86,15 @@ Sans cela, un joueur pourrait promettre le même bois à trois constructions, pu
 Quand plusieurs annonces visent le même emplacement :
 
 1. **le joueur actif l'emporte** ;
-2. sinon, **la plus ancienne annonce l'emporte** — l'ordre d'arrivée au serveur fait foi ;
-3. les perdants récupèrent leurs ressources réservées.
+2. sinon, **celui qui a le plus d'Influence** (§17) ;
+3. sinon, **la plus ancienne annonce l'emporte** — l'ordre d'arrivée au serveur fait foi ;
+4. les perdants récupèrent leurs ressources réservées.
 
 Cette règle **désigne toujours un vainqueur**.
 
-> **Conséquence assumée : le gel d'emplacement est aujourd'hui inatteignable.** La règle du §8 du game design le prévoyait pour départager une égalité d'Influence, mais l'Influence n'existera qu'en phase tardive. La mécanique de gel est implémentée et testée, elle ne se déclenche simplement jamais tant que le départage par ancienneté tranche tout. Le jour où l'Influence arrivera, il suffira de l'insérer entre les règles 1 et 2.
+L'Influence consultée est celle de l'instant où l'on tranche, et non celle du moment de l'annonce : une annonce est datée à son arrivée, mais l'Influence peut avoir bougé entre les deux.
+
+> **Le gel d'emplacement reste inatteignable, et c'est maintenant un choix.** Le §8 du game design le prévoyait pour une égalité d'Influence. Nous gardons l'ancienneté en dernier recours à la place : deux joueurs à zéro d'Influence sont le cas **ordinaire** en début de partie, et geler à chaque fois aurait fait de l'exception la règle — un emplacement disputé serait interdit à tout le monde plus souvent qu'attribué. La mécanique de gel reste implémentée et testée pour le jour où une véritable impasse deviendra possible.
 
 ### Gel
 
@@ -255,11 +258,14 @@ lieu de l'assécher.
 
 ### Ce qui reste inerte
 
-`defenderToken` (1 point) et `majorExploration` (1 point) demeurent dans le
-barème sans être attribués. Le premier attend les barbares, le second
-l'archipel. Ils sont conservés plutôt que retirés, sur le modèle des
-objectifs indisponibles : le jour où leur système arrive, il n'y aura rien à
+`majorExploration` (1 point) demeure dans le barème sans être attribué : il
+attend l'archipel. Il est conservé plutôt que retiré, sur le modèle des
+objectifs indisponibles — le jour où son système arrive, il n'y aura rien à
 rechiffrer.
+
+`defenderToken` (1 point) **est désormais attribué** : il récompense le joueur
+qui a fourni la plus grande défense lors d'une invasion barbare (§16), et vaut
+en plus un point d'Influence.
 
 ---
 
@@ -549,7 +555,7 @@ port.
 | 2026-08-28 | Paiement au port commercial | **Jamais avec la ressource demandée** |
 | 2026-08-28 | Contrats et cours | **Sans effet sur le marché** — deux entrées pour une sortie l'auraient fait dériver |
 | 2026-08-28 | Semis des ports particuliers | **Un seul de chaque par plateau**, plafonnés au tiers des ports |
-| 2026-08-28 | Port royal | **Non semé** — il attend l'Influence, et un port inutilisé occupe une côte |
+| 2026-08-29 | Port royal | **Semé** — il donne 2 Influence à qui l'occupe (§17). En dernier des quatre ports uniques : il ne commerce pas, et sur une petite côte une place qui n'échange rien est une place perdue |
 | 2026-08-29 | Ports sur l'écran de table | **Dessinés**, sur l'eau du sommet — les contrats en couleur d'accent |
 | 2026-08-29 | L'or dans le panneau de commerce | **Proposé** — la bande en chiffrait le prix, les menus le cachaient |
 | 2026-08-29 | Objectif « grand commerçant » | **Déclaré, éteint** — cinq ports sont hors d'atteinte sans les comptoirs (mesuré : deux au mieux) |

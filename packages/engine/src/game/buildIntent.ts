@@ -48,15 +48,25 @@ export interface Resolution {
 /**
  * Départage les annonces d'un cycle.
  *
- * Règle du contrat : le joueur actif l'emporte, sinon la plus ancienne
- * annonce. Elle désigne toujours un vainqueur, ce qui rend le gel
- * inatteignable tant que l'Influence n'existe pas — la sortie `frozen` est
- * donc vide en pratique, mais la mécanique reste en place pour le jour où
- * une véritable égalité deviendra possible.
+ * Règle du contrat §3, désormais complète : le joueur actif l'emporte ;
+ * sinon celui qui a le plus d'Influence ; sinon la plus ancienne annonce.
+ *
+ * L'Influence s'insère **entre** les deux règles existantes, exactement où
+ * le contrat l'avait prévue. Elle ne remplace pas l'ancienneté : la garder en
+ * dernier recours est ce qui fait que la résolution désigne toujours un
+ * vainqueur, et donc que le gel reste inatteignable. Le §8 du game design le
+ * prévoyait pour une égalité d'Influence, mais deux joueurs à zéro sont le
+ * cas ordinaire en début de partie — geler à chaque fois aurait fait de
+ * l'exception la règle.
+ *
+ * `influenceOf` est passée en fonction plutôt que lue sur les annonces : une
+ * annonce est datée à son arrivée, et l'Influence peut avoir bougé entre
+ * l'annonce et la résolution. C'est celle du moment où l'on tranche qui compte.
  */
 export function resolveIntents(
   intents: readonly BuildIntent[],
   activePlayer: PlayerId,
+  influenceOf: (player: PlayerId) => number = () => 0,
 ): Resolution {
   const byLocation = new Map<string, BuildIntent[]>();
   for (const intent of intents) {
@@ -71,7 +81,7 @@ export function resolveIntents(
   const frozen: string[] = [];
 
   for (const [location, group] of byLocation) {
-    const winner = pickWinner(group, activePlayer);
+    const winner = pickWinner(group, activePlayer, influenceOf);
 
     if (winner === undefined) {
       // Aucune départition possible : personne ne construit ici ce cycle.
@@ -90,12 +100,24 @@ export function resolveIntents(
   return { built, refunded, frozen };
 }
 
-function pickWinner(group: readonly BuildIntent[], activePlayer: PlayerId): BuildIntent | undefined {
+function pickWinner(
+  group: readonly BuildIntent[],
+  activePlayer: PlayerId,
+  influenceOf: (player: PlayerId) => number,
+): BuildIntent | undefined {
   if (group.length === 0) return undefined;
 
+  // 1. Le joueur actif l'emporte, quelle que soit son Influence.
   const fromActive = group.filter((i) => i.player === activePlayer);
-  const contenders = fromActive.length > 0 ? fromActive : group;
+  if (fromActive.length > 0) {
+    return [...fromActive].sort((a, b) => a.order - b.order)[0];
+  }
 
-  // À égalité de priorité, la plus ancienne annonce l'emporte.
+  // 2. Sinon la plus forte Influence — et seuls ceux qui l'égalent restent
+  //    en lice, pour que l'ancienneté ne tranche qu'entre égaux.
+  const best = Math.max(...group.map((i) => influenceOf(i.player)));
+  const contenders = group.filter((i) => influenceOf(i.player) === best);
+
+  // 3. À Influence égale, la plus ancienne annonce.
   return [...contenders].sort((a, b) => a.order - b.order)[0];
 }

@@ -101,14 +101,15 @@ const COMMON_PORT_KINDS: readonly PortKind[] = [
  * sur la même côte n'apprendraient rien de plus à la table, et un plateau
  * immense en aurait semé deux ou trois puisque les types s'y répètent.
  *
- * L'ordre compte : si le plateau est trop petit pour les trois, c'est le
+ * L'ordre compte : si le plateau est trop petit pour les quatre, c'est le
  * marchand qui reste, parce qu'il est le seul dont l'effet se comprend sans
  * avoir lu la règle.
  *
- * Le port royal manque encore — il donne un bonus d'Influence, et
- * l'Influence n'existe pas.
+ * Le royal vient en dernier, et c'est voulu : il ne commerce pas: il paie en
+ * Influence. Sur une petite côte, où chaque port compte pour le commerce
+ * ordinaire, en poser un qui n'échange rien serait une place perdue.
  */
-const UNIQUE_PORT_KINDS: readonly PortKind[] = ['merchant', 'mining', 'commercial'];
+const UNIQUE_PORT_KINDS: readonly PortKind[] = ['merchant', 'mining', 'commercial', 'royal'];
 
 /**
  * La liste des types à semer, pour un nombre de ports donné.

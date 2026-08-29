@@ -43,6 +43,12 @@ export interface PlayerState {
   hasMonument: boolean;
   /** Îles secondaires atteintes le premier — 1 point chacune (contrat §9). */
   explorations: number;
+  /**
+   * Jetons « Défenseur de Catan », gagnés en menant la défense contre une
+   * invasion barbare (§16). Un point de victoire et un point d'Influence
+   * chacun.
+   */
+  barbarianDefences: number;
   /** Cartes à défausser après un 7 ; zéro le reste du temps. */
   mustDiscard: number;
 
@@ -166,6 +172,7 @@ export function createGame(options: NewGameOptions): GameState {
     settlementsLeft: options.config.settlementsPerPlayer,
     citiesLeft: options.config.citiesPerPlayer,
     hasMonument: false,
+    barbarianDefences: 0,
     explorations: 0,
     mustDiscard: 0,
     offeredObjectives: [],

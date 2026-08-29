@@ -51,6 +51,9 @@ export const PORT_LABELS: Readonly<Record<string, { rate: string; goods: string 
   merchant: { rate: '2:1', goods: 'Marchand' },
   mining: { rate: '2→1', goods: 'Minerai → Or' },
   commercial: { rate: '2→1', goods: 'Deux sortes' },
+  // Le port royal ne commerce pas : il paie en Influence (§17). Son panneau
+  // ne porte donc pas de taux — en afficher un ferait croire à un échange.
+  royal: { rate: '👑', goods: 'Influence' },
 };
 
 /** Les ports à contrat du §11 : ils ne remisent pas le cours, ils s'y soustraient. */

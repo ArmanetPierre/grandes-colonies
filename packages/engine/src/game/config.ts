@@ -14,6 +14,8 @@ import type { MarketConfig } from '../market.js';
 import { GRAND_COLONIES_MARKET } from '../market.js';
 import type { VictoryConfig } from '../victory.js';
 import { GRAND_COLONIES_VICTORY } from '../victory.js';
+import type { InfluenceConfig } from '../influence.js';
+import { GRAND_COLONIES_INFLUENCE } from '../influence.js';
 
 export interface GameConfig {
   readonly victory: VictoryConfig;
@@ -26,6 +28,8 @@ export interface GameConfig {
    * en playtest sans recompiler.
    */
   readonly market: MarketConfig;
+  /** Ce que rapporte chaque source d'Influence (§17). */
+  readonly influence: InfluenceConfig;
 
   /** Limite de main au-delà de laquelle un 7 force la défausse. */
   readonly handLimit: number;
@@ -96,6 +100,7 @@ export function defaultConfig(playerCount: number): GameConfig {
     production: GRAND_COLONIES_PRODUCTION,
     deck: GRAND_COLONIES_DECK,
     market: GRAND_COLONIES_MARKET,
+    influence: GRAND_COLONIES_INFLUENCE,
     handLimit: handLimitFor(playerCount),
     robberCount: robberCountFor(playerCount),
     minimumRouteLength: 5,

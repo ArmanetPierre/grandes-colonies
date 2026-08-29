@@ -22,5 +22,6 @@ export * from './devCards.js';
 export * from './victory.js';
 export * from './objectives.js';
 export * from './ports.js';
+export * from './influence.js';
 export * from './market.js';
 export * from './game/index.js';

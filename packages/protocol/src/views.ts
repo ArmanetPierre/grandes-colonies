@@ -45,6 +45,7 @@ import {
   metropolisesBuilt,
   robberVictims,
   playerOf,
+  playerInfluence,
   playerPoints,
   maritimeSpots,
   roadSpots,
@@ -78,6 +79,15 @@ export interface PublicPlayer {
   readonly hand: ResourceCounts;
   readonly devCardCount: number;
   readonly knightsPlayed: number;
+  /**
+   * Influence publique (§17), et publique par nécessité.
+   *
+   * C'est elle qui départage deux annonces sur le même emplacement : un
+   * joueur qui ne saurait pas où il se situe ne pourrait pas décider s'il
+   * vaut la peine d'annoncer contre un voisin. Le plan §16 la listait déjà
+   * parmi les informations permanentes de la fiche adversaire.
+   */
+  readonly influence: number;
   readonly roadsLeft: number;
   readonly settlementsLeft: number;
   readonly citiesLeft: number;
@@ -318,6 +328,7 @@ export function publicView(state: GameState, connectivity?: Connectivity): Publi
       hand: p.hand,
       devCardCount: heldCount(p.devCards),
       knightsPlayed: knightsPlayed(p.devCards),
+      influence: playerInfluence(state, p.id),
       roadsLeft: p.roadsLeft,
       settlementsLeft: p.settlementsLeft,
       citiesLeft: p.citiesLeft,

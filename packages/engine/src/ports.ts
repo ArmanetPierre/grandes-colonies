@@ -21,7 +21,8 @@ export type PortKind =
   | 'wood' | 'brick' | 'wool' | 'grain' | 'ore'   // remise de deux sur une ressource
   | 'merchant'   // port marchand : remise de deux sur n'importe laquelle
   | 'mining'     // port minier : 2 minerai contre 1 or, hors marché
-  | 'commercial'; // port commercial : 2 ressources différentes contre 1 au choix
+  | 'commercial'  // port commercial : 2 ressources différentes contre 1 au choix
+  | 'royal';      // port royal : ne commerce pas — il donne de l'Influence (§17)
 
 /**
  * Tous les types de ports, à l'exécution.
@@ -33,7 +34,7 @@ export type PortKind =
  */
 export const PORT_KINDS = [
   'generic', 'wood', 'brick', 'wool', 'grain', 'ore',
-  'merchant', 'mining', 'commercial',
+  'merchant', 'mining', 'commercial', 'royal',
 ] as const satisfies readonly PortKind[];
 
 export interface Port {
@@ -96,6 +97,10 @@ function discountOf(port: Port, resource: Resource): number {
   // Les ports à contrat n'entrent pas dans le calcul du cours : ils ont leur
   // propre échange, et cumuler les deux reviendrait à les payer deux fois.
   if (isContractPort(port.kind)) return 0;
+  // Le port royal ne commerce pas du tout : il paie en Influence (§17). Le
+  // dire ici plutôt que de le laisser tomber dans la comparaison finale — il
+  // y rendrait zéro par accident, et personne ne saurait que c'est voulu.
+  if (port.kind === 'royal') return 0;
   if (port.kind === 'merchant') return SPECIFIC_DISCOUNT;
   if (port.kind === 'generic') return GENERIC_DISCOUNT;
   return port.kind === resource ? SPECIFIC_DISCOUNT : 0;
