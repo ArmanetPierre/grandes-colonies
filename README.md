@@ -50,6 +50,21 @@ tours de table. Sans ce geste, la partie l'attend indéfiniment : son tour est
 joué au minimum, cycle après cycle, et sa position ne bouge plus. Le jeton de
 reconnexion du partant est invalidé — céder sa place, c'est la céder.
 
+### Mode maître de jeu
+
+Le bouton **Maître de jeu** ouvre un panneau sur l'écran hôte : donner ou
+retirer des ressources, forcer le prochain lancer, pousser la piste barbare ou
+déclencher l'invasion, couronner un joueur.
+
+Il est là pour les playtests. Reproduire un bug qui n'apparaît qu'à quinze
+points demandait sinon de jouer quarante-cinq minutes à chaque tentative.
+
+Ces gestes ignorent la phase, le tour et les ressources — c'est leur raison
+d'être. Le garde-fou est ailleurs : le panneau vit sur le port de l'hôte, que
+les invités ne connaissent pas, et le WebSocket des joueurs refuse toute
+commande `GM_` quel que soit le client. Elles sont journalisées comme les
+autres : une partie truquée se rejoue truquée.
+
 ### Si le serveur tombe
 
 Chaque partie écrit son journal dans `parties/` : la graine, la

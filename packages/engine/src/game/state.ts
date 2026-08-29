@@ -77,6 +77,14 @@ export interface GameState {
   /** Index du joueur actif dans `players`. */
   activeIndex: number;
   lastRoll: { readonly a: number; readonly b: number; readonly total: number } | undefined;
+  /**
+   * Lancer imposé par le maître de jeu (§22), consommé au prochain `ROLL_DICE`.
+   *
+   * Posé plutôt que résolu sur-le-champ : qui force un 7 veut voir la
+   * défausse et le voleur se dérouler normalement, et c'est `rollDice` qui
+   * sait faire tout cela.
+   */
+  forcedRoll: { readonly a: number; readonly b: number } | undefined;
 
   bank: ResourceCounts;
   /**
@@ -204,6 +212,7 @@ export function createGame(options: NewGameOptions): GameState {
     market: createMarket(),
     deck: [],
     rng,
+    forcedRoll: undefined,
     barbarians: initialBarbarians(),
     longestRouteHolder: undefined,
     largestArmyHolder: undefined,

@@ -385,6 +385,28 @@ export class GameSession {
    * Soumet une commande. Un seul appel à la fois : c'est l'appelant — la
    * room — qui garantit la sérialisation.
    */
+  /**
+   * Commande du maître de jeu (§22), soumise par l'hôte.
+   *
+   * Le passage obligé : `submit` refuse tout ce qui commence par `GM_`, et
+   * seul ce chemin-ci les laisse entrer. Un joueur ne peut donc pas se donner
+   * des ressources en fabriquant la commande à la main — son WebSocket ne
+   * mène qu'à `submit`, et l'écran de l'hôte est le seul à passer par ici.
+   *
+   * Elles sont journalisées comme les autres : une partie truquée puis
+   * rejouée reproduit exactement les mêmes truquages, plutôt que de diverger
+   * en silence.
+   */
+  submitAsHost(command: Command): SubmitOutcome {
+    if (!this.manualStart) {
+      return {
+        result: { ok: false, reason: 'wrong-phase', detail: 'la partie n a pas encore commencé' },
+        events: [],
+      };
+    }
+    return this.apply(command);
+  }
+
   submit(command: Command): SubmitOutcome {
     if (!this.manualStart) {
       return {
@@ -399,6 +421,27 @@ export class GameSession {
       };
     }
 
+    /*
+     * Les commandes du maître de jeu n'entrent pas par ici.
+     *
+     * C'est le seul garde-fou qui compte : elles ne vérifient ni la phase, ni
+     * le tour, ni les ressources, et un client bricolé qui en enverrait une
+     * se donnerait la partie. Le préfixe est vérifié plutôt que la liste des
+     * types — une commande ajoutée plus tard serait sinon ouverte à tous par
+     * omission.
+     */
+    if (command.type.startsWith('GM_')) {
+      return {
+        result: { ok: false, reason: 'unknown-command', detail: command.type },
+        events: [],
+      };
+    }
+
+    return this.apply(command);
+  }
+
+  /** Le chemin commun : dispatch, journal, chronomètre. */
+  private apply(command: Command): SubmitOutcome {
     const result = dispatch(this.state, command);
     if (result.ok && !result.duplicate) {
       this.log.push(command);

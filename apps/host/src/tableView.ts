@@ -87,9 +87,37 @@ export function tableViewMarkup(): string {
       <button class="table-again" id="t-pause">Pause</button>
       <button class="table-again" id="t-extend">+30 s</button>
       <button class="table-again" id="t-again">Nouvelle partie</button>
+      <button class="table-again" id="t-gm">Maître de jeu</button>
     </header>
 
     <div class="table-veil" id="t-veil" hidden>Partie en pause</div>
+
+    <!-- Le panneau du §22 : pour le développement et les playtests. Il vit
+         sur le port de l'hôte, que les joueurs ne connaissent pas. -->
+    <div class="gm-panel" id="t-gm-panel" hidden>
+      <div class="gm-row">
+        <label>Joueur <select id="gm-who"></select></label>
+        <label>Ressource <select id="gm-what">
+          <option value="wood">Bois</option><option value="brick">Argile</option>
+          <option value="wool">Laine</option><option value="grain">Blé</option>
+          <option value="ore">Minerai</option><option value="gold">Or</option>
+          <option value="fish">Poisson</option>
+        </select></label>
+        <label>Combien <input id="gm-many" type="number" value="1" min="1" max="20"></label>
+        <button data-gm="grant">Donner</button>
+        <button data-gm="take">Retirer</button>
+      </div>
+      <div class="gm-row">
+        <label>Dés <input id="gm-a" type="number" value="3" min="1" max="6">
+          <input id="gm-b" type="number" value="4" min="1" max="6"></label>
+        <button data-gm="dice">Forcer le lancer</button>
+        <button data-gm="barb1">Barbares +1</button>
+        <button data-gm="barbNow">Invasion tout de suite</button>
+        <button data-gm="win">Faire gagner</button>
+      </div>
+      <p class="gm-note" id="gm-note">Ces gestes ignorent la phase, le tour et les
+        ressources. Ils sont journalisés : une partie truquée se rejoue truquée.</p>
+    </div>
 
     <div class="table-body">
       <div class="table-board"><svg id="t-svg" role="img" aria-label="Plateau"></svg></div>
@@ -161,6 +189,24 @@ export function tableViewStyles(): string {
     padding:3px 8px; background:var(--accent); color:#F7F1E1; border:none;
   }
   .player-bot:disabled { opacity:.5; cursor:default; }
+
+  .gm-panel {
+    background:rgba(24,20,14,.9); border:1px solid var(--line); padding:12px 14px;
+    margin-bottom:12px; font-family:'Inter',sans-serif; font-size:12px; color:var(--ink);
+  }
+  .gm-row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:8px; }
+  .gm-row label { display:flex; gap:5px; align-items:center; color:var(--soft); }
+  .gm-row select, .gm-row input {
+    background:var(--raised); border:1px solid var(--line); color:var(--ink);
+    padding:3px 6px; font:inherit;
+  }
+  .gm-row input[type=number] { width:56px; }
+  .gm-row button {
+    background:var(--raised); border:1px solid var(--line); color:var(--ink);
+    padding:4px 10px; font:inherit; cursor:pointer;
+  }
+  .gm-row button:hover { border-color:var(--accent); }
+  .gm-note { margin:0; color:var(--soft); font-size:11px; line-height:1.5; }
 
   .table-body { display:flex; gap:18px; align-items:flex-start; }
   .table-board {
@@ -412,6 +458,7 @@ export function tableViewScript(): string {
        * chevalier plutôt qu'à le garder pour la puissance militaire.
        */
       const b = view.barbarians;
+      derniereBarb = b || null;
       if (b) {
         const cells = [];
         for (let i = 0; i < b.trackLength; i++) {
@@ -423,6 +470,18 @@ export function tableViewScript(): string {
         barb.classList.toggle('is-weak', b.defence < b.strength);
         barb.innerHTML = '<span>BARBARES</span><span class="barb-track">' + cells.join('')
           + '</span><b>' + b.defence + '/' + b.strength + '</b>';
+      }
+
+      // La liste des joueurs du panneau suit la table : un siège renommé ou
+      // un effectif changé s'y reflète sans recharger la page.
+      const who = document.getElementById('gm-who');
+      const attendu = view.players.map((p) => p.id + '|' + p.name).join(',');
+      if (who.dataset.sig !== attendu) {
+        who.dataset.sig = attendu;
+        const garde = who.value;
+        who.innerHTML = view.players
+          .map((p) => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('');
+        if (garde) who.value = garde;
       }
 
       drawBoard(view);
@@ -450,6 +509,53 @@ export function tableViewScript(): string {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ playerId: button.dataset.seat }),
+    });
+    refreshTable();
+  });
+
+  /** Cases restantes avant l'invasion, d'après la dernière vue reçue. */
+  let derniereBarb = null;
+  function resteBarbares() {
+    if (!derniereBarb) return 1;
+    return Math.max(1, derniereBarb.trackLength - derniereBarb.progress);
+  }
+
+  document.getElementById('t-gm').addEventListener('click', () => {
+    const panel = document.getElementById('t-gm-panel');
+    panel.hidden = !panel.hidden;
+  });
+
+  document.getElementById('t-gm-panel').addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-gm]');
+    if (!button) return;
+    const who = document.getElementById('gm-who').value;
+    const what = document.getElementById('gm-what').value;
+    const many = Number(document.getElementById('gm-many').value) || 1;
+    const geste = button.dataset.gm;
+
+    const commandes = {
+      grant: { type: 'GM_GRANT', playerId: who, resources: { [what]: many } },
+      take: { type: 'GM_TAKE', playerId: who, resources: { [what]: many } },
+      dice: {
+        type: 'GM_SET_DICE', playerId: who,
+        a: Number(document.getElementById('gm-a').value) || 1,
+        b: Number(document.getElementById('gm-b').value) || 1,
+      },
+      barb1: { type: 'GM_BARBARIANS', playerId: who, steps: 1 },
+      // Exactement ce qu'il faut pour atteindre le bout : envoyer un grand
+      // nombre enchaînerait plusieurs invasions.
+      barbNow: { type: 'GM_BARBARIANS', playerId: who, steps: resteBarbares() },
+      win: { type: 'GM_END_GAME', playerId: who },
+    };
+    const commande = commandes[geste];
+    if (!commande) return;
+    // Terminer la partie ne se reprend pas : on demande confirmation.
+    if (geste === 'win' && !confirm('Terminer la partie et couronner ce joueur ?')) return;
+
+    await fetch('/api/gm', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(commande),
     });
     refreshTable();
   });

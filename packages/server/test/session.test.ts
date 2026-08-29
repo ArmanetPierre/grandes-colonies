@@ -699,3 +699,111 @@ describe('mise en place chronométrée', () => {
     expect(session.state.board.allBuildings().size).toBe(0);
   });
 });
+
+/**
+ * Le mode maître de jeu (§22).
+ *
+ * Ces commandes ne vérifient ni la phase, ni le tour, ni les ressources —
+ * c'est leur raison d'être, et c'est pourquoi le seul garde-fou qui compte est
+ * qu'un joueur ne puisse jamais en émettre.
+ */
+describe('mode maître de jeu', () => {
+  it('refuse une commande GM venue du chemin des joueurs', () => {
+    const session = joinedSession(4);
+    runSetup(session);
+
+    const refus = session.submit({
+      ...cmd('GM_GRANT', 'p2'), resources: { ore: 9 },
+    } as never);
+
+    expect(refus.result.ok).toBe(false);
+    expect(session.state.players[1]?.hand).not.toMatchObject({ ore: 9 });
+  });
+
+  it('l accepte de l hôte, et donne les ressources', () => {
+    const session = joinedSession(4);
+    runSetup(session);
+
+    const outcome = session.submitAsHost({
+      ...cmd('GM_GRANT', 'p2'), resources: { ore: 9 },
+    } as never);
+
+    expect(outcome.result.ok).toBe(true);
+    expect(session.state.players[1]?.hand.ore).toBe(9);
+  });
+
+  /** Retirer plus que la main donnerait un inventaire négatif, irreprésentable. */
+  it('ne retire jamais plus que ce que le joueur a', () => {
+    const session = joinedSession(4);
+    runSetup(session);
+    session.submitAsHost({ ...cmd('GM_GRANT', 'p2'), resources: { ore: 2 } } as never);
+    session.submitAsHost({ ...cmd('GM_TAKE', 'p2'), resources: { ore: 7 } } as never);
+
+    expect(session.state.players[1]?.hand.ore ?? 0).toBe(0);
+  });
+
+  it('force le prochain lancer, sans consulter le hasard', () => {
+    const session = joinedSession(4);
+    runSetup(session);
+    session.submitAsHost({ ...cmd('GM_SET_DICE', 'p1'), a: 3, b: 4 } as never);
+    session.submit(cmd('ROLL_DICE', 'p1'));
+
+    expect(session.state.lastRoll?.total).toBe(7);
+  });
+
+  it('n impose qu un seul lancer : le suivant redevient aléatoire', () => {
+    const session = joinedSession(4);
+    runSetup(session);
+    session.submitAsHost({ ...cmd('GM_SET_DICE', 'p1'), a: 6, b: 6 } as never);
+    session.submit(cmd('ROLL_DICE', 'p1'));
+    expect(session.state.lastRoll?.total).toBe(12);
+    expect(session.state.forcedRoll).toBeUndefined();
+  });
+
+  /**
+   * Un « déclencher maintenant » envoyé large enchaînait douze invasions
+   * d'affilée sur une piste de huit, et la table perdait autant de cités.
+   */
+  it('ne déclenche qu une invasion par appel, même sur un nombre absurde', () => {
+    const session = joinedSession(4);
+    runSetup(session);
+    const avant = session.state.barbarians.attacks;
+
+    session.submitAsHost({ ...cmd('GM_BARBARIANS', 'p1'), steps: 999 } as never);
+
+    expect(session.state.barbarians.attacks).toBe(avant + 1);
+  });
+
+  it('déclenche une invasion à la demande', () => {
+    const session = joinedSession(4);
+    runSetup(session);
+    const avant = session.state.barbarians.attacks;
+
+    const out = session.submitAsHost({
+      ...cmd('GM_BARBARIANS', 'p1'), steps: session.state.config.barbarians.trackLength,
+    } as never);
+
+    expect(out.result.ok).toBe(true);
+    expect(session.state.barbarians.attacks).toBe(avant + 1);
+  });
+
+  it('termine la partie et couronne qui on veut', () => {
+    const session = joinedSession(4);
+    runSetup(session);
+    session.submitAsHost(cmd('GM_END_GAME', 'p3') as never);
+
+    expect(session.state.winner).toBe('p3');
+    expect(session.state.phase).toBe('ended');
+  });
+
+  /** Truqué puis rejoué, à l'identique : sinon le journal ne vaut rien. */
+  it('journalise ses commandes comme les autres', () => {
+    const session = joinedSession(4);
+    runSetup(session);
+    const avant = session.commandLog().length;
+    session.submitAsHost({ ...cmd('GM_GRANT', 'p2'), resources: { wood: 3 } } as never);
+
+    expect(session.commandLog().length).toBe(avant + 1);
+    expect(session.commandLog().at(-1)?.type).toBe('GM_GRANT');
+  });
+});

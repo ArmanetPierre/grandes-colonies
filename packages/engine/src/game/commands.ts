@@ -63,7 +63,27 @@ export type Command =
   | (CommandBase & { readonly type: 'CREATE_TRADE'; readonly to?: PlayerId; readonly give: ResourceCounts; readonly receive: ResourceCounts })
   | (CommandBase & { readonly type: 'CANCEL_TRADE'; readonly offerId: string })
   | (CommandBase & { readonly type: 'ACCEPT_TRADE'; readonly offerId: string })
-  | (CommandBase & { readonly type: 'END_CYCLE' });
+  | (CommandBase & { readonly type: 'END_CYCLE' })
+  /*
+   * Commandes du mode maître de jeu (§22 du plan).
+   *
+   * Elles passent par le même pipeline que tout le reste, et c'est ce qui
+   * compte : appliquées directement à l'état, elles n'auraient pas été
+   * journalisées, et une partie rejouée aurait divergé sans que rien ne le
+   * signale. Le serveur les refuse à quiconque n'est pas l'hôte.
+   *
+   * `playerId` désigne ici la **cible** — l'hôte n'a pas de siège.
+   */
+  | (CommandBase & { readonly type: 'GM_GRANT'; readonly resources: ResourceCounts })
+  | (CommandBase & { readonly type: 'GM_TAKE'; readonly resources: ResourceCounts })
+  /** Force le prochain lancer. Deux dés, chacun de 1 à 6. */
+  | (CommandBase & { readonly type: 'GM_SET_DICE'; readonly a: number; readonly b: number })
+  /** Pousse la piste barbare, ou la déclenche d'un coup. */
+  | (CommandBase & { readonly type: 'GM_BARBARIANS'; readonly steps: number })
+  /** Téléporte un voleur. */
+  | (CommandBase & { readonly type: 'GM_MOVE_ROBBER'; readonly from?: HexId; readonly to: HexId })
+  /** Termine la partie sur-le-champ, en désignant un vainqueur. */
+  | (CommandBase & { readonly type: 'GM_END_GAME' });
 
 export type CommandType = Command['type'];
 

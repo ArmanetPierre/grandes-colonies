@@ -117,6 +117,12 @@ function execute(state: GameState, command: Command): CommandResult {
     case 'CANCEL_TRADE':           return cancelTrade(state, command.playerId, command.offerId);
     case 'ACCEPT_TRADE':           return acceptTrade(state, command.playerId, command.offerId);
     case 'END_CYCLE':              return endCycle(state, command.playerId);
+    case 'GM_GRANT':               return gmGrant(state, command.playerId, command.resources);
+    case 'GM_TAKE':                return gmTake(state, command.playerId, command.resources);
+    case 'GM_SET_DICE':            return gmSetDice(state, command.a, command.b);
+    case 'GM_BARBARIANS':          return gmBarbarians(state, command.steps);
+    case 'GM_MOVE_ROBBER':         return gmMoveRobber(state, command.from, command.to);
+    case 'GM_END_GAME':            return gmEndGame(state, command.playerId);
   }
 
   // Le typage garantit l'exhaustivité à la compilation, mais les commandes
@@ -215,7 +221,20 @@ function rollDice(state: GameState, playerId: string): CommandResult {
   if (state.phase !== 'production') return reject(state.phase === 'activeTurn' ? 'already-rolled' : 'wrong-phase');
   if (activePlayer(state).id !== playerId) return reject('not-your-turn');
 
-  const roll = state.rng.roll();
+  /*
+   * Un lancer imposé prime, et est consommé.
+   *
+   * Le générateur n'est **pas** consulté dans ce cas : le faire aurait fait
+   * dériver toute la suite de la partie d'un truquage à l'autre, alors que
+   * l'intérêt du mode maître de jeu est justement de reproduire une situation
+   * à l'identique.
+   */
+  const forced = state.forcedRoll;
+  const roll = forced === undefined
+    ? state.rng.roll()
+    : { a: forced.a, b: forced.b, total: forced.a + forced.b };
+  state.forcedRoll = undefined;
+
   state.lastRoll = roll;
   state.phase = 'activeTurn';
 
@@ -1359,6 +1378,131 @@ export function playerPoints(state: GameState, playerId: string): VictoryBreakdo
     majorExplorations: player.explorations,
     defenderTokens: player.barbarianDefences,
   }, state.config.victory);
+}
+
+// ── mode maître de jeu (§22) ───────────────────────────────────────────────
+
+/*
+ * Le panneau de l'hôte, pour le développement et les playtests.
+ *
+ * Le §22 le voulait « très tôt », et pour une raison précise : reproduire une
+ * situation de fin de partie demandait sinon de jouer quarante-cinq minutes
+ * pour l'atteindre. Un bug qui n'apparaît qu'à quinze points coûtait une
+ * soirée à chaque tentative.
+ *
+ * **Ces commandes ne vérifient ni la phase, ni le tour, ni les ressources.**
+ * C'est leur raison d'être. Le garde-fou n'est pas ici mais à l'entrée du
+ * serveur, qui ne les accepte que de l'hôte et jamais d'un joueur — un client
+ * bricolé qui en enverrait une se fait refuser avant d'atteindre le moteur.
+ *
+ * Elles passent en revanche par le pipeline ordinaire, donc par le journal :
+ * une partie truquée puis rejouée reproduit exactement les mêmes truquages.
+ * Les appliquer directement à l'état aurait fait diverger le rejeu en silence.
+ */
+
+function gmGrant(state: GameState, playerId: string, resources: ResourceCounts): CommandResult {
+  const player = playerOf(state, playerId);
+  if (!player) return reject('unknown-player');
+
+  player.hand = addCounts(player.hand, resources);
+  return { ok: true, events: [{ type: 'ResourcesGranted', player: playerId, resources }] };
+}
+
+function gmTake(state: GameState, playerId: string, resources: ResourceCounts): CommandResult {
+  const player = playerOf(state, playerId);
+  if (!player) return reject('unknown-player');
+
+  // Borné à ce que le joueur a : retirer trois bois à qui n'en a qu'un
+  // donnerait une main négative, que rien ailleurs ne sait représenter.
+  const taken: Record<string, number> = {};
+  for (const resource of RESOURCES) {
+    const asked = resources[resource] ?? 0;
+    if (asked > 0) taken[resource] = Math.min(asked, amount(player.hand, resource));
+  }
+  const effective = counts(taken);
+  player.hand = subtractCounts(player.hand, effective);
+  return {
+    ok: true,
+    events: [{ type: 'ResourcesDiscarded', player: playerId, resources: effective }],
+  };
+}
+
+/**
+ * Force le prochain lancer, sans le résoudre.
+ *
+ * On pose `lastRoll` plutôt que de déclencher la production : le maître de jeu
+ * qui veut un 7 veut voir la défausse et le voleur se dérouler normalement,
+ * et c'est `ROLL_DICE` qui sait faire tout cela.
+ */
+function gmSetDice(state: GameState, a: number, b: number): CommandResult {
+  const clamp = (n: number): number => Math.min(6, Math.max(1, Math.round(n)));
+  const da = clamp(a);
+  const db = clamp(b);
+  state.forcedRoll = { a: da, b: db };
+  return { ok: true, events: [] };
+}
+
+/**
+ * Pousse la piste barbare. Assez de pas et l'invasion se déclenche.
+ *
+ * Bornée à la longueur de la piste, donc à **une** invasion par appel. Sans
+ * cette borne, un « déclencher maintenant » envoyé un peu large enchaînait
+ * une douzaine d'invasions d'affilée — mesuré : quatre-vingt-dix-neuf pas sur
+ * une piste de huit en avaient produit douze, et la table perdait autant de
+ * cités d'un coup.
+ */
+function gmBarbarians(state: GameState, steps: number): CommandResult {
+  const config = state.config.barbarians;
+  const asked = Math.min(config.trackLength, Math.max(0, Math.round(steps)));
+  const events: DomainEvent[] = [];
+
+  for (let i = 0; i < asked; i++) {
+    state.barbarians.progress++;
+    events.push({
+      type: 'BarbariansAdvanced',
+      progress: state.barbarians.progress,
+      trackLength: config.trackLength,
+    });
+    if (state.barbarians.progress >= config.trackLength) events.push(...invade(state));
+  }
+  return { ok: true, events };
+}
+
+/** Téléporte un voleur, sans vol ni tour à respecter. */
+function gmMoveRobber(state: GameState, from: HexId | undefined, to: HexId): CommandResult {
+  if (state.board.terrainAt(to) === undefined) return reject('invalid-robber-move', to);
+
+  const source = from ?? state.board.robberPositions()[0];
+  if (source !== undefined) state.board.removeRobber(source);
+  state.board.placeRobber(to);
+  return { ok: true, events: [{ type: 'RobberMoved', player: 'gm', from: source, to }] };
+}
+
+/** Arrête la partie et couronne qui l'on veut. */
+function gmEndGame(state: GameState, playerId: string): CommandResult {
+  const player = playerOf(state, playerId);
+  if (!player) return reject('unknown-player');
+
+  state.winner = playerId;
+  state.phase = 'ended';
+  const breakdown = playerPoints(state, playerId);
+  return {
+    ok: true,
+    events: [
+      { type: 'GameWon', player: playerId, points: breakdown?.total ?? 0 },
+      // La partie est finie : les objectifs cessent d'être secrets, comme
+      // pour une victoire ordinaire.
+      ...state.players.flatMap((p) => {
+        const objective = activeObjective(p);
+        return objective === undefined ? [] : [{
+          type: 'ObjectiveRevealed' as const,
+          player: p.id,
+          objective,
+          complete: objectiveDone(state, p),
+        }];
+      }),
+    ],
+  };
 }
 
 // ── barbares ───────────────────────────────────────────────────────────────

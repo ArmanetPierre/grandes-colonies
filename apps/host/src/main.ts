@@ -293,6 +293,14 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
   const boardSize = Number.isFinite(terres) && terres > 0 ? terres : defaultLandCount(playerCount);
 
   const bots = new BotTable(port);
+  /*
+   * Compteur d'identifiants pour les commandes du maître de jeu.
+   *
+   * Un identifiant neuf à chaque fois, sans quoi la déduplication du moteur
+   * ignorerait la seconde : donner deux fois trois bois est une demande
+   * parfaitement légitime.
+   */
+  let gmCounter = 0;
 
   const server: GameServer = new GameServer({
     seed,
@@ -363,6 +371,26 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
             // siège vide de plus.
             if (done) bots.set(Math.min(bots.status.count + 1, server.settings.playerCount));
             sendJson(res, done ? 200 : 409, { done, bots: bots.status });
+          })
+          .catch(() => sendJson(res, 400, { error: 'requête illisible' }));
+        return true;
+      }
+      /*
+       * Le panneau du maître de jeu (§22).
+       *
+       * Il vit **sur le port de l'hôte**, et c'est tout le contrôle d'accès :
+       * les joueurs ne connaissent que le port du client et n'ont qu'un
+       * WebSocket, dont le chemin refuse les commandes `GM_`. Rien ici ne
+       * vérifie donc une identité — il n'y en a pas à vérifier.
+       */
+      if (req.url === '/api/gm' && req.method === 'POST') {
+        void readJson(req)
+          .then((body) => {
+            const outcome = server.hostCommand({
+              ...body,
+              actionId: `gm-${gmCounter++}`,
+            } as never);
+            sendJson(res, outcome.ok ? 200 : 409, outcome);
           })
           .catch(() => sendJson(res, 400, { error: 'requête illisible' }));
         return true;

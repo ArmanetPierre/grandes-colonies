@@ -641,6 +641,29 @@ export class GameServer {
     return true;
   }
 
+  /**
+   * Applique une commande de maître de jeu, et diffuse ce qu'elle a produit.
+   *
+   * Passe par `submitAsHost`, seul chemin qui accepte les `GM_` : celui des
+   * joueurs les refuse, quel que soit le client.
+   */
+  hostCommand(command: Command): { ok: boolean; reason?: string } {
+    let outcome;
+    try {
+      outcome = this.current.submitAsHost(command);
+    } catch (error) {
+      console.error('[serveur] commande maître de jeu sur exception', command.type, error);
+      return { ok: false, reason: error instanceof Error ? error.message : String(error) };
+    }
+
+    if (!outcome.result.ok) return { ok: false, reason: outcome.result.reason };
+
+    this.flushJournal();
+    if (outcome.events.length > 0) this.broadcastEvents(outcome.events);
+    this.broadcastAll();
+    return { ok: true };
+  }
+
   /** Sièges absents depuis assez longtemps pour qu'on propose un bot. */
   seatsEligibleForBot(): readonly string[] {
     return this.current.seatsEligibleForBot().map((seat) => seat.playerId);
