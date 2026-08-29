@@ -1,0 +1,498 @@
+/* ──────────────────────────────────────────────────────────────────────
+   Grand Colonies — feuille de style de la documentation.
+
+   Céramique attique. Le thème clair reprend les figures rouges sur argile ;
+   le sombre, les figures noires. Ce ne sont pas deux inversions d'un même
+   dessin mais les deux registres réels de la poterie grecque, et le site
+   bascule de l'un à l'autre comme un vase se retourne.
+
+   Une seule feuille pour toutes les pages. Le manuel imprimable
+   (regles.html) garde ses styles en propre : il doit pouvoir être envoyé
+   seul, sans son dossier.
+   ────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --argile:      #DFCFAC;
+  --engobe:      #E9DCBE;
+  --creme:       #F2E9D4;
+  --trait:       #C3AC80;
+  --encre:       #1B1310;
+  --encre-pale:  #5E4A38;
+  --terre:       #A63A17;
+  --noir-attique:#2E2621;
+  --or-antique:  #8A6420;
+
+  --bois:   #4A6B3A;
+  --brique: #A63A17;
+  --laine:  #8C9A86;
+  --ble:    #C8912B;
+  --minerai:#5A6470;
+  --metal:  #8A6420;
+  --poisson:#3E6C7A;
+
+  --fond:      var(--argile);
+  --panneau:   var(--engobe);
+  --releve:    var(--creme);
+  --bordure:   var(--trait);
+  --texte:     var(--encre);
+  --texte-pale:var(--encre-pale);
+  --accent:    var(--terre);
+  --contraste: var(--noir-attique);
+  --sur-accent:#F4E7CE;
+
+  --serif:   'Marcellus', 'Palatino Linotype', Georgia, serif;
+  --lettre:  'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --donnee:  'Inter', system-ui, -apple-system, sans-serif;
+
+  --colonne: 1240px;
+  --barre:   58px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fond:      #17120F;
+    --panneau:   #201A15;
+    --releve:    #2A221C;
+    --bordure:   #4A3B2C;
+    --texte:     #EFE2C6;
+    --texte-pale:#B49F7E;
+    --accent:    #D0632F;
+    --contraste: #E9DCBE;
+    --sur-accent:#1B1310;
+
+    --bois:   #7CA164;
+    --brique: #D0632F;
+    --laine:  #A9B79F;
+    --ble:    #E0AC4A;
+    --minerai:#8E99A8;
+    --metal:  #C9A227;
+    --poisson:#5E9DB0;
+  }
+}
+
+:root[data-theme="dark"] {
+  --fond:      #17120F;
+  --panneau:   #201A15;
+  --releve:    #2A221C;
+  --bordure:   #4A3B2C;
+  --texte:     #EFE2C6;
+  --texte-pale:#B49F7E;
+  --accent:    #D0632F;
+  --contraste: #E9DCBE;
+  --sur-accent:#1B1310;
+
+  --bois:   #7CA164;
+  --brique: #D0632F;
+  --laine:  #A9B79F;
+  --ble:    #E0AC4A;
+  --minerai:#8E99A8;
+  --metal:  #C9A227;
+  --poisson:#5E9DB0;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--barre) + 20px); }
+
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: var(--lettre);
+  font-size: 19px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── barre de tête ──────────────────────────────────────────────────── */
+.barre {
+  position: sticky; top: 0; z-index: 40;
+  height: var(--barre);
+  background: color-mix(in srgb, var(--panneau) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--bordure);
+}
+.barre-inner {
+  max-width: var(--colonne); margin: 0 auto; height: 100%;
+  padding: 0 26px; display: flex; align-items: center; gap: 18px;
+}
+.marque {
+  font-family: var(--serif); font-size: 1.12rem; letter-spacing: .01em;
+  color: var(--texte); text-decoration: none; white-space: nowrap;
+}
+.marque span { color: var(--accent); }
+.barre-espace { flex: 1; }
+.barre-lien {
+  font-family: var(--donnee); font-size: 12.5px; font-weight: 500;
+  color: var(--texte-pale); text-decoration: none; white-space: nowrap;
+}
+.barre-lien:hover { color: var(--texte); }
+.bascule {
+  font-family: var(--donnee); font-size: 11px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+  background: transparent; color: var(--texte-pale);
+  border: 1px solid var(--bordure); padding: 6px 11px; cursor: pointer;
+}
+.bascule:hover { color: var(--texte); border-color: var(--texte-pale); }
+.ouvre-sommaire { display: none; }
+
+/* ── bandeau de page ────────────────────────────────────────────────── */
+.bandeau { border-bottom: 1px solid var(--bordure); background: var(--panneau); }
+.bandeau-inner {
+  max-width: var(--colonne); margin: 0 auto; padding: 56px 26px 46px;
+  display: grid; gap: 20px;
+}
+.bandeau--haut .bandeau-inner { padding: 84px 26px 68px; }
+.eyebrow {
+  font-family: var(--donnee); font-size: 11px; font-weight: 600;
+  letter-spacing: .2em; text-transform: uppercase; color: var(--accent);
+}
+h1 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(2.3rem, 5.5vw, 3.9rem); line-height: 1.04;
+  letter-spacing: .01em; margin: 0; text-wrap: balance; max-width: 20ch;
+}
+.bandeau--haut h1 { font-size: clamp(2.8rem, 7vw, 4.8rem); }
+.chapeau {
+  font-size: clamp(1.1rem, 2.1vw, 1.36rem); line-height: 1.5;
+  max-width: 52ch; color: var(--texte); margin: 0;
+}
+.chapeau em { color: var(--accent); font-style: italic; }
+
+.faits { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 2px; }
+.fait {
+  font-family: var(--donnee); font-size: 12px; font-weight: 500;
+  padding: 7px 13px; background: var(--releve);
+  border: 1px solid var(--bordure); color: var(--texte-pale);
+}
+.fait b { color: var(--texte); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ── charpente ──────────────────────────────────────────────────────── */
+.page {
+  max-width: var(--colonne); margin: 0 auto; padding: 0 26px 100px;
+  display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 60px;
+  align-items: start;
+}
+main { padding-top: 46px; max-width: 70ch; }
+main.large { max-width: none; }
+
+/* ── sommaire du site ───────────────────────────────────────────────── */
+.sommaire {
+  position: sticky; top: calc(var(--barre) + 18px);
+  max-height: calc(100vh - var(--barre) - 40px); overflow-y: auto;
+  padding: 46px 0 30px;
+  font-family: var(--donnee); font-size: 13.5px;
+}
+.sommaire-groupe { margin-bottom: 22px; }
+.sommaire-titre {
+  font-size: 10.5px; font-weight: 600; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--texte-pale); margin-bottom: 9px;
+}
+.sommaire ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.sommaire a {
+  display: block; padding: 5px 10px; color: var(--texte-pale);
+  text-decoration: none; border-left: 2px solid transparent;
+  transition: color .14s ease, border-color .14s ease;
+}
+.sommaire a:hover { color: var(--texte); }
+.sommaire a[aria-current="page"] {
+  color: var(--accent); border-left-color: var(--accent);
+  background: var(--releve); font-weight: 600;
+}
+/* Les ancres de la page courante, dépliées sous son entrée. */
+.sommaire .ancres { margin: 2px 0 6px; padding-left: 10px; border-left: 1px solid var(--bordure); }
+.sommaire .ancres a { font-size: 12.5px; padding: 3px 10px; }
+.sommaire .ancres a[aria-current="true"] { color: var(--accent); }
+
+/* ── sections ───────────────────────────────────────────────────────── */
+section { padding: 42px 0; border-top: 1px solid var(--bordure); }
+section:first-of-type { border-top: none; padding-top: 6px; }
+
+h2 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(1.65rem, 3.4vw, 2.25rem); line-height: 1.14;
+  margin: 0 0 8px; text-wrap: balance;
+}
+h3 {
+  font-family: var(--donnee); font-weight: 600; font-size: 1rem;
+  letter-spacing: .01em; margin: 30px 0 8px;
+}
+h4 {
+  font-family: var(--donnee); font-weight: 600; font-size: .84rem;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--texte-pale);
+  margin: 24px 0 6px;
+}
+p { margin: 0 0 16px; }
+p:last-child { margin-bottom: 0; }
+strong { font-weight: 600; }
+em { font-style: italic; }
+hr { border: none; border-top: 1px solid var(--bordure); margin: 34px 0; }
+
+.intro { font-size: 1.1em; color: var(--texte-pale); margin-bottom: 22px; max-width: 56ch; }
+
+ul.liste, ol.liste { margin: 0 0 16px; padding-left: 1.2em; }
+ul.liste li, ol.liste li { margin-bottom: 7px; }
+ul.liste li::marker, ol.liste li::marker { color: var(--accent); }
+ul.liste ul { margin-top: 7px; }
+
+.lettrine::first-letter {
+  font-family: var(--serif); float: left; font-size: 3.4em; line-height: .82;
+  padding: .06em .1em 0 0; color: var(--accent);
+}
+
+/* ── encadrés ───────────────────────────────────────────────────────── */
+.note {
+  background: var(--panneau); border: 1px solid var(--bordure);
+  border-left: 3px solid var(--accent);
+  padding: 16px 20px; margin: 24px 0; font-size: .97em;
+}
+.note-titre {
+  font-family: var(--donnee); font-size: 10.5px; font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 6px;
+}
+.note--recit { border-left-color: var(--metal); font-family: var(--lettre); }
+.note--recit .note-titre { color: var(--metal); }
+.note--absent { border-left-color: var(--texte-pale); color: var(--texte-pale); }
+.note--absent .note-titre { color: var(--texte-pale); }
+.note--absent strong { color: var(--texte); }
+
+.citation {
+  margin: 30px 0; padding: 0 0 0 22px; border-left: 2px solid var(--accent);
+  font-family: var(--serif); font-size: 1.22rem; line-height: 1.42;
+  color: var(--texte);
+}
+.citation cite {
+  display: block; margin-top: 9px; font-family: var(--donnee);
+  font-size: 12px; font-style: normal; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--texte-pale);
+}
+
+/* ── étiquettes d'état ──────────────────────────────────────────────── */
+.badge {
+  display: inline-block; font-family: var(--donnee); font-size: 10px;
+  font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  padding: 3px 8px; border: 1px solid var(--bordure); color: var(--texte-pale);
+  vertical-align: middle; margin-left: 8px; white-space: nowrap;
+}
+.badge--jeu { color: var(--sur-accent); background: var(--accent); border-color: var(--accent); }
+.badge--projet { border-style: dashed; }
+
+/* ── tableaux ───────────────────────────────────────────────────────── */
+.tableau-cadre { overflow-x: auto; margin: 24px 0; }
+table { border-collapse: collapse; width: 100%; font-family: var(--donnee); font-size: 14px; }
+caption {
+  text-align: left; font-size: 10.5px; font-weight: 600; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--texte-pale); padding-bottom: 10px;
+}
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--bordure); vertical-align: top; }
+th {
+  font-weight: 600; font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--texte-pale);
+}
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.num { font-weight: 700; }
+tr.inerte td { color: var(--texte-pale); font-style: italic; }
+tbody tr:hover td { background: var(--panneau); }
+
+/* ── blocs de schéma ────────────────────────────────────────────────── */
+pre.schema {
+  background: var(--panneau); border: 1px solid var(--bordure);
+  padding: 18px 20px; margin: 24px 0; overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px; line-height: 1.5; color: var(--texte-pale);
+}
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .86em; background: var(--releve); border: 1px solid var(--bordure);
+  padding: 1px 5px;
+}
+pre.schema code { background: none; border: none; padding: 0; font-size: inherit; }
+
+/* ── grille de cartes de navigation ─────────────────────────────────── */
+.grille {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px; margin: 26px 0;
+}
+.tuile-lien {
+  display: grid; gap: 6px; align-content: start;
+  background: var(--panneau); border: 1px solid var(--bordure);
+  padding: 18px 20px 20px; text-decoration: none; color: var(--texte);
+  transition: border-color .14s ease, background .14s ease, transform .14s ease;
+}
+.tuile-lien:hover { border-color: var(--accent); background: var(--releve); transform: translateY(-1px); }
+.tuile-num {
+  font-family: var(--donnee); font-size: 10.5px; font-weight: 600;
+  letter-spacing: .16em; color: var(--accent);
+}
+.tuile-nom { font-family: var(--serif); font-size: 1.32rem; line-height: 1.15; }
+.tuile-texte { font-size: .93em; color: var(--texte-pale); line-height: 1.45; }
+
+/* ── terrains (images hexagonales) ──────────────────────────────────── */
+.terrains {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px 14px; margin: 30px 0;
+}
+.terrain { display: grid; gap: 4px; justify-items: center; text-align: center; }
+.hex {
+  width: 100%; aspect-ratio: 1 / 1.1547; display: block; object-fit: cover;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: var(--releve);
+}
+.terrain-nom { font-family: var(--donnee); font-size: 13px; font-weight: 600; margin-top: 6px; }
+.terrain-rend { font-size: .85em; color: var(--texte-pale); line-height: 1.35; }
+.terrain-rend b { font-weight: 600; color: var(--texte); }
+
+/* ── cartes du jeu (images) ─────────────────────────────────────────── */
+.jeu-cartes {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 18px 14px; margin: 30px 0;
+}
+.jeu-carte { display: grid; gap: 6px; }
+.jeu-carte img {
+  width: 100%; aspect-ratio: 2 / 3; object-fit: cover; display: block;
+  border: 1px solid var(--bordure); background: var(--releve);
+}
+.jeu-carte-nom { font-family: var(--serif); font-size: 1.1rem; color: var(--accent); }
+.jeu-carte-texte { font-size: .9em; color: var(--texte-pale); line-height: 1.42; }
+
+figure { margin: 30px 0; }
+figure img { width: 100%; display: block; border: 1px solid var(--bordure); }
+figcaption {
+  font-family: var(--donnee); font-size: 12px; color: var(--texte-pale);
+  margin-top: 9px; line-height: 1.45;
+}
+
+/* ── coûts de construction ──────────────────────────────────────────── */
+.constructions { display: grid; gap: 12px; margin: 26px 0; }
+.construction {
+  background: var(--panneau); border: 1px solid var(--bordure); padding: 15px 18px;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 18px;
+  align-items: baseline;
+}
+.construction-nom { font-family: var(--serif); font-size: 1.25rem; color: var(--accent); }
+.construction-gain {
+  font-family: var(--donnee); font-size: 12px; font-weight: 600;
+  color: var(--texte-pale); text-align: right; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.construction-texte { grid-column: 1 / -1; font-size: .95em; margin: 0; }
+.cout {
+  grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 12px;
+  padding-top: 10px; margin-top: 4px; border-top: 1px solid var(--bordure);
+}
+.piece {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--donnee); font-size: 13px; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.pastille {
+  width: 11px; height: 11px; flex: none; border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--texte) 22%, transparent);
+}
+.pastille[data-r="bois"]    { background: var(--bois); }
+.pastille[data-r="brique"]  { background: var(--brique); }
+.pastille[data-r="laine"]   { background: var(--laine); }
+.pastille[data-r="ble"]     { background: var(--ble); }
+.pastille[data-r="minerai"] { background: var(--minerai); }
+.pastille[data-r="or"]      { background: var(--metal); }
+.pastille[data-r="poisson"] { background: var(--poisson); }
+
+/* ── cycle ──────────────────────────────────────────────────────────── */
+.cycle { display: grid; gap: 10px; margin: 26px 0; }
+.temps {
+  display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 16px;
+  background: var(--panneau); border: 1px solid var(--bordure); padding: 15px 18px;
+}
+.temps-num { font-family: var(--serif); font-size: 1.9rem; line-height: 1; color: var(--accent); text-align: center; }
+.temps-nom { font-family: var(--donnee); font-size: 13px; font-weight: 600; letter-spacing: .04em; margin-bottom: 3px; }
+.temps-duree { font-family: var(--donnee); font-size: 11px; color: var(--texte-pale); font-variant-numeric: tabular-nums; }
+.temps p { font-size: .95em; margin: 6px 0 0; }
+
+/* ── fil de lecture (page précédente / suivante) ────────────────────── */
+.fil {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  margin: 56px 0 0; padding-top: 30px; border-top: 1px solid var(--bordure);
+}
+.fil a {
+  display: grid; gap: 3px; padding: 14px 18px; text-decoration: none;
+  border: 1px solid var(--bordure); background: var(--panneau); color: var(--texte);
+  transition: border-color .14s ease;
+}
+.fil a:hover { border-color: var(--accent); }
+.fil-sens { font-family: var(--donnee); font-size: 10.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--texte-pale); }
+.fil-nom { font-family: var(--serif); font-size: 1.15rem; }
+.fil a.suivant { text-align: right; }
+.fil a:only-child { grid-column: 2; }
+
+/* ── pied ───────────────────────────────────────────────────────────── */
+.pied { border-top: 1px solid var(--bordure); background: var(--panneau); font-family: var(--donnee); font-size: 13px; color: var(--texte-pale); }
+.pied-inner { max-width: var(--colonne); margin: 0 auto; padding: 32px 26px 44px; }
+.pied p { max-width: 64ch; }
+.pied strong { color: var(--texte); }
+
+/* ── écrans étroits ─────────────────────────────────────────────────── */
+@media (max-width: 940px) {
+  body { font-size: 18px; }
+  .page { grid-template-columns: 1fr; gap: 0; padding-bottom: 70px; }
+  main { padding-top: 30px; }
+  .ouvre-sommaire { display: inline-block; }
+  .sommaire {
+    position: static; max-height: none; overflow: visible;
+    padding: 26px 0 0; display: none;
+    border-bottom: 1px solid var(--bordure); margin-bottom: 6px;
+  }
+  .sommaire.ouvert { display: block; }
+  .fil { grid-template-columns: 1fr; }
+  .fil a.suivant { text-align: left; }
+  .fil a:only-child { grid-column: 1; }
+  .bandeau-inner, .bandeau--haut .bandeau-inner { padding: 40px 22px 34px; }
+  .barre-inner { padding: 0 18px; gap: 12px; }
+  .page { padding-left: 22px; padding-right: 22px; }
+}
+
+@media (max-width: 620px) {
+  /* La barre ne doit jamais imposer sa largeur à la page : le lien du
+     manuel figure aussi dans le sommaire, il cède la place le premier. */
+  .barre-lien { display: none; }
+  .marque { font-size: 1rem; }
+  .bascule { padding: 5px 9px; font-size: 10px; letter-spacing: .1em; }
+  .bandeau-inner, .bandeau--haut .bandeau-inner { padding: 32px 18px 28px; }
+  .page { padding-left: 18px; padding-right: 18px; }
+  .terrains { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .jeu-cartes { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+}
+
+@media print {
+  .barre, .sommaire, .fil, .bascule { display: none; }
+  .page { display: block; padding: 0; }
+  body { font-size: 12pt; background: #fff; color: #000; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+
+/* ── glossaire ──────────────────────────────────────────────────────── */
+.glossaire { margin: 26px 0; }
+.glossaire dt {
+  font-family: var(--donnee); font-weight: 600; font-size: .95rem;
+  color: var(--accent); margin-top: 22px;
+}
+.glossaire dd {
+  margin: 4px 0 0; padding-left: 0; font-size: .97em;
+}
+.glossaire dd + dt { border-top: 1px solid var(--bordure); padding-top: 20px; }
+.lettre-index {
+  font-family: var(--serif); font-size: 1.5rem; color: var(--texte-pale);
+  margin: 34px 0 0; padding-bottom: 4px; border-bottom: 1px solid var(--bordure);
+}
+
+/* Une tuile de grille non cliquable : même cadre, aucune promesse de lien. */
+.grille .tuile-lien:not(a) { cursor: default; }
+.grille .tuile-lien:not(a):hover {
+  border-color: var(--bordure); background: var(--panneau); transform: none;
+}

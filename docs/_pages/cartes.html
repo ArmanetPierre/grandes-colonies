@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Les cartes — Grand Colonies</title>
+<meta name="description" content="Les cinq cartes développement de Grand Colonies, leurs fenêtres de jeu, la composition du paquet, et les objectifs secrets.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--BARRE-->
+
+<header class="bandeau">
+  <div class="bandeau-inner">
+    <div class="eyebrow">Jouer · 5</div>
+    <h1>Les cartes</h1>
+    <p class="chapeau">
+      Soixante cartes développement, dont la moitié sont des chevaliers. Et
+      une tablette scellée que vous êtes seul à connaître :
+      <em>votre objectif secret</em>.
+    </p>
+    <div class="faits">
+      <span class="fait"><b>60</b> cartes dans le paquet</span>
+      <span class="fait"><b>1</b> par tour, jamais celui de l’achat</span>
+      <span class="fait">Objectif secret : <b>2</b> points</span>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+<!--NAV-->
+  <main>
+
+    <section id="acheter">
+      <h2>Acheter une carte</h2>
+      <p class="intro">
+        1 minerai, 1 laine, 1 blé — les mêmes ressources qu’une cité, en
+        moins grande quantité. On ne sait pas ce qu’on tire.
+      </p>
+      <div class="constructions">
+        <div class="construction">
+          <span class="construction-nom">Carte développement</span>
+          <span class="construction-gain">tirée au hasard</span>
+          <p class="construction-texte">
+            Le paquet est mélangé par le générateur de la partie : à graine
+            égale, la même partie tire les mêmes cartes dans le même ordre.
+          </p>
+          <div class="cout">
+            <span class="piece"><span class="pastille" data-r="minerai"></span>1 minerai</span>
+            <span class="piece"><span class="pastille" data-r="laine"></span>1 laine</span>
+            <span class="piece"><span class="pastille" data-r="ble"></span>1 blé</span>
+          </div>
+        </div>
+      </div>
+
+      <h3>Les deux règles qui valent pour toutes</h3>
+      <ul class="liste">
+        <li>
+          <strong>Une carte ne se joue jamais le tour de son achat.</strong>
+          Sans cette règle, on convertirait des ressources en chevalier au
+          moment précis où l’on en a besoin.
+        </li>
+        <li>
+          <strong>Une seule carte par tour.</strong> Sans elle, un joueur qui
+          a thésaurisé viderait sa main d’un coup, hors de toute réaction — et
+          à douze joueurs, personne n’aurait le temps de voir venir.
+        </li>
+      </ul>
+      <p>
+        <strong>Seul le joueur actif joue des cartes.</strong> L’associé
+        construit, achète et commerce avec la banque, mais ne joue pas de
+        cartes : c’était déjà la règle du chevalier, et l’étendre évite
+        d’avoir à arbitrer deux monopoles dans le même tour.
+      </p>
+    </section>
+
+    <section id="cinq-cartes">
+      <h2>Les cinq cartes</h2>
+
+      <div class="jeu-cartes">
+        <div class="jeu-carte">
+          <img src="../assets/generated/cards/card_dev_knight.jpg" alt="Un hoplite grec de profil, casque corinthien et bouclier rond">
+          <span class="jeu-carte-nom">Chevalier</span>
+          <span class="jeu-carte-texte">
+            <strong>30 cartes sur 60.</strong> Déplace l’Errant et vous laisse
+            dépouiller un voisin qui a bâti sur l’hexagone choisi. Trois
+            chevaliers joués vous donnent la <strong>plus grande puissance
+            militaire</strong> : 2 points, jusqu’à ce qu’on vous dépasse.
+          </span>
+        </div>
+        <div class="jeu-carte">
+          <img src="../assets/generated/cards/card_dev_road.jpg" alt="Une route pavée antique serpentant entre deux collines couvertes d’oliviers">
+          <span class="jeu-carte-nom">Construction de routes</span>
+          <span class="jeu-carte-texte">
+            <strong>8 cartes.</strong> Une ou deux routes gratuites. Deux si
+            vous avez la place ; une seule suffit si vous êtes enfermé — sinon
+            la carte resterait morte en main.
+          </span>
+        </div>
+        <div class="jeu-carte">
+          <img src="../assets/generated/cards/card_dev_invention.jpg" alt="Un établi d’artisan grec, plans déroulés, compas et ciseaux de bronze">
+          <span class="jeu-carte-nom">Invention</span>
+          <span class="jeu-carte-texte">
+            <strong>8 cartes.</strong> Deux ressources de votre choix, prises
+            à la banque — dans la limite de son stock, qui est fini.
+          </span>
+        </div>
+        <div class="jeu-carte">
+          <img src="../assets/generated/cards/card_dev_monopoly.jpg" alt="L’intérieur d’un entrepôt portuaire grec, rangées d’amphores identiques">
+          <span class="jeu-carte-nom">Monopole</span>
+          <span class="jeu-carte-texte">
+            <strong>7 cartes.</strong> Vous nommez une ressource : tous les
+            autres joueurs vous cèdent la totalité de ce qu’ils en ont. À
+            douze, c’est dévastateur.
+          </span>
+        </div>
+        <div class="jeu-carte">
+          <img src="../assets/generated/cards/card_dev_freebuild.jpg" alt="Un temple de marbre en construction, échafaudages de bois, tambours de colonnes au sol">
+          <span class="jeu-carte-nom">Bâtisseur</span>
+          <span class="jeu-carte-texte">
+            <strong>7 cartes.</strong> Une construction offerte, au choix :
+            route, colonie ou cité. Seul le coût disparaît — les règles de
+            placement, les pièces disponibles et les emplacements contestés
+            s’appliquent normalement.
+          </span>
+        </div>
+      </div>
+
+      <h3>Quand chaque carte peut être jouée</h3>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Fenêtres de jeu</caption>
+          <thead><tr><th>Carte</th><th class="num">Exemplaires</th><th>Fenêtre</th></tr></thead>
+          <tbody>
+            <tr><td>Chevalier</td><td class="num">30</td><td><strong>Production ou tour actif</strong></td></tr>
+            <tr><td>Construction de routes</td><td class="num">8</td><td>Tour actif</td></tr>
+            <tr><td>Invention</td><td class="num">8</td><td>Tour actif</td></tr>
+            <tr><td>Monopole</td><td class="num">7</td><td>Tour actif</td></tr>
+            <tr><td>Bâtisseur</td><td class="num">7</td><td>Tour actif</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Le chevalier garde une fenêtre plus large parce qu’il faut pouvoir
+        écarter l’Errant <em>avant</em> de lancer les dés : c’est tout
+        l’intérêt de le garder en main quand il campe sur votre meilleur
+        hexagone.
+      </p>
+      <div class="note">
+        <div class="note-titre">Pourquoi la moitié du paquet est militaire</div>
+        <p>
+          Trente chevaliers sur soixante, contre quatorze sur vingt-cinq au
+          Catan classique : ils servent deux fois — pour la puissance
+          militaire, et pour déplacer l’Errant, qui à douze joueurs bloque
+          plus de monde et plus souvent.
+        </p>
+      </div>
+
+      <h3>Précisions qui comptent</h3>
+      <ul class="liste">
+        <li><strong>Construction de routes</strong> valide les deux emplacements dans l’ordre donné, car la seconde route s’appuie souvent sur la première. Si la seconde est illégale, <em>aucune des deux</em> n’est posée.</li>
+        <li><strong>Invention</strong> respecte le stock de la banque : si elle n’a plus de brique, vous n’en obtenez pas.</li>
+        <li><strong>Bâtisseur</strong> offre la <em>combinaison de ressources</em> d’une construction, et non une construction supplémentaire. Ce chiffrage le met à parité avec Construction de routes — deux routes, soit quatre ressources — tout en laissant le choix.</li>
+      </ul>
+      <div class="note note--absent">
+        <div class="note-titre">Les cartes politiques</div>
+        <p>
+          Le concept d’origine prévoit un sixième type de carte : déplacer un
+          marché, modifier un port, forcer une négociation, réduire
+          l’Influence d’un joueur. Elles ne sont pas dans le paquet — la
+          plupart de leurs effets supposent des systèmes qui n’existent pas
+          encore. Voir <a href="horizon.html">L’horizon</a>.
+        </p>
+      </div>
+    </section>
+
+    <section id="objectifs">
+      <h2>L’objectif secret</h2>
+      <p class="intro">
+        Deux vous sont proposés au début de la partie. Vous en gardez un.
+        Personne ne saura lequel avant la fin.
+      </p>
+      <p>
+        Rempli, il vaut <strong>2 points</strong> — l’équivalent d’une cité,
+        sans ressources ni emplacement. C’est une information strictement
+        privée : elle n’est jamais envoyée aux autres écrans, et n’apparaît
+        qu’à la révélation finale.
+      </p>
+
+      <div class="jeu-cartes">
+        <div class="jeu-carte">
+          <img src="../assets/generated/cards/card_obj_architect.jpg" alt="Une cité grecque en croissance, temples de marbre et toits de tuiles en construction">
+          <span class="jeu-carte-nom">Architecte</span>
+          <span class="jeu-carte-texte">Posséder 8 bâtiments.</span>
+        </div>
+        <div class="jeu-carte">
+          <img src="../assets/generated/cards/card_obj_warlord.jpg" alt="Un étendard militaire grec planté sur un promontoire rocheux au-dessus de la mer">
+          <span class="jeu-carte-nom">Seigneur militaire</span>
+          <span class="jeu-carte-texte">Jouer 3 chevaliers.</span>
+        </div>
+        <div class="jeu-carte">
+          <img src="../assets/generated/cards/card_back_objective.jpg" alt="Dos de carte ornemental, bleu égéen profond et motif radial de vagues">
+          <span class="jeu-carte-nom">Et trois autres</span>
+          <span class="jeu-carte-texte">
+            Bâtisseur de cités, Colonisateur, Grand bâtisseur — le dos qu’en
+            voient vos adversaires pendant toute la partie.
+          </span>
+        </div>
+      </div>
+
+      <div class="tableau-cadre">
+        <table>
+          <caption>Les objectifs distribuables</caption>
+          <thead><tr><th>Objectif</th><th>Condition</th></tr></thead>
+          <tbody>
+            <tr><td>Architecte</td><td>Posséder 8 bâtiments</td></tr>
+            <tr><td>Bâtisseur de cités</td><td>Posséder 4 cités</td></tr>
+            <tr><td>Colonisateur</td><td>Posséder 5 colonies en même temps</td></tr>
+            <tr><td>Grand bâtisseur</td><td>Poser 12 routes</td></tr>
+            <tr><td>Seigneur militaire</td><td>Jouer 3 chevaliers</td></tr>
+            <tr class="inerte"><td>Explorateur</td><td>Découvrir 5 territoires — <em>indisponible</em></td></tr>
+            <tr class="inerte"><td>Magnat</td><td>Accumuler 12 or — <em>indisponible</em></td></tr>
+            <tr class="inerte"><td>Diplomate</td><td>Honorer 3 contrats — <em>indisponible</em></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Les trois derniers sont déclarés mais jamais distribués : leur système
+        n’existe pas encore, et tirer une carte impossible à remplir serait
+        pire que de ne pas l’avoir. Ils sont conservés plutôt que retirés —
+        le jour où l’exploration, l’or et les contrats arriveront, il suffira
+        de les rendre disponibles.
+      </p>
+      <div class="note">
+        <div class="note-titre">Ce que ça change à la table</div>
+        <p>
+          L’objectif oriente toute votre partie, et il explique bien des
+          comportements. Si un voisin s’obstine deux heures durant à poser des
+          routes qui ne mènent nulle part, vous saurez pourquoi à la
+          révélation finale.
+        </p>
+      </div>
+      <div class="note note--recit">
+        <div class="note-titre">Ce qu’en dit le récit</div>
+        <p>
+          La veille de l’embarquement, chaque maison scelle un vœu sur une
+          tablette d’argile. Le prêtre en propose deux ; on n’en emporte qu’un,
+          et on ne le brise qu’au dernier jour —
+          <a href="monde.html#maisons">Les Douze Maisons</a>.
+        </p>
+      </div>
+    </section>
+
+<!--FIL-->
+  </main>
+</div>
+
+<!--PIED-->
+<script src="doc.js"></script>
+</body>
+</html>

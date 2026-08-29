@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sous le capot — Grand Colonies</title>
+<meta name="description" content="Comment le jeu est fabriqué : serveur arbitre, déterminisme, dés physiques honnêtes, plateau en trois dimensions, bots qui ne trichent pas.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--BARRE-->
+
+<header class="bandeau">
+  <div class="bandeau-inner">
+    <div class="eyebrow">Coulisses · 1</div>
+    <h1>Sous le capot</h1>
+    <p class="chapeau">
+      Six paquets, un moteur qui ignore le réseau, et des dés qui tombent pour
+      de bon. <em>Le client ne tire jamais rien</em> : l’image ne peut pas
+      mentir sur l’état du jeu.
+    </p>
+  </div>
+</header>
+
+<div class="page">
+<!--NAV-->
+  <main>
+
+    <section id="paquets">
+      <h2>Comment le jeu est découpé</h2>
+      <p class="intro">
+        Une seule règle d’architecture : le moteur ne connaît ni le réseau, ni
+        le navigateur, ni le temps.
+      </p>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Les six paquets</caption>
+          <thead><tr><th>Paquet</th><th>Rôle</th></tr></thead>
+          <tbody>
+            <tr><td><code>packages/engine</code></td><td>Les règles. Ne dépend ni du réseau, ni du navigateur.</td></tr>
+            <tr><td><code>packages/protocol</code></td><td>Les vues publique et privée, et la sérialisation des événements.</td></tr>
+            <tr><td><code>packages/server</code></td><td>Sièges, chronomètres, reconnexion, transport WebSocket.</td></tr>
+            <tr><td><code>packages/client</code></td><td>L’écran des joueurs (React), et le plateau en 3D.</td></tr>
+            <tr><td><code>packages/sim</code></td><td>Bots et simulation, pour mesurer l’équilibrage.</td></tr>
+            <tr><td><code>apps/host</code></td><td>L’écran de l’hôte : QR code, réglages, démarrage.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Le moteur <strong>ignore le temps</strong> : les durées voyagent avec
+        la configuration, mais c’est le serveur qui, à l’expiration d’un
+        chronomètre, émet la commande correspondant à l’état sélectionné par
+        le client. Cette séparation est ce qui rend une partie rejouable —
+        un moteur qui lirait l’horloge ne le serait pas.
+      </p>
+    </section>
+
+    <section id="autorite">
+      <h2>Le serveur est seul juge</h2>
+      <p class="intro">
+        L’interface ne devine rien : les actions disponibles sont calculées
+        côté serveur et envoyées au client.
+      </p>
+      <p>
+        Un bouton grisé ne l’est pas parce que le client a estimé que vous ne
+        pouviez pas construire : il l’est parce que le serveur l’a dit, et il
+        dit aussi <em>pourquoi</em> — pas assez de brique, ce n’est pas ton
+        tour, emplacement contesté. C’est ce qui permet d’apprendre les règles
+        sans que quelqu’un les récite toute la soirée.
+      </p>
+      <p>
+        Pendant la phase simultanée, le serveur reçoit deux flux d’actions en
+        parallèle — le joueur actif et son associé — plus les annonces de tous
+        les autres. Il les range dans une <strong>file ordonnée</strong> avant
+        de les soumettre au moteur, qui ne voit donc jamais de vraie
+        concurrence. C’est ce qui permet à la règle « la plus ancienne annonce
+        l’emporte » d’avoir un sens : l’ordre d’arrivée au serveur fait foi, et
+        il est total.
+      </p>
+      <p>
+        L’acceptation d’un échange est <strong>atomique</strong> : inventaire
+        de A, inventaire de B, phase, validité de l’offre, puis les deux
+        transferts. Si l’un des inventaires a changé entre-temps, l’offre
+        devient caduque plutôt que de s’exécuter à moitié.
+      </p>
+    </section>
+
+    <section id="determinisme">
+      <h2>Le déterminisme</h2>
+      <p class="intro">
+        À graine et commandes égales, la même partie se rejoue à l’identique —
+        déconnexions comprises.
+      </p>
+      <p>
+        Tout ce qui relève du hasard passe par un générateur ensemencé : le
+        plateau, la répartition des jetons, le mélange du paquet, les dés, le
+        vol du voleur. Les inventaires ne sont jamais modifiés en place mais
+        recalculés par fonctions pures. Résultat : un journal de commandes
+        suffit à reconstruire un état.
+      </p>
+      <p>
+        Cela vaut aussi pour ce que le jeu décide à la place d’un absent. Un
+        tour joué par défaut, une défausse validée d’office, un voleur posé sur
+        un hexagone sans construction : tous ces choix sont déterministes —
+        sans quoi une partie comportant une déconnexion cesserait d’être
+        rejouable, et un bug cesserait d’être reproductible.
+      </p>
+      <div class="citation">
+        « En cas de désaccord entre ce document et le moteur, c’est le moteur
+        qui a tort. »
+        <cite>Préambule du contrat de règles</cite>
+      </div>
+    </section>
+
+    <section id="des">
+      <h2>Les dés tombent pour de bon</h2>
+      <p class="intro">
+        Un petit solveur de corps rigide, et une astuce vieille comme la
+        géométrie du cube.
+      </p>
+      <p>
+        Le lancer se joue sur le plateau : les deux dés tombent du ciel au
+        centre de la carte, roulent, se heurtent, s’arrêtent, et le nombre sorti
+        monte au-dessus d’eux en grand, le temps qu’on le lise depuis l’autre
+        bout de la pièce. Ce n’est pas une animation truquée :
+        <code>board3d/physique.ts</code> est un vrai solveur — pesanteur,
+        contacts par les huit coins, rebond, frottement de Coulomb.
+      </p>
+
+      <h3>Comment un dé qui tombe librement arrive-t-il sur le nombre tiré par le serveur ?</h3>
+      <p>
+        Par les <strong>vingt-quatre symétries du cube</strong>. On simule une
+        chute honnête sans savoir ce qu’elle donnera, on regarde quelle face
+        s’est arrêtée en haut, puis on fait tourner la <em>peinture</em> du
+        dé — pas sa trajectoire — pour que le nombre voulu soit celui qui
+        regarde le ciel.
+      </p>
+      <p>
+        Mêmes chocs, mêmes rebonds, même arrêt : le dé n’a pas été dévié d’un
+        millimètre, il a été repeint. <strong>Le client ne tire jamais
+        rien</strong> ; le moteur reste seul juge, et l’image ne peut pas
+        mentir sur l’état du jeu.
+      </p>
+      <p>
+        Le lancer entier est calculé au lâcher, en une fraction de
+        milliseconde, puis rejoué image par image — ce qui permet de connaître
+        la face avant de l’afficher, de savoir où poser le total, et de ne rien
+        dérégler quand une image se perd. Le calcul n’emploie que les quatre
+        opérations et une racine carrée, exactes au bit près : à graine égale —
+        cycle, joueur actif, deux nombres — <strong>les douze écrans calculent
+        le même lancer</strong>, ce qui est la moitié de l’intérêt de le montrer
+        sur la table.
+      </p>
+      <p>
+        Le reste de l’interface se règle sur lui : le bandeau ne dit le total
+        qu’une fois les dés posés, les jetons ne sautent qu’après, et la
+        défausse d’un sept attend son tour.
+      </p>
+    </section>
+
+    <section id="plateau3d">
+      <h2>Le plateau en trois dimensions</h2>
+      <p class="intro">
+        Cinquante hexagones et les constructions de douze joueurs, à soixante
+        images par seconde sur un téléphone d’entrée de gamme.
+      </p>
+      <p>
+        Les tuiles sont des prismes hexagonaux dont la surface est sculptée —
+        la montagne a un pic, la colline une croupe, le champ ondule à peine —
+        la mer est une nappe animée, et les pièces sont des volumes. Le relief
+        est décrit terrain par terrain dans <code>board3d/relief.ts</code>,
+        sous une contrainte qui gouverne tout le fichier :
+        <strong>le bord d’une tuile est plat et presque au même niveau que ses
+        voisines</strong>, parce que les routes courent sur les arêtes et les
+        colonies sur les sommets. Tout le volume est au centre.
+      </p>
+      <p>
+        Tout est instancié : une partie à douze tient en une trentaine
+        d’appels de dessin. Un doigt déplace la carte, deux doigts zooment et
+        la font pivoter, un tap construit.
+      </p>
+
+      <h3>Ce qui bouge répond à une question</h3>
+      <ul class="liste">
+        <li>
+          Une pièce posée <strong>tombe du ciel</strong> et soulève un peu de
+          poussière : à douze joueurs, où l’on bâtit hors de son tour, une
+          route apparue sans bruit n’était pas remarquée.
+        </li>
+        <li>
+          Un hexagone qui produit <strong>fait sauter son jeton</strong>, et
+          les cartes gagnées <strong>volent jusqu’à leur pile</strong> dans la
+          barre du bas : le montant vient du serveur, le trajet dit d’où il
+          vient.
+        </li>
+      </ul>
+      <p>
+        Les courbes sont réunies dans <code>board3d/chute.ts</code>, et toutes
+        se taisent sous <code>prefers-reduced-motion</code>.
+      </p>
+    </section>
+
+    <section id="bots">
+      <h2>Les bots</h2>
+      <p class="intro">
+        Ils passent par le même WebSocket que les joueurs et ne voient que ce
+        qu’un joueur voit.
+      </p>
+      <p>
+        <strong>Ils ne peuvent pas tricher</strong> : ils reçoivent la vue
+        publique et leur vue privée, comme tout le monde, et n’ont aucun accès
+        à l’état du moteur. Ils construisent par ordre de valeur en points et
+        convertissent leur surplus, mais ne planifient pas et ne marchandent
+        pas.
+      </p>
+      <p>
+        Un humain les bat sans peine, et c’est le but : ils sont là pour que la
+        partie tourne quand un siège est vide, pas pour la gagner. Ils servent
+        aussi à mesurer — des milliers de parties simulées, dont sont sortis
+        la dotation de vingt routes, la part de trois quarts de l’île centrale,
+        et les bornes du marché.
+      </p>
+      <pre class="schema"><code>npx tsx scripts/marche.ts   # mesure le marché contre un taux figé
+npx tsx scripts/ports.ts    # mesure les ports à contrat contre une côte sans eux
+npx tsx scripts/echelles.ts # mesure l'effet de la taille du plateau</code></pre>
+    </section>
+
+    <section id="images">
+      <h2>Les images</h2>
+      <p class="intro">
+        Grèce égéenne, rendu 3D stylisé. Et quatre règles apprises à la dure.
+      </p>
+      <ol class="liste">
+        <li>
+          <strong>Ne jamais demander une forme hexagonale.</strong> Aucun
+          modèle ne produit une géométrie assez précise pour que des tuiles se
+          juxtaposent au pixel près. On génère des images
+          <em>carrées</em> de terrain, découpées en hexagone par un masque
+          côté client — c’est d’ailleurs ce que fait cette page.
+        </li>
+        <li>
+          <strong>Ne jamais demander de texte.</strong> Jetons 2–12, ratios de
+          ports, noms de cartes : tout est composé en typographie dans le code.
+        </li>
+        <li>
+          <strong>Une couleur dominante franche par tuile.</strong> C’est la
+          couleur, et elle seule, qui permet de reconnaître un terrain sur un
+          plateau de cinquante hexagones dézoomé.
+        </li>
+        <li>
+          <strong>Ne jamais générer une tuile seule.</strong> L’harmonie est
+          une propriété <em>relationnelle</em> : dix tuiles décrites séparément
+          sont dix images qui ne se sont jamais vues, et elles dérivent. Une
+          <strong>planche de série</strong> montrant les dix terrains côte à
+          côte est générée d’abord, validée à l’œil, puis jointe en référence à
+          chaque génération.
+        </li>
+      </ol>
+      <p>
+        Contraintes de lisibilité, fonctionnelles et non esthétiques : centre
+        calme — il accueille un jeton opaque —, bords calmes — les routes y
+        passent —, composition plein cadre, et une mer qui doit être la plus
+        discrète de toutes puisqu’elle est la tuile la plus répétée du plateau.
+      </p>
+    </section>
+
+    <section id="documents">
+      <h2>Où vivent les décisions</h2>
+      <p class="intro">
+        Trois documents font autorité, dans cet ordre.
+      </p>
+      <ul class="liste">
+        <li>
+          <a href="../RULES_CONTRACT.md"><strong>RULES_CONTRACT.md</strong></a> —
+          les règles exactes des mécaniques concurrentes, avec leur
+          justification. Il fait autorité sur le code : en cas de désaccord,
+          c’est le moteur qui a tort.
+        </li>
+        <li>
+          <a href="../Catan_Grand_Colonies_8-12_joueurs.md"><strong>Le game design</strong></a> —
+          le concept d’origine, qui décrit des <em>intentions</em>, pas des cas
+          limites. C’est de là que viennent les numéros de paragraphe cités
+          partout dans le code.
+        </li>
+        <li>
+          <a href="../SIMULATION_FINDINGS.md"><strong>SIMULATION_FINDINGS.md</strong></a> —
+          ce que les mesures ont montré, et ce qui a été changé en
+          conséquence.
+        </li>
+      </ul>
+      <p>
+        Cette documentation-ci est écrite d’après ces trois-là. Quand elle dit
+        qu’une règle est en jeu, c’est qu’elle l’est dans le moteur ;
+        quand elle dit qu’une mécanique n’existe pas encore, c’est qu’elle
+        figure au concept sans figurer au code — voir
+        <a href="horizon.html">L’horizon</a>.
+      </p>
+    </section>
+
+<!--FIL-->
+  </main>
+</div>
+
+<!--PIED-->
+<script src="doc.js"></script>
+</body>
+</html>

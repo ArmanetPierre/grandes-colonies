@@ -66,8 +66,12 @@ il est sur le point de bouger.
 Un joueur qui rafraîchit sa page **retrouve son siège**. Un joueur absent voit
 son tour joué au minimum plutôt que de bloquer la table.
 
-**Les règles complètes, pour les joueurs :** [docs/regles.html](docs/regles.html)
-— à ouvrir dans un navigateur, ou à envoyer à tes invités avant la soirée.
+**La documentation :** [docs/index.html](docs/index.html) — quinze pages qui
+expliquent le monde, les règles et les mécanismes du jeu. À ouvrir dans un
+navigateur, sans rien lancer.
+
+**Les règles seules, pour les joueurs :** [docs/regles.html](docs/regles.html)
+— le manuel en une page, à envoyer à tes invités avant la soirée.
 
 Les décisions prises là où le jeu d'origine était ambigu sont consignées dans
 [RULES_CONTRACT.md](RULES_CONTRACT.md), qui fait foi sur le code.
@@ -98,6 +102,8 @@ lsof -ti:2567 -ti:5173 | xargs kill -9
 npm test          # 480 tests
 npm run typecheck # les six paquets
 npm run assets    # met les images générées à la portée du client
+
+node docs/tisser.mjs        # réassemble la documentation depuis docs/_pages/
 
 npx tsx scripts/marche.ts   # mesure le marché contre un taux figé
 npx tsx scripts/ports.ts    # mesure les ports à contrat contre une côte sans eux

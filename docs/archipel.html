@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L’archipel — Grand Colonies</title>
+<meta name="description" content="Le plateau de Grand Colonies : île centrale, îles secondaires, mer, jetons numérotés, ports, voies maritimes et exploration majeure.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="barre">
+  <div class="barre-inner">
+    <a class="marque" href="index.html">Grand <span>Colonies</span></a>
+    <button class="bascule ouvre-sommaire" type="button" aria-expanded="false">Sommaire</button>
+    <div class="barre-espace"></div>
+    <a class="barre-lien" href="regles.html">Manuel en une page</a>
+    <button class="bascule bascule-registre" type="button">Registre</button>
+  </div>
+</header>
+
+<header class="bandeau">
+  <div class="bandeau-inner">
+    <div class="eyebrow">Le monde · 2</div>
+    <h1>L’archipel</h1>
+    <p class="chapeau">
+      Une grande île où tout le monde débarque, deux ou trois terres autour
+      qu’on ne rejoint qu’à la voile. <em>La place manquera avant la fin</em>,
+      et c’est prévu.
+    </p>
+    <div class="faits">
+      <span class="fait"><b>44 à 52</b> hexagones de terre</span>
+      <span class="fait"><b>3</b> îles à dix joueurs, <b>4</b> à douze</span>
+      <span class="fait"><b>¾</b> des terres au centre</span>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+<nav class="sommaire" aria-label="Sommaire de la documentation">
+    <div class="sommaire-groupe">
+      <ul>
+        <li><a href="index.html">Accueil</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Le monde</div>
+      <ul>
+        <li><a href="monde.html">Le récit</a></li>
+        <li><a href="archipel.html" aria-current="page">L’archipel</a>
+          <ul class="ancres">
+            <li><a href="#forme">La forme du plateau</a></li>
+            <li><a href="#jetons">Les jetons numérotés</a></li>
+            <li><a href="#mer">La mer, et comment on la franchit</a></li>
+            <li><a href="#exploration">L’exploration majeure</a></li>
+            <li><a href="#ports">Les ports sur la côte</a></li>
+          </ul></li>
+        <li><a href="terres.html">Les terres</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Jouer</div>
+      <ul>
+        <li><a href="premiers-pas.html">Premiers pas</a></li>
+        <li><a href="cycle.html">Le cycle</a></li>
+        <li><a href="construction.html">Bâtir</a></li>
+        <li><a href="commerce.html">Commercer</a></li>
+        <li><a href="cartes.html">Les cartes</a></li>
+        <li><a href="voleur.html">Le sept et l’Errant</a></li>
+        <li><a href="victoire.html">Gagner</a></li>
+        <li><a href="variantes.html">Variantes</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Coulisses</div>
+      <ul>
+        <li><a href="mecanismes.html">Sous le capot</a></li>
+        <li><a href="horizon.html">L’horizon</a></li>
+        <li><a href="glossaire.html">Glossaire</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">À emporter</div>
+      <ul>
+        <li><a href="regles.html">Manuel en une page</a></li>
+      </ul>
+    </div>
+  </nav>
+  <main>
+
+    <section id="forme">
+      <h2>La forme du plateau</h2>
+      <p class="intro">
+        Le plateau n’est pas un disque de terre entouré d’eau : c’est un
+        semis d’îles séparées par de la haute mer.
+      </p>
+      <p>
+        Une <strong>île centrale</strong> porte les trois quarts des terres.
+        Autour d’elle, <strong>deux îles secondaires</strong> — trois à partir
+        de onze joueurs — se partagent le reste. Chaque île est séparée des
+        autres par <strong>au moins un hexagone de mer</strong>, et cette
+        séparation fait tout le jeu : sans elle, la voie maritime serait un
+        raccourci facultatif ; avec elle, c’est le seul chemin.
+      </p>
+      <pre class="schema"><code>              ~ ~ ~ ~ ~ ~ ~ ~
+        ~ ~                     ~ ~
+      ~        ( terre sans nom )      ~
+    ~                                    ~
+   ~            ┌──────────────┐          ~
+   ~            │              │          ~
+   ~   ( terre  │    MÉSÉA     │          ~
+   ~   sans nom)│  île du milieu│  ~ ~     ~
+   ~            │   ¾ des terres│          ~
+   ~            └──────────────┘   (terre  ~
+    ~                              sans nom)
+      ~                                  ~
+        ~ ~                          ~ ~
+              ~ ~ ~ ~ ~ ~ ~ ~ ~ ~</code></pre>
+      <p>
+        La <strong>mise en place se fait toujours sur l’île centrale</strong>.
+        Commencer sur une île secondaire donnerait un point d’exploration
+        gratuit et priverait la partie de la course qui en fait l’intérêt.
+      </p>
+
+      <h3>Combien de terres</h3>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Dimensionnement du plateau</caption>
+          <thead>
+            <tr><th>Joueurs</th><th class="num">Terres</th><th class="num">Îles secondaires</th><th class="num">Déserts</th><th class="num">Tuiles d’or</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>8 à 9</td><td class="num">44</td><td class="num">2</td><td class="num">3</td><td class="num">2</td></tr>
+            <tr><td>10</td><td class="num">44</td><td class="num">2</td><td class="num">3</td><td class="num">3</td></tr>
+            <tr><td>11</td><td class="num">44</td><td class="num">3</td><td class="num">4</td><td class="num">3</td></tr>
+            <tr><td>12</td><td class="num">48</td><td class="num">3</td><td class="num">4</td><td class="num">3</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        En dessous de huit joueurs, le plateau XXL n’a pas de sens : quarante-quatre
+        hexagones pour quatre personnes dispersent tellement les colonies que
+        chacun ne touche que six tuiles et ne produit presque jamais. Le jeu
+        sert alors le plateau classique de dix-neuf tuiles.
+      </p>
+      <div class="note">
+        <div class="note-titre">Deux formes de plateau</div>
+        <p>
+          L’<strong>archipel</strong> est le plateau par défaut. Le
+          <strong>disque</strong> — une seule masse de terre, pas de
+          traversée — donne une soirée nettement plus courte : environ
+          2 h 20 à douze joueurs, contre 3 h 30 sur l’archipel. L’hôte le
+          choisit au lancement avec <code>BOARD=disque</code>.
+        </p>
+      </div>
+      <p>
+        L’hôte peut aussi demander un plateau plus vaste que ne l’appelle son
+        effectif — <em>grand</em> (× 1,6) ou <em>immense</em> (× 2,4), ou un
+        nombre de terres au choix entre 19 et 130. Ce n’est pas un correctif
+        d’équilibrage mais une variante : plus de place à explorer, et une
+        partie plus longue. Le nombre d’îles suit la surface, jusqu’à six —
+        ce sont les rives qui font l’exploration, pas les continents.
+      </p>
+    </section>
+
+    <section id="jetons">
+      <h2>Les jetons numérotés</h2>
+      <p class="intro">
+        Chaque hexagone de terre productive porte un nombre. C’est lui, et
+        non le terrain, qui décide de votre rythme.
+      </p>
+      <p>
+        Deux dés sont lancés à chaque cycle. Tous les hexagones portant le
+        total sorti produisent — pour <em>tout le monde</em>, pas seulement
+        pour le joueur actif.
+      </p>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Fréquence des totaux, sur 36 lancers</caption>
+          <thead><tr><th>Nombre</th><th class="num">Chances</th><th>Ce que ça vaut</th></tr></thead>
+          <tbody>
+            <tr><td>6 · 8</td><td class="num">5 / 36</td><td>Très fréquent — la base d’une bonne position</td></tr>
+            <tr><td>5 · 9</td><td class="num">4 / 36</td><td>Fréquent</td></tr>
+            <tr><td>4 · 10</td><td class="num">3 / 36</td><td>Moyen</td></tr>
+            <tr><td>3 · 11</td><td class="num">2 / 36</td><td>Faible</td></tr>
+            <tr><td>2 · 12</td><td class="num">1 / 36</td><td>Très rare — mais <strong>production double</strong></td></tr>
+            <tr><td>7</td><td class="num">6 / 36</td><td>Personne ne produit : l’Errant se réveille</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <div class="note-titre">La règle du 2 et du 12</div>
+        <p>
+          Dans Grand Colonies, <strong>un 2 ou un 12 produit deux ressources
+          par bâtiment au lieu d’une</strong>. Une colonie sur un 12 rapporte
+          donc 2 cartes, une cité 4. C’est ce qui rend un emplacement
+          quasiment mort réellement intéressant : rare, mais généreux quand
+          il tombe.
+        </p>
+      </div>
+      <p>
+        Sur le plateau classique de dix-neuf tuiles, les jetons sont posés en
+        spirale selon la séquence d’origine, ce qui éloigne mécaniquement les
+        6 des 8. Sur un plateau de cinquante hexagones, cette séquence n’a plus
+        de sens : les jetons y sont tirés au sort par le générateur de la
+        partie. Regardez donc la carte avant de fonder — deux 8 voisins, ça
+        arrive.
+      </p>
+    </section>
+
+    <section id="mer">
+      <h2>La mer, et comment on la franchit</h2>
+      <p class="intro">
+        Une voie maritime coûte 1 bois et 1 laine, et compte dans le même
+        réseau que vos routes.
+      </p>
+      <p>
+        La <strong>voie maritime</strong> est une route qui longe ou traverse
+        l’eau. Elle se pose exactement comme une route terrestre, sur une
+        arête, en prolongement de votre réseau. Elle compte pour le
+        <a href="victoire.html#titres">plus long réseau</a> comme n’importe
+        quel segment, et elle est le <strong>seul</strong> moyen d’atteindre
+        une autre île.
+      </p>
+      <div class="constructions">
+        <div class="construction">
+          <span class="construction-nom">Voie maritime</span>
+          <span class="construction-gain">0 point</span>
+          <p class="construction-texte">
+            Prolonge votre réseau sur l’eau. C’est le chemin des terres
+            neuves — et à douze joueurs, les terres neuves sont la seule
+            place qui reste après une heure.
+          </p>
+          <div class="cout">
+            <span class="piece"><span class="pastille" data-r="bois"></span>1 bois</span>
+            <span class="piece"><span class="pastille" data-r="laine"></span>1 laine</span>
+          </div>
+        </div>
+      </div>
+      <p>
+        Traverser coûte plusieurs segments et plusieurs cycles. C’est un
+        investissement : pendant que vous naviguez, vos voisins bâtissent. Le
+        pari est qu’ils manqueront de place avant que vous manquiez de bois.
+      </p>
+    </section>
+
+    <section id="exploration">
+      <h2>L’exploration majeure</h2>
+      <p class="intro">
+        Le premier à fonder sur une île secondaire gagne 1 point. Une seule
+        fois par île, pour toute la partie.
+      </p>
+      <p>
+        Le point est attribué à la <strong>pose de la colonie</strong>, pas à
+        l’arrivée de la route : c’est fonder qui compte, pas accoster. Il
+        n’est jamais donné pendant la mise en place, puisque la mise en place
+        a lieu sur l’île centrale.
+      </p>
+      <p>
+        Avec deux îles secondaires, il y a donc <strong>deux points</strong>
+        à prendre sur le plateau, trois à onze joueurs et plus. Ce n’est pas
+        énorme au regard des quinze qu’il faut — mais celui qui traverse le
+        premier ne gagne pas seulement le point : il gagne une île entière
+        où personne ne le gêne, pendant que onze personnes se disputent le
+        reste.
+      </p>
+      <div class="citation">
+        « L’île se lit toute seule. »
+        <cite>Le moteur ne stocke pas les îles : il les déduit des hexagones de terre connexes</cite>
+      </div>
+      <div class="note note--absent">
+        <div class="note-titre">Ce que l’exploration n’est pas encore</div>
+        <p>
+          Le concept d’origine prévoit des <strong>hexagones face cachée</strong>
+          qu’on révèle en approchant — ressource rare, village neutre, port,
+          zone dangereuse. Ce système n’existe pas : toutes les tuiles sont
+          visibles dès le début. Seul le point du premier arrivé est en jeu.
+          Voir <a href="horizon.html">L’horizon</a>.
+        </p>
+      </div>
+    </section>
+
+    <section id="ports">
+      <h2>Les ports sur la côte</h2>
+      <p class="intro">
+        Semés sur des sommets côtiers, espacés, et acquis dès qu’une de vos
+        colonies les touche.
+      </p>
+      <p>
+        Un port n’a rien à construire ni à payer : il est à vous à l’instant
+        où vous bâtissez sur son sommet. Deux tiers des ports sont
+        <strong>spécialisés</strong> — ils remisent deux cartes sur une seule
+        ressource — et un tiers sont <strong>génériques</strong> — une carte
+        sur n’importe laquelle.
+      </p>
+      <p>
+        S’y ajoutent trois ports en <strong>un seul exemplaire par plateau</strong> :
+        le port marchand, le port minier et le port commercial. Ce sont des
+        positions de course, comme les métropoles. Ils sont plafonnés au tiers
+        des ports du plateau : sur une côte de six ports, en semer trois ferait
+        un plateau où le commerce ordinaire serait l’exception.
+      </p>
+      <p>
+        Les ports sont toujours <strong>espacés les uns des autres</strong> :
+        deux ports adjacents seraient captés par une seule colonie, ce qui
+        donnerait un avantage décisif au premier qui la pose.
+      </p>
+      <p>
+        Ce que fait chaque port, et pourquoi le port minier vaut soudain très
+        cher quand le marché s’emballe : <a href="commerce.html#ports">Commercer</a>.
+      </p>
+      <figure>
+        <img src="../assets/generated/backgrounds/bg_host.jpg" alt="Une carte marine antique de l’Égée déployée sur la pierre, avec un cordage lové et des instruments de bronze">
+        <figcaption>
+          La carte de l’écran hôte. C’est elle qu’on regarde à douze, autour
+          de l’ordinateur, pendant que chacun joue sur son téléphone.
+        </figcaption>
+      </figure>
+    </section>
+
+<nav class="fil" aria-label="Pages voisines">
+    <a href="monde.html">
+      <span class="fil-sens">Page précédente</span>
+      <span class="fil-nom">Le récit</span>
+    </a>
+    <a href="terres.html" class="suivant">
+      <span class="fil-sens">Page suivante</span>
+      <span class="fil-nom">Les terres</span>
+    </a>
+  </nav>
+  </main>
+</div>
+
+<footer class="pied">
+  <div class="pied-inner">
+    <p><strong>Grand Colonies</strong> — variante de Catan pour 8 à 12 joueurs, jouable en réseau
+    local. Projet personnel, sans affiliation avec les éditeurs de Catan, Seafarers,
+    Cities&nbsp;&amp;&nbsp;Knights, Traders&nbsp;&amp;&nbsp;Barbarians ou Explorers&nbsp;&amp;&nbsp;Pirates,
+    dont il s’inspire.</p>
+    <p>Le récit de l’Archipel est une fiction : il n’a aucun effet sur les règles.
+    Les règles font foi telles qu’elles sont écrites ici, et le
+    <a href="../RULES_CONTRACT.md">contrat de règles</a> fait foi sur le code.</p>
+  </div>
+</footer>
+<script src="doc.js"></script>
+</body>
+</html>

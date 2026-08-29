@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le sept et l’Errant — Grand Colonies</title>
+<meta name="description" content="Ce que déclenche un 7 : la défausse, la limite de main selon l’effectif, le déplacement du voleur et le double voleur à partir de onze joueurs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="barre">
+  <div class="barre-inner">
+    <a class="marque" href="index.html">Grand <span>Colonies</span></a>
+    <button class="bascule ouvre-sommaire" type="button" aria-expanded="false">Sommaire</button>
+    <div class="barre-espace"></div>
+    <a class="barre-lien" href="regles.html">Manuel en une page</a>
+    <button class="bascule bascule-registre" type="button">Registre</button>
+  </div>
+</header>
+
+<header class="bandeau">
+  <div class="bandeau-inner">
+    <div class="eyebrow">Jouer · 6</div>
+    <h1>Le sept et l’Errant</h1>
+    <p class="chapeau">
+      Un lancer sur six ne produit rien et coûte cher à ceux qui ont trop
+      accumulé. <em>Surveillez votre main avant le lancer</em>, pas après.
+    </p>
+    <div class="faits">
+      <span class="fait"><b>6</b> chances sur 36</span>
+      <span class="fait">Limite : <b>9</b> à huit joueurs, <b>13</b> à douze</span>
+      <span class="fait"><b>2</b> voleurs à partir de onze</span>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+<nav class="sommaire" aria-label="Sommaire de la documentation">
+    <div class="sommaire-groupe">
+      <ul>
+        <li><a href="index.html">Accueil</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Le monde</div>
+      <ul>
+        <li><a href="monde.html">Le récit</a></li>
+        <li><a href="archipel.html">L’archipel</a></li>
+        <li><a href="terres.html">Les terres</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Jouer</div>
+      <ul>
+        <li><a href="premiers-pas.html">Premiers pas</a></li>
+        <li><a href="cycle.html">Le cycle</a></li>
+        <li><a href="construction.html">Bâtir</a></li>
+        <li><a href="commerce.html">Commercer</a></li>
+        <li><a href="cartes.html">Les cartes</a></li>
+        <li><a href="voleur.html" aria-current="page">Le sept et l’Errant</a>
+          <ul class="ancres">
+            <li><a href="#sept">Ce que déclenche un 7</a></li>
+            <li><a href="#defausse">La défausse</a></li>
+            <li><a href="#errant">Déplacer l’Errant</a></li>
+            <li><a href="#double">Le double voleur</a></li>
+            <li><a href="#banque">Quand la banque n’a plus rien</a></li>
+          </ul></li>
+        <li><a href="victoire.html">Gagner</a></li>
+        <li><a href="variantes.html">Variantes</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Coulisses</div>
+      <ul>
+        <li><a href="mecanismes.html">Sous le capot</a></li>
+        <li><a href="horizon.html">L’horizon</a></li>
+        <li><a href="glossaire.html">Glossaire</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">À emporter</div>
+      <ul>
+        <li><a href="regles.html">Manuel en une page</a></li>
+      </ul>
+    </div>
+  </nav>
+  <main>
+
+    <section id="sept">
+      <h2>Ce que déclenche un 7</h2>
+      <p class="intro">
+        Aucune production, puis deux choses dans cet ordre.
+      </p>
+      <ol class="liste">
+        <li><strong>La défausse.</strong> Toute main strictement au-dessus de la limite perd la moitié de ses cartes, arrondie à l’inférieur.</li>
+        <li><strong>Le déplacement.</strong> Le joueur actif pose l’Errant sur l’hexagone de son choix et dépouille un joueur qui y a bâti.</li>
+      </ol>
+      <p>
+        Rien d’autre ne se passe tant que toutes les défausses ne sont pas
+        réglées : le jeu attend, parce qu’une main dépouillée après coup ne
+        serait pas la même.
+      </p>
+    </section>
+
+    <section id="defausse">
+      <h2>La défausse</h2>
+      <p class="intro">
+        La limite monte avec l’effectif, parce que les occasions de dépenser
+        se raréfient.
+      </p>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Limite de main</caption>
+          <thead><tr><th class="num">Joueurs</th><th class="num">Limite</th><th>Une main de 14 perd…</th></tr></thead>
+          <tbody>
+            <tr><td class="num">7 et moins</td><td class="num">7</td><td>7 cartes</td></tr>
+            <tr><td class="num">8</td><td class="num">9</td><td>7 cartes</td></tr>
+            <tr><td class="num">9</td><td class="num">10</td><td>7 cartes</td></tr>
+            <tr><td class="num">10</td><td class="num">11</td><td>7 cartes</td></tr>
+            <tr><td class="num">11</td><td class="num">12</td><td>7 cartes</td></tr>
+            <tr><td class="num">12</td><td class="num">13</td><td>7 cartes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        La colonne de droite ne varie pas, et c’est le point : la limite
+        décide <em>si</em> vous défaussez, jamais <em>combien</em>. Une main
+        de 14 perd toujours 7 cartes. Ce qui change d’un effectif à l’autre,
+        c’est la hauteur à laquelle on peut monter sans risque.
+      </p>
+      <p>
+        À douze joueurs, chacun produit à chaque lancer mais n’agit qu’un tour
+        sur douze : les mains gonflent bien plus vite qu’elles ne se vident.
+        Garder la limite de sept aurait fait de chaque 7 une catastrophe
+        collective. Treize est le plafond, au-delà duquel les mains
+        deviennent ingérables à lire comme à défausser.
+      </p>
+      <div class="note">
+        <div class="note-titre">Ce que le jeu choisit pour vous</div>
+        <p>
+          La suggestion de défausse entame toujours votre
+          <strong>pile la plus fournie</strong>. Perdre sa seule brique coûte
+          bien plus cher que perdre un bois sur cinq : préserver la diversité
+          est ce qui se rapproche le plus de ce qu’aurait choisi un joueur.
+          Si le chronomètre expire ou si vous êtes absent, cette suggestion
+          est validée telle quelle.
+        </p>
+      </div>
+      <p>
+        Le compteur sous votre main vous prévient quand vous approchez de la
+        limite. Un 7 sort une fois sur six : à douze joueurs, cela veut dire
+        environ deux fois par tour de table.
+      </p>
+    </section>
+
+    <section id="errant">
+      <h2>Déplacer l’Errant</h2>
+      <p class="intro">
+        Un hexagone bloqué ne produit plus pour personne — pas même pour
+        celui qui y a bâti.
+      </p>
+      <ul class="liste">
+        <li>Le joueur actif le pose sur <strong>n’importe quel hexagone</strong>, sauf un où un voleur se trouve déjà.</li>
+        <li>Il <strong>vole une carte au hasard</strong> à un joueur ayant une construction sur cet hexagone. Si personne n’y a bâti, il ne vole rien.</li>
+        <li>Tant qu’il y est, l’hexagone <strong>ne produit plus</strong>, y compris pour son propriétaire.</li>
+        <li>La carte <strong>Chevalier</strong> permet de le déplacer hors d’un 7 — y compris <em>avant</em> le lancer, pendant la phase de production.</li>
+      </ul>
+      <div class="note">
+        <div class="note-titre">Où le poser</div>
+        <p>
+          Le meilleur hexagone n’est pas toujours celui du joueur en tête :
+          c’est celui qui porte un 6 ou un 8 <em>et</em> plusieurs bâtiments
+          adverses. Bloquer un 3 par vengeance ne coûte presque rien à
+          personne.
+        </p>
+      </div>
+    </section>
+
+    <section id="double">
+      <h2>Le double voleur</h2>
+      <p class="intro">
+        À onze joueurs et plus, ils sont deux sur le plateau.
+      </p>
+      <p>
+        Sur une carte de cinquante hexagones, un seul voleur ne bloque presque
+        rien. Deux permettent de tenir deux régions à la fois — mais poser le
+        second ne libère pas le premier :
+        <strong>c’est le plus anciennement placé qui bouge</strong>.
+      </p>
+      <p>
+        Autrement dit, une région bloquée le reste jusqu’à ce que deux
+        déplacements aient eu lieu. C’est ce qui empêche le second voleur de
+        servir à figer deux fois la même zone, et donne à chaque joueur actif
+        une vraie décision plutôt qu’un réflexe.
+      </p>
+      <div class="note note--recit">
+        <div class="note-titre">Ce qu’en dit le récit</div>
+        <p>
+          On ne chasse pas l’Errant : on le déplace, et il part toujours en
+          emportant quelque chose. C’est le prix, et tout le monde le paye à
+          son tour — <a href="monde.html#errant">L’Errant</a>.
+        </p>
+      </div>
+    </section>
+
+    <section id="banque">
+      <h2>Quand la banque n’a plus rien</h2>
+      <p class="intro">
+        Le stock de la banque est fini, et cela se voit surtout à douze.
+      </p>
+      <p>
+        Une production qui dépasse ce que la banque possède est
+        <strong>servie dans la limite du stock</strong>. Une ressource épuisée
+        ne se produit plus tant que personne ne la lui rend — et on la lui
+        rend en se défaussant, en achetant à la banque, ou en payant une
+        construction.
+      </p>
+      <p>
+        La carte <strong>Invention</strong> obéit à la même contrainte : elle
+        ne crée pas des ressources, elle en prend.
+      </p>
+    </section>
+
+<nav class="fil" aria-label="Pages voisines">
+    <a href="cartes.html">
+      <span class="fil-sens">Page précédente</span>
+      <span class="fil-nom">Les cartes</span>
+    </a>
+    <a href="victoire.html" class="suivant">
+      <span class="fil-sens">Page suivante</span>
+      <span class="fil-nom">Gagner</span>
+    </a>
+  </nav>
+  </main>
+</div>
+
+<footer class="pied">
+  <div class="pied-inner">
+    <p><strong>Grand Colonies</strong> — variante de Catan pour 8 à 12 joueurs, jouable en réseau
+    local. Projet personnel, sans affiliation avec les éditeurs de Catan, Seafarers,
+    Cities&nbsp;&amp;&nbsp;Knights, Traders&nbsp;&amp;&nbsp;Barbarians ou Explorers&nbsp;&amp;&nbsp;Pirates,
+    dont il s’inspire.</p>
+    <p>Le récit de l’Archipel est une fiction : il n’a aucun effet sur les règles.
+    Les règles font foi telles qu’elles sont écrites ici, et le
+    <a href="../RULES_CONTRACT.md">contrat de règles</a> fait foi sur le code.</p>
+  </div>
+</footer>
+<script src="doc.js"></script>
+</body>
+</html>

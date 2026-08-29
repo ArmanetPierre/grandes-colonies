@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le cycle — Grand Colonies</title>
+<meta name="description" content="Production, tour simultané, commerce : le battement de deux minutes de Grand Colonies, les rôles, les annonces hors tour et le chronomètre.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="barre">
+  <div class="barre-inner">
+    <a class="marque" href="index.html">Grand <span>Colonies</span></a>
+    <button class="bascule ouvre-sommaire" type="button" aria-expanded="false">Sommaire</button>
+    <div class="barre-espace"></div>
+    <a class="barre-lien" href="regles.html">Manuel en une page</a>
+    <button class="bascule bascule-registre" type="button">Registre</button>
+  </div>
+</header>
+
+<header class="bandeau">
+  <div class="bandeau-inner">
+    <div class="eyebrow">Jouer · 2</div>
+    <h1>Le cycle</h1>
+    <p class="chapeau">
+      Deux minutes, trois temps, et deux joueurs qui jouent en même temps.
+      <em>C’est la mécanique qui rend une partie à douze supportable</em> — et
+      celle dont tout le reste découle.
+    </p>
+    <div class="faits">
+      <span class="fait"><b>2 min</b> par cycle</span>
+      <span class="fait"><b>90 s</b> de tour</span>
+      <span class="fait"><b>30 s</b> de commerce</span>
+      <span class="fait"><b>24 min</b> le tour de table à douze</span>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+<nav class="sommaire" aria-label="Sommaire de la documentation">
+    <div class="sommaire-groupe">
+      <ul>
+        <li><a href="index.html">Accueil</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Le monde</div>
+      <ul>
+        <li><a href="monde.html">Le récit</a></li>
+        <li><a href="archipel.html">L’archipel</a></li>
+        <li><a href="terres.html">Les terres</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Jouer</div>
+      <ul>
+        <li><a href="premiers-pas.html">Premiers pas</a></li>
+        <li><a href="cycle.html" aria-current="page">Le cycle</a>
+          <ul class="ancres">
+            <li><a href="#vue">Le cycle en trois temps</a></li>
+            <li><a href="#roles">Les trois rôles</a></li>
+            <li><a href="#production">La production</a></li>
+            <li><a href="#annonces">Annoncer hors de son tour</a></li>
+            <li><a href="#chrono">Le chronomètre</a></li>
+            <li><a href="#fin">La fin du cycle</a></li>
+            <li><a href="#absences">Absences et déconnexions</a></li>
+            <li><a href="#pourquoi">Pourquoi simultané</a></li>
+          </ul></li>
+        <li><a href="construction.html">Bâtir</a></li>
+        <li><a href="commerce.html">Commercer</a></li>
+        <li><a href="cartes.html">Les cartes</a></li>
+        <li><a href="voleur.html">Le sept et l’Errant</a></li>
+        <li><a href="victoire.html">Gagner</a></li>
+        <li><a href="variantes.html">Variantes</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Coulisses</div>
+      <ul>
+        <li><a href="mecanismes.html">Sous le capot</a></li>
+        <li><a href="horizon.html">L’horizon</a></li>
+        <li><a href="glossaire.html">Glossaire</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">À emporter</div>
+      <ul>
+        <li><a href="regles.html">Manuel en une page</a></li>
+      </ul>
+    </div>
+  </nav>
+  <main>
+
+    <section id="vue">
+      <h2>Le cycle en trois temps</h2>
+      <p class="intro">
+        Un cycle, c’est le tour d’un joueur. Mais tout le monde y fait quelque
+        chose.
+      </p>
+      <pre class="schema"><code>A · PRODUCTION      le joueur actif lance les dés, tout le monde produit
+                    ↓
+B · TOUR            90 s — l'actif ET son associé jouent SIMULTANÉMENT
+                    les autres peuvent annoncer des constructions
+                    ↓
+C · COMMERCE        30 s — tout le monde échange avec tout le monde
+                    ↓
+                    résolution des annonces, contrôle de victoire, cycle suivant</code></pre>
+
+      <div class="cycle">
+        <div class="temps">
+          <div class="temps-num">I</div>
+          <div>
+            <div class="temps-nom">Production</div>
+            <div class="temps-duree">le temps d’un lancer</div>
+            <p>
+              Le joueur actif lance les deux dés. Chaque hexagone portant le
+              total sorti produit, <strong>pour tout le monde</strong> : une
+              ressource par colonie adjacente, deux par cité. Un 7 ne produit
+              rien et réveille l’Errant.
+            </p>
+          </div>
+        </div>
+        <div class="temps">
+          <div class="temps-num">II</div>
+          <div>
+            <div class="temps-nom">Le tour</div>
+            <div class="temps-duree">90 secondes au plus</div>
+            <p>
+              Le joueur actif bâtit, achète, échange. Le joueur
+              <strong>associé</strong> — trois sièges plus loin — fait de même
+              en parallèle. Pendant ce temps, les dix autres peuvent
+              <a href="#annonces">annoncer</a> des constructions.
+            </p>
+          </div>
+        </div>
+        <div class="temps">
+          <div class="temps-num">III</div>
+          <div>
+            <div class="temps-nom">Commerce libre</div>
+            <div class="temps-duree">30 secondes</div>
+            <p>
+              La table entière négocie. C’est court, c’est bruyant, et c’est
+              là que se jouent les parties. À la fermeture, les offres non
+              conclues disparaissent.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <p>
+        Puis le cycle se referme : les annonces se résolvent, la victoire est
+        contrôlée, et le rôle actif passe au joueur suivant.
+      </p>
+    </section>
+
+    <section id="roles">
+      <h2>Les trois rôles</h2>
+      <p class="intro">
+        À chaque cycle, chacun est actif, associé, ou spectateur actif. Le
+        troisième rôle n’est pas le moins occupé.
+      </p>
+      <p>
+        Le joueur <strong>associé</strong> est celui situé
+        <strong>trois positions à gauche</strong> de l’actif. Sur un tour de
+        table complet, vous serez donc actif une fois et associé une autre
+        fois — deux occasions de bâtir par tour de table, à des moments
+        différents.
+      </p>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Ce que chaque rôle a le droit de faire</caption>
+          <thead>
+            <tr><th>Rôle</th><th class="num">Banque</th><th class="num">Entre joueurs</th><th class="num">Construire</th><th class="num">Acheter une carte</th><th class="num">Jouer une carte</th><th class="num">Annoncer</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Actif</strong></td><td class="num">oui</td><td class="num">oui</td><td class="num">oui</td><td class="num">oui</td><td class="num">oui</td><td class="num">—</td></tr>
+            <tr><td><strong>Associé</strong></td><td class="num">oui</td><td class="num">non</td><td class="num">oui</td><td class="num">oui</td><td class="num">non</td><td class="num">—</td></tr>
+            <tr><td><strong>Les autres</strong></td><td class="num">non</td><td class="num">phase C</td><td class="num">non</td><td class="num">non</td><td class="num">non</td><td class="num"><strong>oui</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        L’associé peut tout faire, sauf deux choses : <strong>négocier avec
+        les autres joueurs</strong> et <strong>jouer une carte
+        développement</strong>. La première évite qu’un second marché s’ouvre
+        en parallèle du tour actif ; la seconde évite d’avoir à arbitrer deux
+        monopoles dans le même tour.
+      </p>
+      <div class="note">
+        <div class="note-titre">Qui peut répondre pendant le tour</div>
+        <p>
+          Un échange est recevable pendant la phase B dès lors que
+          <strong>le joueur actif en est l’une des deux parties</strong>.
+          N’importe qui peut donc accepter son offre ou lui répondre — mais
+          deux joueurs non actifs ne peuvent pas échanger entre eux avant la
+          phase C.
+        </p>
+      </div>
+    </section>
+
+    <section id="production">
+      <h2>La production</h2>
+      <p class="intro">
+        Le seul moment où douze personnes regardent le même écran.
+      </p>
+      <p>
+        Les deux dés tombent sur le plateau, au centre de la carte : ils
+        roulent, se heurtent, s’arrêtent, et le nombre monte au-dessus d’eux
+        en grand, le temps qu’on le lise depuis l’autre bout de la pièce.
+        Puis chaque hexagone concerné fait sauter son jeton, et les cartes
+        gagnées volent jusqu’à leur pile dans la barre du bas.
+      </p>
+      <ul class="liste">
+        <li><strong>Colonie</strong> : 1 ressource par hexagone adjacent qui produit.</li>
+        <li><strong>Cité</strong> : 2 ressources. La <strong>métropole</strong> produit comme une cité, ni plus ni moins — elle ne vaut que des points.</li>
+        <li><strong>2 ou 12</strong> : production <strong>doublée</strong>. Une colonie en reçoit 2, une cité 4.</li>
+        <li><strong>Hexagone occupé par l’Errant</strong> : rien, pour personne.</li>
+        <li>La banque a un <strong>stock fini</strong>. Une ressource épuisée ne se produit plus.</li>
+      </ul>
+    </section>
+
+    <section id="annonces">
+      <h2>Annoncer hors de son tour</h2>
+      <p class="intro">
+        La mécanique la plus ambitieuse du jeu, et celle qui sert le mieux son
+        objectif : que personne ne soit jamais passif.
+      </p>
+      <p>
+        <strong>À n’importe quel moment</strong> — pendant le tour d’un autre,
+        pendant la production, pendant le commerce — vous pouvez
+        <strong>annoncer</strong> une construction sur un emplacement. Elle ne
+        se pose pas tout de suite : elle se résout <strong>à la fin du
+        cycle</strong>.
+      </p>
+      <pre class="schema"><code>ressources disponibles
+        ↓  annonce
+ressources RÉSERVÉES  ──────────────┐
+        ↓                           │ annulation
+   annonce en attente               │ (libre, à tout moment)
+        ↓  fin de la phase C        │
+     résolution                     │
+    ↙         ↘                     ↓
+construite   perdue → ressources rendues</code></pre>
+
+      <h3>Vos ressources sont réservées</h3>
+      <p>
+        Dès l’annonce, les cartes nécessaires sont mises de côté. Elles ne
+        sont plus échangeables ni utilisables pour autre chose, et vous sont
+        rendues si la construction échoue. Sans cela, on pourrait promettre le
+        même bois à trois constructions puis le vendre entre-temps :
+        l’annonce ne voudrait plus rien dire.
+      </p>
+      <p>
+        Une annonce s’<strong>annule librement</strong>, à tout moment, tant
+        qu’elle n’est pas résolue.
+      </p>
+
+      <h3>Quand deux joueurs visent le même emplacement</h3>
+      <ol class="liste">
+        <li><strong>Le joueur actif l’emporte.</strong></li>
+        <li>Sinon, <strong>la plus ancienne annonce l’emporte</strong> — l’ordre d’arrivée au serveur fait foi.</li>
+        <li>Les perdants récupèrent l’intégralité de leurs ressources réservées.</li>
+      </ol>
+      <p>
+        Cette règle désigne <strong>toujours</strong> un vainqueur : il n’y a
+        pas de cas où un emplacement contesté reste vide.
+      </p>
+      <div class="note note--absent">
+        <div class="note-titre">Le gel, une règle qui ne se déclenche pas</div>
+        <p>
+          Le concept d’origine prévoyait qu’une égalité d’Influence
+          <strong>gèle</strong> l’emplacement jusqu’à la fin du cycle.
+          L’Influence n’existe pas encore, et le départage par ancienneté
+          tranche tout : la mécanique de gel est écrite et testée, elle ne se
+          déclenche simplement jamais. Le jour où l’Influence arrivera, elle
+          s’insérera entre les règles 1 et 2.
+        </p>
+      </div>
+      <div class="citation">
+        « Sans cela, vous passeriez onze douzièmes de la partie à regarder.
+        Avec, le bon emplacement se prend quand on le voit — pas quand vient
+        votre tour, où il aura disparu. »
+      </div>
+    </section>
+
+    <section id="chrono">
+      <h2>Le chronomètre</h2>
+      <p class="intro">
+        À zéro, ce qui est sélectionné est validé. Une action entamée n’est
+        jamais annulée.
+      </p>
+      <p>
+        Le chronomètre ne sert pas à vous presser, mais à empêcher que onze
+        personnes attendent celle qui est partie chercher à boire. À
+        l’expiration, l’état sélectionné à l’écran est validé tel quel — une
+        défausse composée est envoyée, un emplacement choisi est posé — et la
+        partie continue.
+      </p>
+      <p>
+        La raison est arithmétique : à cinq ou six tours actifs par personne
+        sur une soirée, perdre un tour coûterait 20 % de sa partie. On ne peut
+        pas se permettre d’annuler.
+      </p>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Les durées</caption>
+          <thead><tr><th>Moment</th><th class="num">Durée</th></tr></thead>
+          <tbody>
+            <tr><td>Mise en place, par pose</td><td class="num">30 s</td></tr>
+            <tr><td>Tour actif</td><td class="num">90 s</td></tr>
+            <tr><td>Tour associé</td><td class="num">90 s</td></tr>
+            <tr><td>Fenêtre de commerce</td><td class="num">30 s</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Ce sont les valeurs par défaut. L’hôte peut toutes les régler depuis
+        son écran, y compris pendant que la pièce se remplit — voir
+        <a href="variantes.html#reglages">les réglages du salon</a>.
+      </p>
+    </section>
+
+    <section id="fin">
+      <h2>La fin du cycle</h2>
+      <p class="intro">
+        Trois choses arrivent dans cet ordre, toujours.
+      </p>
+      <ol class="liste">
+        <li><strong>Les annonces se résolvent</strong>, dans l’ordre de priorité ci-dessus. Les constructions gagnantes apparaissent sur le plateau, les perdantes rendent leurs ressources.</li>
+        <li><strong>La victoire est contrôlée.</strong> Jamais en cours de phase : personne n’est coupé en plein geste.</li>
+        <li><strong>Le rôle actif passe au joueur suivant</strong>, et avec lui le rôle d’associé.</li>
+      </ol>
+      <p>
+        Les <strong>offres d’échange ne franchissent pas le cycle</strong> :
+        les inventaires ont trop changé pour qu’une offre du cycle précédent
+        garde un sens. Elles expirent à la résolution.
+      </p>
+      <p>
+        Si plusieurs joueurs atteignent 15 points dans le même cycle, le plus
+        haut total l’emporte ; à égalité parfaite, l’ordre du tour tranche, en
+        partant du joueur actif puis vers sa gauche. Voir
+        <a href="victoire.html">Gagner</a>.
+      </p>
+    </section>
+
+    <section id="absences">
+      <h2>Absences et déconnexions</h2>
+      <p class="intro">
+        Une seule règle gouverne tous ces cas : le jeu ne s’arrête jamais, et
+        ce qui est décidé à votre place l’est de façon minimale.
+      </p>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Ce qui se passe sans vous</caption>
+          <thead><tr><th>Situation</th><th>Décision du jeu</th></tr></thead>
+          <tbody>
+            <tr><td>Vous rechargez votre page</td><td>Vous retrouvez siège, main et cartes</td></tr>
+            <tr><td>Vous êtes actif et absent</td><td>Les dés sont lancés, un éventuel 7 est traité, la main passe. <strong>Rien d’autre</strong> : aucune construction, aucun achat, aucun échange</td></tr>
+            <tr><td>Vous êtes associé et absent</td><td>Votre tour est simplement sauté</td></tr>
+            <tr><td>Vous devez vous défausser</td><td>La suggestion du jeu est validée : elle entame toujours votre pile la plus fournie</td></tr>
+            <tr><td>Vous devez poser l’Errant</td><td>Il est posé sur un hexagone ne touchant aucune construction</td></tr>
+            <tr><td>Vous ne revenez pas</td><td>Votre siège est gardé <strong>deux tours de table</strong>, puis l’hôte peut le confier à un bot</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        On débloque la partie, on ne joue pas à votre place. Construire ou
+        acheter pour vous fausserait votre partie bien plus que de vous le
+        faire manquer.
+      </p>
+      <div class="note">
+        <div class="note-titre">Tout cela est déterministe</div>
+        <p>
+          À graine et commandes égales, un tour joué par défaut produit
+          toujours le même résultat — sans quoi une partie comportant une
+          déconnexion cesserait d’être rejouable.
+          Voir <a href="mecanismes.html#determinisme">Sous le capot</a>.
+        </p>
+      </div>
+    </section>
+
+    <section id="pourquoi">
+      <h2>Pourquoi simultané</h2>
+      <p class="intro">
+        Ce n’est pas un choix de confort : c’est le seul compatible avec la
+        durée visée.
+      </p>
+      <p>
+        À douze joueurs, un cycle de deux minutes donne un tour de table de
+        <strong>24 minutes</strong>, soit cinq à six tours actifs par personne
+        sur une partie de deux heures. En séquentiel — l’actif d’abord, puis
+        l’associé — le cycle passerait à 3 min 30 : 42 minutes par tour de
+        table, moins de trois tours actifs par joueur, et
+        <strong>atteindre 15 points deviendrait hors de portée</strong>.
+      </p>
+      <p>
+        Le coût est technique : le serveur reçoit deux flux d’actions en
+        parallèle. Il les range dans une file ordonnée avant de les soumettre
+        au moteur, qui ne voit donc jamais de vraie concurrence.
+      </p>
+      <div class="note">
+        <div class="note-titre">À surveiller en partie</div>
+        <p>
+          Trente secondes pour négocier <em>et</em> valider, à douze, c’est
+          très court. Si la fenêtre se révèle insuffisante, les leviers
+          existent : l’allonger, ou basculer sur un commerce ouvert pendant
+          tout le cycle.
+        </p>
+      </div>
+    </section>
+
+<nav class="fil" aria-label="Pages voisines">
+    <a href="premiers-pas.html">
+      <span class="fil-sens">Page précédente</span>
+      <span class="fil-nom">Premiers pas</span>
+    </a>
+    <a href="construction.html" class="suivant">
+      <span class="fil-sens">Page suivante</span>
+      <span class="fil-nom">Bâtir</span>
+    </a>
+  </nav>
+  </main>
+</div>
+
+<footer class="pied">
+  <div class="pied-inner">
+    <p><strong>Grand Colonies</strong> — variante de Catan pour 8 à 12 joueurs, jouable en réseau
+    local. Projet personnel, sans affiliation avec les éditeurs de Catan, Seafarers,
+    Cities&nbsp;&amp;&nbsp;Knights, Traders&nbsp;&amp;&nbsp;Barbarians ou Explorers&nbsp;&amp;&nbsp;Pirates,
+    dont il s’inspire.</p>
+    <p>Le récit de l’Archipel est une fiction : il n’a aucun effet sur les règles.
+    Les règles font foi telles qu’elles sont écrites ici, et le
+    <a href="../RULES_CONTRACT.md">contrat de règles</a> fait foi sur le code.</p>
+  </div>
+</footer>
+<script src="doc.js"></script>
+</body>
+</html>

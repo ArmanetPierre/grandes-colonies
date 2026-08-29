@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Premiers pas — Grand Colonies</title>
+<meta name="description" content="Héberger une partie, rejoindre depuis son téléphone, poser ses deux premières colonies, et lire son écran.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--BARRE-->
+
+<header class="bandeau">
+  <div class="bandeau-inner">
+    <div class="eyebrow">Jouer · 1</div>
+    <h1>Premiers pas</h1>
+    <p class="chapeau">
+      Une personne héberge, les autres scannent un QR code. <em>Rien à
+      installer, rien à imprimer</em> — et dix minutes plus tard, douze
+      colonies sont fondées.
+    </p>
+    <div class="faits">
+      <span class="fait">Un PC pour l’hôte</span>
+      <span class="fait">Un navigateur par joueur</span>
+      <span class="fait">Même réseau Wi-Fi</span>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+<!--NAV-->
+  <main>
+
+    <section id="heberger">
+      <h2>Héberger la partie</h2>
+      <p class="intro">
+        Deux commandes sur l’ordinateur qui sert de table. Le reste se fait
+        depuis les téléphones.
+      </p>
+      <pre class="schema"><code>npm install
+npm run play</code></pre>
+      <p>Le terminal affiche alors quelque chose comme :</p>
+      <pre class="schema"><code>  Écran hôte   http://192.168.1.34:2567
+  Joueurs      http://192.168.1.34:5173
+  Code         AMPHORE-46
+  Plateau      archipel</code></pre>
+      <p>
+        Ouvrez <strong>l’écran hôte</strong> sur le PC — la première adresse.
+        Il affiche un QR code, l’adresse à donner aux invités, et se remplit à
+        mesure qu’ils arrivent. C’est aussi lui qu’on regarde à plusieurs
+        pendant la partie.
+      </p>
+      <p>
+        Quand tout le monde est là, cliquez <strong>« Démarrer la partie »</strong>.
+        Vous pouvez lancer sans attendre les retardataires : leurs sièges
+        seront joués au minimum, et ils reprendront leur place en arrivant.
+        <code>Ctrl+C</code> arrête tout.
+      </p>
+
+      <h3>Les réglages du lancement</h3>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Options de <code>npm run play</code></caption>
+          <thead><tr><th>Commande</th><th>Effet</th></tr></thead>
+          <tbody>
+            <tr><td><code>PLAYERS=8 npm run play</code></td><td>Huit sièges au lieu de douze</td></tr>
+            <tr><td><code>BOARD=disque npm run play</code></td><td>Plateau en disque : soirée plus courte, ≈ 2 h 20 au lieu de 3 h 30 à douze</td></tr>
+            <tr><td><code>BOTS=11 npm run play</code></td><td>Onze adversaires automatiques, une place pour vous</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <div class="note-titre">Sur les bots</div>
+        <p>
+          Ils passent par le même WebSocket que les joueurs et ne voient que
+          ce qu’un joueur voit : <strong>ils ne peuvent pas tricher</strong>.
+          Ils construisent par ordre de valeur en points et convertissent leur
+          surplus, mais ne planifient pas et ne marchandent pas. Un humain les
+          bat sans peine — c’est le but : ils sont là pour que la partie
+          tourne, pas pour la gagner.
+        </p>
+      </div>
+    </section>
+
+    <section id="rejoindre">
+      <h2>Rejoindre</h2>
+      <p class="intro">
+        Scanner, taper son prénom, attendre. Il n’y a pas d’étape trois.
+      </p>
+      <ol class="liste">
+        <li><strong>Scannez le QR code</strong> affiché sur l’écran hôte, ou tapez l’adresse en <code>192.168.x.x</code> dans votre navigateur. Pas <code>localhost</code> — c’est l’erreur la plus fréquente.</li>
+        <li><strong>Donnez votre prénom.</strong> C’est tout ce qui vous identifie : pas de compte, pas de mot de passe.</li>
+        <li><strong>Patientez.</strong> Vous voyez les autres arriver un à un. L’ordre d’arrivée n’a aucune importance.</li>
+      </ol>
+      <div class="note">
+        <div class="note-titre">Si votre page se recharge</div>
+        <p>
+          Vous <strong>retrouvez votre siège</strong>, votre main et vos
+          cartes. Rien n’est perdu si votre téléphone se met en veille ou si
+          vous fermez l’onglet par mégarde. Un siège vraiment abandonné est
+          conservé <strong>deux tours de table</strong> avant que l’hôte ne se
+          voie proposer de le remplacer par un bot.
+        </p>
+      </div>
+    </section>
+
+    <section id="fondation">
+      <h2>La fondation</h2>
+      <p class="intro">
+        Deux colonies et deux routes chacun, dans un ordre en aller-retour,
+        toutes sur l’île centrale.
+      </p>
+      <p>
+        La mise en place suit l’ordre classique : chaque joueur pose une
+        colonie et une route, du premier au dernier siège, <strong>puis on
+        revient en sens inverse</strong> pour la seconde. Le dernier joueur
+        pose donc deux fois de suite — c’est ce qui compense d’avoir choisi en
+        dernier au premier tour.
+      </p>
+      <pre class="schema"><code>1 → 2 → 3 → … → 11 → 12 → 12 → 11 → … → 3 → 2 → 1
+        première colonie          seconde colonie</code></pre>
+      <ul class="liste">
+        <li><strong>Deux colonies ne peuvent jamais se toucher</strong> : il faut au moins un carrefour d’écart entre deux bâtiments, les vôtres compris.</li>
+        <li><strong>La route doit partir de la colonie</strong> que vous venez de poser.</li>
+        <li><strong>La seconde colonie rapporte immédiatement</strong> une ressource par hexagone productif qu’elle touche. C’est votre main de départ, et elle récompense un bon placement.</li>
+        <li><strong>Tout se passe sur l’île centrale.</strong> Fonder d’emblée sur une île secondaire donnerait un point d’exploration gratuit.</li>
+        <li>Vous avez <strong>30 secondes</strong> pour poser — c’est le seul délai que toute la table subit d’un coup, et à douze joueurs la mise en place enchaîne vingt-quatre poses. Passé ce délai, la partie continue sans vous. L’hôte peut l’allonger dans les réglages du salon.</li>
+      </ul>
+      <p>
+        Comment choisir : <a href="terres.html#lire">Lire un emplacement</a>.
+      </p>
+    </section>
+
+    <section id="ecran">
+      <h2>Lire son écran</h2>
+      <p class="intro">
+        Cinq zones, et une seule vraiment critique : celle qui vous dit ce
+        qu’on attend de vous.
+      </p>
+      <ul class="liste">
+        <li><strong>Le bandeau du haut</strong> — cycle en cours, phase, qui est actif, qui est associé, et le chronomètre. C’est là que s’affiche l’action attendue de vous : <em>c’est à toi</em>, <em>tu peux annoncer</em>, <em>défausse</em>.</li>
+        <li><strong>Le plateau</strong> — en trois dimensions, manipulable au doigt : un doigt déplace la carte, deux doigts zooment et la font pivoter, un tap construit. Les dés y tombent pour de bon au centre.</li>
+        <li><strong>Votre main</strong>, en bas — vos ressources, et le compteur qui vous prévient quand vous approchez de la <a href="voleur.html#defausse">limite de cartes</a>.</li>
+        <li><strong>La bande du cours</strong>, au-dessus du commerce — le prix de chaque ressource à la banque, remise de vos ports comprise, avec une flèche quand il est sur le point de bouger.</li>
+        <li><strong>Le bouton « Marché »</strong> — la liste de toutes les offres en cours, y compris celles échangées entre deux autres joueurs.</li>
+      </ul>
+      <div class="note">
+        <div class="note-titre">Un bouton grisé vous dit pourquoi</div>
+        <p>
+          Les actions disponibles sont calculées par le serveur, jamais
+          devinées par l’interface. Un bouton indisponible affiche sa raison —
+          <em>pas assez de brique</em>, <em>ce n’est pas ton tour</em>,
+          <em>emplacement gelé</em>. C’est comme cela qu’on apprend les règles
+          sans que quelqu’un les récite à voix haute toute la soirée.
+        </p>
+      </div>
+    </section>
+
+    <section id="dix-minutes">
+      <h2>Les dix premières minutes</h2>
+      <p class="intro">
+        Ce qu’il faut avoir compris avant le troisième cycle.
+      </p>
+      <ol class="liste">
+        <li>
+          <strong>Vous produisez à chaque lancer</strong>, pas seulement au
+          vôtre. Regardez le plateau même quand ce n’est pas votre tour : les
+          cartes qui volent vers votre pile sont les vôtres.
+        </li>
+        <li>
+          <strong>Vous n’avez pas à attendre votre tour pour bâtir.</strong>
+          Dès que vous voyez un bon carrefour et que vous avez les ressources,
+          <a href="cycle.html#annonces">annoncez</a>. Il se résoudra en fin de
+          cycle. C’est la mécanique qui change tout, et celle qu’on oublie le
+          plus longtemps.
+        </li>
+        <li>
+          <strong>La banque est chère.</strong> Entre 2 et 6 cartes pour une.
+          Servez-vous-en pour vous débloquer, pas pour bâtir votre économie —
+          la table est presque toujours un meilleur partenaire.
+        </li>
+        <li>
+          <strong>Surveillez votre main avant le lancer</strong>, pas après.
+          Un 7 sort une fois sur six, et il coûte la moitié de tout ce qui
+          dépasse la limite.
+        </li>
+        <li>
+          <strong>Parlez.</strong> Vous êtes dans la même pièce : l’interface
+          ne sert pas à négocier, elle sert à exécuter très vite un accord
+          déjà conclu à voix haute pendant les trente secondes de commerce.
+        </li>
+      </ol>
+    </section>
+
+    <section id="soucis">
+      <h2>Si ça coince</h2>
+      <h3>« La partie est complète » alors que personne n’a rejoint</h3>
+      <p>
+        Un onglet Grand Colonies resté ouvert reprend son siège à chaque
+        redémarrage. Fermez les onglets qui traînent, ou relancez le serveur.
+      </p>
+      <h3>Un invité n’arrive pas à se connecter</h3>
+      <p>
+        Vérifiez qu’il est sur le même réseau Wi-Fi. L’adresse doit être celle
+        en <code>192.168.x.x</code>, pas <code>localhost</code>.
+      </p>
+      <h3>Le port est déjà pris</h3>
+      <pre class="schema"><code>lsof -ti:2567 -ti:5173 | xargs kill -9</code></pre>
+      <h3>Le plateau s’affiche sans ses terrains</h3>
+      <p>
+        Les images vivent dans <code>assets/generated</code> et le client les
+        sert depuis son dossier <code>public</code>, qui n’est pas versionné.
+        <code>npm run play</code> fait la copie ; <code>npm run assets</code>
+        la refait à la demande.
+      </p>
+    </section>
+
+<!--FIL-->
+  </main>
+</div>
+
+<!--PIED-->
+<script src="doc.js"></script>
+</body>
+</html>

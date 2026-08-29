@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Commercer — Grand Colonies</title>
+<meta name="description" content="Échanges entre joueurs, marché dynamique, cours de la banque, ports ordinaires et ports à contrat.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="barre">
+  <div class="barre-inner">
+    <a class="marque" href="index.html">Grand <span>Colonies</span></a>
+    <button class="bascule ouvre-sommaire" type="button" aria-expanded="false">Sommaire</button>
+    <div class="barre-espace"></div>
+    <a class="barre-lien" href="regles.html">Manuel en une page</a>
+    <button class="bascule bascule-registre" type="button">Registre</button>
+  </div>
+</header>
+
+<header class="bandeau">
+  <div class="bandeau-inner">
+    <div class="eyebrow">Jouer · 4</div>
+    <h1>Commercer</h1>
+    <p class="chapeau">
+      La banque n’a pas de prix fixe : chaque ressource a un cours qui monte
+      quand la table la brade et descend quand elle se raréfie.
+      <em>Plus la banque devient chère, plus vos voisins deviennent
+      intéressants.</em>
+    </p>
+    <div class="faits">
+      <span class="fait">Cours entre <b>2</b> et <b>6</b></span>
+      <span class="fait">Un cran toutes les <b>4</b> transactions</span>
+      <span class="fait"><b>30 s</b> de commerce libre par cycle</span>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+<nav class="sommaire" aria-label="Sommaire de la documentation">
+    <div class="sommaire-groupe">
+      <ul>
+        <li><a href="index.html">Accueil</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Le monde</div>
+      <ul>
+        <li><a href="monde.html">Le récit</a></li>
+        <li><a href="archipel.html">L’archipel</a></li>
+        <li><a href="terres.html">Les terres</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Jouer</div>
+      <ul>
+        <li><a href="premiers-pas.html">Premiers pas</a></li>
+        <li><a href="cycle.html">Le cycle</a></li>
+        <li><a href="construction.html">Bâtir</a></li>
+        <li><a href="commerce.html" aria-current="page">Commercer</a>
+          <ul class="ancres">
+            <li><a href="#joueurs">Entre joueurs</a></li>
+            <li><a href="#marche">Le marché dynamique</a></li>
+            <li><a href="#ports">Les ports ordinaires</a></li>
+            <li><a href="#contrats">Les ports à contrat</a></li>
+            <li><a href="#strategie">Trois habitudes qui rapportent</a></li>
+          </ul></li>
+        <li><a href="cartes.html">Les cartes</a></li>
+        <li><a href="voleur.html">Le sept et l’Errant</a></li>
+        <li><a href="victoire.html">Gagner</a></li>
+        <li><a href="variantes.html">Variantes</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Coulisses</div>
+      <ul>
+        <li><a href="mecanismes.html">Sous le capot</a></li>
+        <li><a href="horizon.html">L’horizon</a></li>
+        <li><a href="glossaire.html">Glossaire</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">À emporter</div>
+      <ul>
+        <li><a href="regles.html">Manuel en une page</a></li>
+      </ul>
+    </div>
+  </nav>
+  <main>
+
+    <section id="joueurs">
+      <h2>Entre joueurs</h2>
+      <p class="intro">
+        C’est le cœur du jeu à douze. Vous n’aurez jamais tout ce qu’il vous
+        faut, et quelqu’un autour de la table a toujours trop de laine.
+      </p>
+      <p>
+        Une offre dit ce que vous donnez contre ce que vous voulez. Elle
+        s’adresse à une personne précise ou à toute la table. Pendant la
+        fenêtre de commerce, <strong>tout le monde peut proposer et
+        accepter</strong> ; pendant un tour, seul le joueur actif peut lancer
+        une offre — mais n’importe qui peut lui répondre.
+      </p>
+      <ul class="liste">
+        <li><strong>L’acceptation est atomique.</strong> Le serveur vérifie les deux inventaires, la phase et la validité de l’offre, puis effectue les deux transferts d’un coup. Si l’un des inventaires a changé entre-temps, l’offre devient caduque plutôt que de transférer à moitié.</li>
+        <li><strong>Les offres ne franchissent pas le cycle.</strong> Elles expirent à la résolution : les mains ont trop changé pour qu’une offre du cycle précédent garde un sens.</li>
+        <li><strong>Les ressources réservées par une annonce ne sont pas échangeables.</strong> Annoncer une construction, c’est retirer ces cartes du marché.</li>
+        <li><strong>Un échange entre joueurs ne fait jamais bouger le cours.</strong> Le marché n’enregistre que la banque.</li>
+      </ul>
+      <div class="note">
+        <div class="note-titre">L’interface n’est pas là pour négocier</div>
+        <p>
+          Vous êtes dans la même pièce : la négociation est orale. L’écran
+          sert à <strong>exécuter très vite</strong> un accord déjà conclu à
+          voix haute. Le bouton <em>Marché</em> montre toutes les offres en
+          cours, y compris celles échangées entre deux autres joueurs — savoir
+          que trois personnes réclament du minerai vaut mieux que de proposer
+          le vôtre au premier venu.
+        </p>
+      </div>
+    </section>
+
+    <section id="marche">
+      <h2>Le marché dynamique</h2>
+      <p class="intro">
+        Le taux bancaire n’est pas 4:1. C’est un cours par ressource, public,
+        qui bouge selon ce que la table vend.
+      </p>
+      <p>
+        Échanger avec la banque, c’est donner un certain nombre de cartes
+        identiques pour en recevoir une au choix. Ce nombre — le
+        <strong>cours</strong> — n’est pas le même pour toutes les ressources,
+        et il change pendant la partie. Rien de nouveau à apprendre : c’est le
+        même geste qu’au Catan classique, à un prix qui bouge.
+      </p>
+
+      <h3>Les prix d’ouverture</h3>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Cours de départ — cartes à donner pour en recevoir une</caption>
+          <thead><tr><th>Ressource</th><th class="num">Cours</th><th>Ce que ça dit</th></tr></thead>
+          <tbody>
+            <tr><td><span class="piece"><span class="pastille" data-r="bois"></span>Bois</span></td><td class="num">5</td><td>Il est partout, il ne vaut rien</td></tr>
+            <tr><td><span class="piece"><span class="pastille" data-r="brique"></span>Brique</span></td><td class="num">4</td><td>Courante</td></tr>
+            <tr><td><span class="piece"><span class="pastille" data-r="laine"></span>Laine</span></td><td class="num">4</td><td>Courante</td></tr>
+            <tr><td><span class="piece"><span class="pastille" data-r="ble"></span>Blé</span></td><td class="num">3</td><td>Demandée par tout ce qui monte au score</td></tr>
+            <tr><td><span class="piece"><span class="pastille" data-r="minerai"></span>Minerai</span></td><td class="num">3</td><td>Demandée par tout ce qui monte au score</td></tr>
+            <tr><td><span class="piece"><span class="pastille" data-r="or"></span>Or</span></td><td class="num">2</td><td>Rare, et déjà au plancher du jeu</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Ce qui fait bouger le cours</h3>
+      <p>
+        Une transaction bancaire déplace le solde d’un cran : la ressource que
+        vous <em>donnez</em> afflue et se déprécie, celle que vous
+        <em>recevez</em> se raréfie et se renchérit.
+        <strong>Quatre transactions nettes</strong> dans le même sens
+        déplacent le cours d’une carte.
+      </p>
+      <pre class="schema"><code>vous vendez du bois × 4   →  le bois passe de 5 à 6   (il faut en donner plus)
+vous achetez du blé × 4   →  le blé passe de 3 à 2    (il en faut moins)
+
+bornes : jamais en dessous de 2, jamais au-dessus de 6</code></pre>
+      <div class="note">
+        <div class="note-titre">Un cours bas est une bonne nouvelle</div>
+        <p>
+          Le cours dit <em>combien de cartes donner pour en recevoir une</em>.
+          Une ressource précieuse en demande donc <strong>peu</strong> : l’or à
+          2 est le meilleur prix du jeu, le bois à 5 le pire. Une ressource que
+          toute la table brade voit son cours <strong>monter</strong> ; une
+          ressource que tout le monde s’arrache le voit <strong>descendre</strong>.
+        </p>
+      </div>
+      <p>
+        On compte des <strong>transactions</strong> et non des cartes : un
+        échange donne toujours <em>cours</em> cartes contre une seule, et
+        compter les cartes ferait monter le côté vendu quatre à six fois plus
+        vite que ne descend le côté acheté — tous les cours dériveraient vers
+        le plafond en quelques dizaines d’échanges.
+      </p>
+
+      <h3>Ce qui n’y touche pas</h3>
+      <p>
+        Le cours ne bouge <strong>que</strong> par la banque. Production, vol,
+        monopole, défausse, échanges entre joueurs et ports à contrat n’y
+        changent rien.
+      </p>
+      <p>
+        C’est délibéré, et c’est tout l’intérêt du dispositif à douze
+        joueurs : <strong>plus la banque devient chère sur une ressource, plus
+        il devient rentable de se tourner vers la table</strong>. Le marché ne
+        remplace pas la négociation, il la pousse.
+      </p>
+
+      <h3>Le cours est public</h3>
+      <p>
+        Chacun voit les six prix et le sens du prochain mouvement. Un marché
+        qu’on découvrirait au moment de cliquer ne serait pas un marché :
+        c’est de le voir monter qu’on décide de vendre maintenant plutôt qu’au
+        cycle suivant. Le taux affiché est <strong>le vôtre</strong>, remise
+        de vos ports comprise.
+      </p>
+      <div class="citation">
+        « Une flèche qui monte veut dire : vendez maintenant. »
+      </div>
+      <div class="note">
+        <div class="note-titre">Une ressource saturée repart dès qu’on cesse</div>
+        <p>
+          Le solde qui porte le cours est borné, un cran au-delà du cours
+          lui-même. Sans cette seconde borne, la mesure a montré une ressource
+          vendue quatre cents fois de suite et un cours qu’il aurait fallu
+          quatre cents achats pour décoller — un indicateur mort. Ici, il
+          suffit d’un palier d’achats, pas d’une partie entière.
+        </p>
+      </div>
+    </section>
+
+    <section id="ports">
+      <h2>Les ports ordinaires</h2>
+      <p class="intro">
+        Un port ne fixe pas un prix : il retranche une remise au cours du
+        jour.
+      </p>
+      <p>
+        Le port est à vous dès qu’une de vos colonies occupe son sommet. Il
+        n’y a rien à payer ni à activer.
+      </p>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Remises</caption>
+          <thead><tr><th>Port</th><th class="num">Remise</th><th>Sur quoi</th></tr></thead>
+          <tbody>
+            <tr><td>Générique</td><td class="num">−1 carte</td><td>N’importe quelle ressource</td></tr>
+            <tr><td>Spécialisé</td><td class="num">−2 cartes</td><td>Sa ressource uniquement</td></tr>
+            <tr><td>Marchand</td><td class="num">−2 cartes</td><td>N’importe quelle ressource — un seul par plateau</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        On retient toujours la <strong>meilleure remise</strong> dont vous
+        disposez : posséder un port spécialisé n’annule jamais l’avantage d’un
+        port générique. Et le taux final ne descend
+        <strong>jamais sous 2</strong>, le plancher du cours lui-même.
+      </p>
+      <pre class="schema"><code>cours du bois          5
+port générique        −1   →  4 cartes pour une
+port spécialisé bois  −2   →  3 cartes pour une
+
+cours de l'or          2
+n'importe quel port   −2   →  2 (plancher) : l'or ne profite d'aucun port</code></pre>
+      <p>
+        C’est le barème classique — 4 nu, 3 générique, 2 spécialisé — mais
+        exprimé de façon à ce que les deux systèmes coexistent. L’inverse
+        aurait tué le marché : un port qui <em>imposerait</em> son taux le
+        rendrait invisible à tout joueur installé, c’est-à-dire à tout le
+        monde après quelques cycles.
+      </p>
+    </section>
+
+    <section id="contrats">
+      <h2>Les ports à contrat</h2>
+      <p class="intro">
+        Deux enseignes qui ne suivent jamais le cours. Sans intérêt quand le
+        marché est calme, précieuses quand il s’emballe.
+      </p>
+
+      <div class="constructions">
+        <div class="construction">
+          <span class="construction-nom">Port minier</span>
+          <span class="construction-gain">un seul par plateau</span>
+          <p class="construction-texte">
+            <strong>2 minerai → 1 or</strong>, à prix fixe, quoi que dise le
+            marché. C’est le seul moyen de faire de l’or sans tuile d’or — et
+            l’or bâtit les métropoles.
+          </p>
+        </div>
+        <div class="construction">
+          <span class="construction-nom">Port commercial</span>
+          <span class="construction-gain">un seul par plateau</span>
+          <p class="construction-texte">
+            <strong>2 ressources de natures différentes → 1 au choix</strong>,
+            à prix fixe. Jamais deux fois la même carte en paiement, et jamais
+            la ressource demandée.
+          </p>
+        </div>
+      </div>
+
+      <p>
+        Le port minier devait être exempté du marché, sans quoi il serait
+        mort-né : un port spécialisé minerai donne déjà deux cartes de remise
+        sur <em>tout</em>, y compris l’or, donc un port minier soumis au même
+        plancher n’aurait rien apporté de plus. Exempté, il devient ce qu’un
+        contrat doit être — sans intérêt quand le minerai est bon marché, très
+        précieux quand le marché l’a poussé à six.
+      </p>
+      <p>
+        Le port commercial répond à un autre problème, mesuré en simulation :
+        à douze joueurs, le blocage n’est pas la pénurie mais la
+        <strong>dispersion</strong>. Dix cartes réparties sur cinq types ne
+        font jamais une cité. On n’y écoule pas un surplus — on y recompose
+        une main éparpillée.
+      </p>
+      <p>
+        Aucun de ces deux échanges n’enregistre de mouvement de marché. Ce
+        n’est pas seulement cohérent avec leur prix fixe, c’est nécessaire :
+        le port commercial consomme deux cartes pour en rendre une, et les
+        compter pousserait deux cours vers le haut pour un seul vers le bas à
+        chaque usage.
+      </p>
+      <div class="note">
+        <div class="note-titre">Trois positions de course</div>
+        <p>
+          Le marchand, le minier et le commercial sont semés
+          <strong>une seule fois chacun</strong> par plateau, comme les
+          métropoles sont trois pour la partie. Si la côte est trop courte
+          pour les trois, c’est le marchand qui reste : il est le seul dont
+          l’effet se comprend sans avoir lu la règle.
+        </p>
+      </div>
+      <div class="note note--absent">
+        <div class="note-titre">Le port royal n’est pas semé</div>
+        <p>
+          Le quatrième port du concept d’origine donne un bonus d’Influence
+          aux joueurs qui contrôlent sa région. Ni l’Influence ni la notion de
+          région n’existent : il n’est ni semé ni déclaré, parce qu’un type de
+          port inutilisé ne se contente pas d’être inerte — il occuperait un
+          sommet de côte.
+        </p>
+      </div>
+    </section>
+
+    <section id="strategie">
+      <h2>Trois habitudes qui rapportent</h2>
+      <ol class="liste">
+        <li>
+          <strong>Vendez sur la flèche, achetez à plat.</strong> Le cours est
+          public et prévient avant de bouger. Une carte de bois vendue juste
+          avant que le bois ne passe à 6 vaut une carte de plus qu’au cycle
+          suivant.
+        </li>
+        <li>
+          <strong>Gardez la banque pour vous débloquer.</strong> Deux à six
+          cartes pour une, c’est toujours cher. La table est presque toujours
+          un meilleur partenaire — surtout quand le cours grimpe, ce qui est
+          exactement le moment où tout le monde y pense.
+        </li>
+        <li>
+          <strong>Comptez vos natures, pas vos cartes.</strong> Une main de
+          dix cartes sur cinq types ne bâtit rien. Un passage au port
+          commercial, ou deux échanges bien choisis, valent mieux qu’une
+          production supplémentaire.
+        </li>
+      </ol>
+    </section>
+
+<nav class="fil" aria-label="Pages voisines">
+    <a href="construction.html">
+      <span class="fil-sens">Page précédente</span>
+      <span class="fil-nom">Bâtir</span>
+    </a>
+    <a href="cartes.html" class="suivant">
+      <span class="fil-sens">Page suivante</span>
+      <span class="fil-nom">Les cartes</span>
+    </a>
+  </nav>
+  </main>
+</div>
+
+<footer class="pied">
+  <div class="pied-inner">
+    <p><strong>Grand Colonies</strong> — variante de Catan pour 8 à 12 joueurs, jouable en réseau
+    local. Projet personnel, sans affiliation avec les éditeurs de Catan, Seafarers,
+    Cities&nbsp;&amp;&nbsp;Knights, Traders&nbsp;&amp;&nbsp;Barbarians ou Explorers&nbsp;&amp;&nbsp;Pirates,
+    dont il s’inspire.</p>
+    <p>Le récit de l’Archipel est une fiction : il n’a aucun effet sur les règles.
+    Les règles font foi telles qu’elles sont écrites ici, et le
+    <a href="../RULES_CONTRACT.md">contrat de règles</a> fait foi sur le code.</p>
+  </div>
+</footer>
+<script src="doc.js"></script>
+</body>
+</html>

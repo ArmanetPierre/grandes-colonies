@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Variantes — Grand Colonies</title>
+<meta name="description" content="Les réglages du salon, l’ordre d’apprentissage recommandé, et les variantes de table proposées par le concept d’origine.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="barre">
+  <div class="barre-inner">
+    <a class="marque" href="index.html">Grand <span>Colonies</span></a>
+    <button class="bascule ouvre-sommaire" type="button" aria-expanded="false">Sommaire</button>
+    <div class="barre-espace"></div>
+    <a class="barre-lien" href="regles.html">Manuel en une page</a>
+    <button class="bascule bascule-registre" type="button">Registre</button>
+  </div>
+</header>
+
+<header class="bandeau">
+  <div class="bandeau-inner">
+    <div class="eyebrow">Jouer · 8</div>
+    <h1>Variantes</h1>
+    <p class="chapeau">
+      Ce que l’hôte peut régler sans toucher au code, <em>l’ordre dans lequel
+      apprendre le jeu</em>, et les variantes que le concept d’origine propose
+      aux tables qui veulent autre chose.
+    </p>
+  </div>
+</header>
+
+<div class="page">
+<nav class="sommaire" aria-label="Sommaire de la documentation">
+    <div class="sommaire-groupe">
+      <ul>
+        <li><a href="index.html">Accueil</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Le monde</div>
+      <ul>
+        <li><a href="monde.html">Le récit</a></li>
+        <li><a href="archipel.html">L’archipel</a></li>
+        <li><a href="terres.html">Les terres</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Jouer</div>
+      <ul>
+        <li><a href="premiers-pas.html">Premiers pas</a></li>
+        <li><a href="cycle.html">Le cycle</a></li>
+        <li><a href="construction.html">Bâtir</a></li>
+        <li><a href="commerce.html">Commercer</a></li>
+        <li><a href="cartes.html">Les cartes</a></li>
+        <li><a href="voleur.html">Le sept et l’Errant</a></li>
+        <li><a href="victoire.html">Gagner</a></li>
+        <li><a href="variantes.html" aria-current="page">Variantes</a>
+          <ul class="ancres">
+            <li><a href="#reglages">Les réglages du salon</a></li>
+            <li><a href="#apprentissage">L’ordre d’apprentissage</a></li>
+            <li><a href="#table">Variantes de table</a></li>
+            <li><a href="#equilibrage">Les principes d’équilibrage</a></li>
+          </ul></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">Coulisses</div>
+      <ul>
+        <li><a href="mecanismes.html">Sous le capot</a></li>
+        <li><a href="horizon.html">L’horizon</a></li>
+        <li><a href="glossaire.html">Glossaire</a></li>
+      </ul>
+    </div>
+    <div class="sommaire-groupe">
+      <div class="sommaire-titre">À emporter</div>
+      <ul>
+        <li><a href="regles.html">Manuel en une page</a></li>
+      </ul>
+    </div>
+  </nav>
+  <main>
+
+    <section id="reglages">
+      <h2>Les réglages du salon</h2>
+      <p class="intro">
+        L’écran de l’hôte règle la partie pendant que la pièce se remplit. Ces
+        réglages-là sont réels : ils prennent effet sans rien recompiler.
+      </p>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Ce que l’hôte peut changer</caption>
+          <thead><tr><th>Réglage</th><th class="num">Défaut</th><th class="num">Domaine</th><th>Effet</th></tr></thead>
+          <tbody>
+            <tr><td>Nombre de joueurs</td><td class="num">8</td><td class="num">4 – 12</td><td>En dessous de 8, le plateau classique remplace le XXL</td></tr>
+            <tr><td>Forme du plateau</td><td class="num">archipel</td><td class="num">archipel · disque</td><td>Le disque supprime les traversées : soirée plus courte</td></tr>
+            <tr><td>Nombre de terres</td><td class="num">selon l’effectif</td><td class="num">19 – 130</td><td>Plus de terres, plus d’îles, partie plus longue</td></tr>
+            <tr><td>Points de victoire</td><td class="num">15</td><td class="num">6 – 30</td><td>Le levier le plus direct sur la durée</td></tr>
+            <tr><td>Temps de mise en place</td><td class="num">30 s</td><td class="num">15 – 300 s</td><td>Par pose, et vingt-quatre poses à douze joueurs</td></tr>
+            <tr><td>Durée du tour</td><td class="num">90 s</td><td class="num">20 – 600 s</td><td>Actif et associé, simultanés</td></tr>
+            <tr><td>Fenêtre de commerce</td><td class="num">30 s</td><td class="num">0 – 180 s</td><td>À zéro, il n’y a plus de commerce libre du tout</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Depuis la ligne de commande, trois raccourcis fixent le point de
+        départ : <code>PLAYERS=8</code>, <code>BOARD=disque</code>,
+        <code>TERRES=72</code> — et <code>BOTS=11</code> pour remplir la table
+        de joueurs automatiques.
+      </p>
+      <div class="note">
+        <div class="note-titre">Le plus court chemin vers une partie courte</div>
+        <p>
+          Baisser la victoire à <strong>12 points</strong> et jouer sur le
+          <strong>disque</strong>. Réduire la durée des tours accélère peu :
+          l’essentiel du temps passe en production, en commerce et en
+          résolution, pas à attendre le joueur actif.
+        </p>
+      </div>
+    </section>
+
+    <section id="apprentissage">
+      <h2>L’ordre d’apprentissage</h2>
+      <p class="intro">
+        Grand Colonies contient plus de règles qu’on n’en explique en une
+        soirée. Voici l’ordre dans lequel les introduire.
+      </p>
+
+      <h3>Première partie — le Catan XXL</h3>
+      <p>
+        Ne dites rien de plus que : on produit tous à chaque lancer, deux
+        joueurs jouent en même temps, on peut annoncer une construction hors
+        de son tour, et la banque a un prix qui change. C’est déjà beaucoup.
+        Laissez de côté les métropoles et les ports à contrat — ils
+        s’expliqueront d’eux-mêmes quand quelqu’un cliquera dessus.
+      </p>
+
+      <h3>Deuxième partie — la course</h3>
+      <p>
+        Introduisez explicitement les <strong>trois métropoles</strong>, le
+        <strong>monument</strong> et les <strong>points d’exploration</strong>.
+        Ce sont les trois mécaniques qui empêchent une partie de s’enliser, et
+        elles ne servent qu’à ceux qui savent qu’elles existent.
+      </p>
+
+      <h3>Troisième partie — l’économie</h3>
+      <p>
+        Faites lire la <a href="commerce.html#marche">bande du cours</a> à
+        tout le monde. Une table qui joue le marché — vendre sur la flèche,
+        acheter à plat, se tourner vers les voisins quand la banque s’emballe —
+        joue un autre jeu que celle qui l’ignore.
+      </p>
+      <div class="note">
+        <div class="note-titre">Une soirée d’essai</div>
+        <p>
+          <code>BOTS=11 npm run play</code> : vous seul contre onze bots. Un
+          cycle dure deux minutes quoi qu’il arrive, donc une partie complète
+          s’observe en accéléré, et les bots ne se vexent pas quand on relit
+          les règles à voix haute.
+        </p>
+      </div>
+    </section>
+
+    <section id="table">
+      <h2>Variantes de table</h2>
+      <p class="intro">
+        Le concept d’origine en propose plusieurs. Aucune n’est implémentée :
+        ce sont des propositions pour une version papier, ou pour une version
+        future.
+      </p>
+
+      <div class="grille">
+        <div class="tuile-lien">
+          <span class="tuile-num">Non implémentée</span>
+          <span class="tuile-nom">Jeu ultra-rapide</span>
+          <span class="tuile-texte">
+            Victoire à 12 points, tours de 60 secondes, production toutes les
+            45 secondes, marché ouvert en permanence. Le jeu devient un marché
+            continu.
+          </span>
+        </div>
+        <div class="tuile-lien">
+          <span class="tuile-num">Non implémentée</span>
+          <span class="tuile-nom">Marché chaotique</span>
+          <span class="tuile-texte">
+            Une fenêtre de 60 secondes où tous les échanges sont permis, à
+            chaque cycle. Objectif assumé : le bruit d’une criée.
+          </span>
+        </div>
+        <div class="tuile-lien">
+          <span class="tuile-num">Non implémentée</span>
+          <span class="tuile-nom">Équipes</span>
+          <span class="tuile-texte">
+            Deux équipes de 4 à 6, ou trois équipes à 9 et 12. Ressources
+            individuelles, points additionnés, échanges libres entre
+            partenaires.
+          </span>
+        </div>
+        <div class="tuile-lien">
+          <span class="tuile-num">Non implémentée</span>
+          <span class="tuile-nom">Dé d’événement</span>
+          <span class="tuile-texte">
+            Un troisième dé : tempête, pénurie, festival, migration. Les
+            événements doivent rester rares, sous peine de transformer le jeu
+            en paquet de cartes.
+          </span>
+        </div>
+      </div>
+
+      <p>
+        Deux d’entre elles sont partiellement atteignables avec les réglages
+        du salon : baisser la victoire à 12 points et raccourcir les tours
+        approche le <em>jeu ultra-rapide</em> ; porter la fenêtre de commerce
+        à 60 secondes approche le <em>marché chaotique</em>. Le reste demande
+        du code.
+      </p>
+    </section>
+
+    <section id="equilibrage">
+      <h2>Les principes d’équilibrage</h2>
+      <p class="intro">
+        Utiles à connaître si vous envisagez de changer les réglages : voici
+        ce que le jeu essaie de tenir.
+      </p>
+      <h3>Aucun malus pour le joueur en tête</h3>
+      <p>
+        Le leader ne reçoit pas de pénalité artificielle. Ce qui le freine,
+        c’est que les autres disposent de <strong>plus d’alternatives</strong> :
+        commerce, exploration, objectifs, ports, monument. Il doit donc
+        continuer à jouer activement plutôt que d’attendre que sa position
+        rapporte.
+      </p>
+      <h3>Le plafond n’est pas la ressource, c’est la place</h3>
+      <p>
+        La simulation l’a montré et le jeu en tient compte partout : à douze
+        joueurs, les parties s’enlisent parce que les emplacements manquent.
+        C’est pour cela que le monument ne demande pas de sommet, que la
+        métropole se bâtit sur l’existant, et que les îles secondaires
+        existent.
+      </p>
+      <h3>Rien ne doit dépendre d’un tour individuel long</h3>
+      <p>
+        C’est la règle fondamentale du concept : une partie à douze doit donner
+        quelque chose à faire à presque tout le monde pendant le tour des
+        autres. Chaque réglage qui allonge un tour individuel travaille contre
+        elle.
+      </p>
+    </section>
+
+<nav class="fil" aria-label="Pages voisines">
+    <a href="victoire.html">
+      <span class="fil-sens">Page précédente</span>
+      <span class="fil-nom">Gagner</span>
+    </a>
+    <a href="mecanismes.html" class="suivant">
+      <span class="fil-sens">Page suivante</span>
+      <span class="fil-nom">Sous le capot</span>
+    </a>
+  </nav>
+  </main>
+</div>
+
+<footer class="pied">
+  <div class="pied-inner">
+    <p><strong>Grand Colonies</strong> — variante de Catan pour 8 à 12 joueurs, jouable en réseau
+    local. Projet personnel, sans affiliation avec les éditeurs de Catan, Seafarers,
+    Cities&nbsp;&amp;&nbsp;Knights, Traders&nbsp;&amp;&nbsp;Barbarians ou Explorers&nbsp;&amp;&nbsp;Pirates,
+    dont il s’inspire.</p>
+    <p>Le récit de l’Archipel est une fiction : il n’a aucun effet sur les règles.
+    Les règles font foi telles qu’elles sont écrites ici, et le
+    <a href="../RULES_CONTRACT.md">contrat de règles</a> fait foi sur le code.</p>
+  </div>
+</footer>
+<script src="doc.js"></script>
+</body>
+</html>

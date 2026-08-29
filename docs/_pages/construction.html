@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bâtir — Grand Colonies</title>
+<meta name="description" content="Routes, voies maritimes, colonies, cités, métropoles et monuments : coûts, règles de placement et réserves de pièces.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--BARRE-->
+
+<header class="bandeau">
+  <div class="bandeau-inner">
+    <div class="eyebrow">Jouer · 3</div>
+    <h1>Bâtir</h1>
+    <p class="chapeau">
+      Six constructions. Les trois premières sont votre pain quotidien ;
+      <em>les trois autres décident souvent de la partie</em>.
+    </p>
+    <div class="faits">
+      <span class="fait"><b>20</b> routes</span>
+      <span class="fait"><b>5</b> colonies</span>
+      <span class="fait"><b>4</b> cités</span>
+      <span class="fait"><b>3</b> métropoles pour toute la table</span>
+      <span class="fait"><b>1</b> monument par joueur</span>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+<!--NAV-->
+  <main>
+
+    <section id="couts">
+      <h2>Les six constructions</h2>
+      <p class="intro">
+        Tous les coûts, dans l’ordre où l’on y vient au cours d’une partie.
+      </p>
+
+      <div class="constructions">
+        <div class="construction">
+          <span class="construction-nom">Route</span>
+          <span class="construction-gain">0 point</span>
+          <p class="construction-texte">
+            Prolonge votre réseau vers de nouveaux emplacements. Elle ne
+            rapporte rien en elle-même, mais le plus long réseau vaut 2 points.
+          </p>
+          <div class="cout">
+            <span class="piece"><span class="pastille" data-r="bois"></span>1 bois</span>
+            <span class="piece"><span class="pastille" data-r="brique"></span>1 brique</span>
+          </div>
+        </div>
+
+        <div class="construction">
+          <span class="construction-nom">Voie maritime</span>
+          <span class="construction-gain">0 point</span>
+          <p class="construction-texte">
+            Une route qui franchit l’eau. Elle compte dans le même réseau que
+            vos routes terrestres, et c’est le seul chemin vers les autres
+            îles.
+          </p>
+          <div class="cout">
+            <span class="piece"><span class="pastille" data-r="bois"></span>1 bois</span>
+            <span class="piece"><span class="pastille" data-r="laine"></span>1 laine</span>
+          </div>
+        </div>
+
+        <div class="construction">
+          <span class="construction-nom">Colonie</span>
+          <span class="construction-gain">1 point</span>
+          <p class="construction-texte">
+            Votre unité de base. Elle produit une ressource par hexagone
+            voisin à chaque lancer, et capte le port sur lequel elle est
+            posée.
+          </p>
+          <div class="cout">
+            <span class="piece"><span class="pastille" data-r="bois"></span>1 bois</span>
+            <span class="piece"><span class="pastille" data-r="brique"></span>1 brique</span>
+            <span class="piece"><span class="pastille" data-r="laine"></span>1 laine</span>
+            <span class="piece"><span class="pastille" data-r="ble"></span>1 blé</span>
+          </div>
+        </div>
+
+        <div class="construction">
+          <span class="construction-nom">Cité</span>
+          <span class="construction-gain">2 points</span>
+          <p class="construction-texte">
+            Améliore une de vos colonies, qui retourne dans votre réserve.
+            Elle produit le double. C’est la façon la plus sûre de monter au
+            score.
+          </p>
+          <div class="cout">
+            <span class="piece"><span class="pastille" data-r="minerai"></span>3 minerai</span>
+            <span class="piece"><span class="pastille" data-r="ble"></span>2 blé</span>
+          </div>
+        </div>
+
+        <div class="construction">
+          <span class="construction-nom">Métropole</span>
+          <span class="construction-gain">3 points</span>
+          <p class="construction-texte">
+            Améliore une cité — ses 3 points <em>remplacent</em> les 2 de la
+            cité, soit un point net. Il n’y en a que <strong>trois pour toute
+            la partie</strong>, tous joueurs confondus.
+          </p>
+          <div class="cout">
+            <span class="piece"><span class="pastille" data-r="minerai"></span>3 minerai</span>
+            <span class="piece"><span class="pastille" data-r="ble"></span>2 blé</span>
+            <span class="piece"><span class="pastille" data-r="or"></span>2 or</span>
+          </div>
+        </div>
+
+        <div class="construction">
+          <span class="construction-nom">Monument</span>
+          <span class="construction-gain">2 points</span>
+          <p class="construction-texte">
+            S’élève sur une de vos cités ou métropoles et n’occupe aucun
+            emplacement nouveau. <strong>Un seul par joueur.</strong>
+          </p>
+          <div class="cout">
+            <span class="piece"><span class="pastille" data-r="bois"></span>1 bois</span>
+            <span class="piece"><span class="pastille" data-r="brique"></span>1 brique</span>
+            <span class="piece"><span class="pastille" data-r="laine"></span>1 laine</span>
+            <span class="piece"><span class="pastille" data-r="ble"></span>1 blé</span>
+            <span class="piece"><span class="pastille" data-r="minerai"></span>1 minerai</span>
+          </div>
+        </div>
+      </div>
+
+      <p>
+        S’y ajoute la <strong>carte développement</strong>, qui n’est pas une
+        construction mais se paye au même moment : 1 minerai, 1 laine, 1 blé.
+        Voir <a href="cartes.html">Les cartes</a>.
+      </p>
+    </section>
+
+    <section id="placement">
+      <h2>Où l’on a le droit de poser</h2>
+      <p class="intro">
+        Trois règles, les mêmes qu’au Catan d’origine, et une quatrième pour
+        la mer.
+      </p>
+      <ul class="liste">
+        <li>
+          <strong>La règle de distance.</strong> Deux bâtiments ne peuvent
+          jamais occuper deux carrefours voisins — les vôtres compris. Il faut
+          toujours au moins un carrefour libre entre deux constructions.
+        </li>
+        <li>
+          <strong>La règle de réseau.</strong> Une colonie doit être reliée à
+          l’une de vos routes. Une route doit prolonger votre réseau : elle
+          part d’un de vos bâtiments ou d’une de vos routes.
+        </li>
+        <li>
+          <strong>La règle d’amélioration.</strong> Une cité se bâtit sur une
+          de vos colonies ; une métropole sur une de vos cités ; un monument
+          sur une de vos cités ou métropoles. On n’améliore jamais le
+          bâtiment d’autrui.
+        </li>
+        <li>
+          <strong>La mer.</strong> Une voie maritime se pose sur une arête
+          bordée d’eau, exactement comme une route sur la terre, et poursuit
+          le même réseau. Une colonie ne se pose jamais en pleine mer : il
+          faut un sommet touchant une terre.
+        </li>
+      </ul>
+      <div class="note">
+        <div class="note-titre">La réserve de pièces vous bloque avant les ressources</div>
+        <p>
+          Vous avez <strong>20 routes, 5 colonies et 4 cités</strong>. La
+          dotation de routes a été portée de 15 à 20 après mesure : à 15, un
+          joueur finissait avec des colonies en réserve et plus une seule
+          route pour atteindre un emplacement légal. Gardez un œil sur ces
+          compteurs — une colonie améliorée en cité vous la rend.
+        </p>
+      </div>
+    </section>
+
+    <section id="metropole">
+      <h2>La métropole</h2>
+      <p class="intro">
+        Trois pour toute la partie. C’est un prix de course, pas un palier.
+      </p>
+      <p>
+        La métropole améliore une de vos cités. Elle vaut <strong>3 points au
+        lieu des 2</strong> de la cité — un point net — et
+        <strong>produit autant qu’une cité</strong>, ni plus. Ce n’est pas un
+        moteur économique : c’est un point de plus, et le prestige d’avoir été
+        parmi les trois premiers.
+        Le compteur de métropoles restantes est public.
+      </p>
+      <p>
+        Elle est la seule construction qui réclame de l’<strong>or</strong>.
+        C’est délibéré : sans elle, l’or était une ressource morte — produit
+        par ses hexagones, compté par la banque, réclamé par aucun coût. Il
+        s’accumulait en main jusqu’à la défausse. La métropole lui donne une
+        raison d’exister, et donne aux tuiles d’or une valeur de placement.
+      </p>
+      <p>
+        À douze joueurs, une amélioration accessible à tous aurait gonflé tous
+        les scores sans rien départager. En la limitant à trois, elle
+        redevient ce qu’est la route la plus longue : quelque chose qu’on
+        prend à quelqu’un d’autre.
+      </p>
+      <div class="note note--recit">
+        <div class="note-titre">Ce qu’en dit le récit</div>
+        <p>
+          Kalythéra ne délivre que trois sceaux par génération. Le quatrième
+          convoi rentre les mains vides —
+          <a href="monde.html#sceaux">Les trois sceaux</a>.
+        </p>
+      </div>
+    </section>
+
+    <section id="monument">
+      <h2>Le monument</h2>
+      <p class="intro">
+        Cinq ressources pour deux points, sans avoir à trouver un emplacement.
+      </p>
+      <p>
+        C’est le tarif d’une cité, mais il s’acquitte <strong>sur place</strong>.
+        Le monument est la sortie du joueur bloqué : celui qui a des
+        ressources et plus aucun sommet libre où bâtir. Le vrai plafond d’une
+        partie à douze n’est presque jamais la pénurie — c’est le manque de
+        place.
+      </p>
+      <p>
+        Son coût — <strong>une ressource de chaque</strong> — vous oblige à
+        passer par le commerce. Personne ne réunit les cinq natures par la
+        seule production. C’est voulu : cette construction fait vivre la table
+        au lieu de l’assécher.
+      </p>
+      <p><strong>Un seul monument par joueur</strong>, pour toute la partie.</p>
+    </section>
+
+    <section id="hauteur">
+      <h2>Croître en hauteur</h2>
+      <p class="intro">
+        Pourquoi métropole et monument existent, alors que le Catan d’origine
+        s’en passe très bien.
+      </p>
+      <p>
+        La simulation a montré une chose contre-intuitive : les parties à
+        douze ne s’éternisent pas parce que les joueurs manquent de
+        ressources, mais parce qu’ils manquent d’<strong>emplacements</strong>.
+        Passé un certain point, tout le monde a des cartes et personne n’a de
+        sommet libre. Le score cesse de monter, et la partie ne se termine
+        plus.
+      </p>
+      <p>
+        Métropole et monument répondent exactement à cela : ils font croître
+        le score <strong>en hauteur</strong> plutôt qu’en surface. Chacun se
+        bâtit sur quelque chose que vous possédez déjà.
+      </p>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Le même sommet, à trois âges de la partie</caption>
+          <thead><tr><th>Sur ce carrefour</th><th class="num">Production</th><th class="num">Points</th></tr></thead>
+          <tbody>
+            <tr><td>Colonie</td><td class="num">×1</td><td class="num">1</td></tr>
+            <tr><td>Cité</td><td class="num">×2</td><td class="num">2</td></tr>
+            <tr><td>Métropole</td><td class="num">×2</td><td class="num">3</td></tr>
+            <tr><td>Métropole + monument</td><td class="num">×2</td><td class="num">5</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="quand">
+      <h2>Quand on a le droit de bâtir</h2>
+      <p class="intro">
+        Trois fenêtres, et une seule ouverte en permanence.
+      </p>
+      <ul class="liste">
+        <li><strong>Pendant votre tour actif</strong> — vous bâtissez directement, autant de fois que vos ressources le permettent.</li>
+        <li><strong>Pendant votre tour associé</strong> — de même. Vous êtes associé une fois par tour de table, en plus de votre tour actif.</li>
+        <li><strong>À tout autre moment</strong> — vous ne bâtissez pas, vous <a href="cycle.html#annonces">annoncez</a>. Vos ressources sont réservées sur-le-champ, et la construction se pose à la fin du cycle si personne ne vous a devancé.</li>
+      </ul>
+      <p>
+        Une construction annoncée obéit aux mêmes règles de placement qu’une
+        construction ordinaire, et un emplacement occupé entre-temps la fait
+        échouer — vos ressources vous reviennent alors intégralement.
+      </p>
+      <div class="note note--absent">
+        <div class="note-titre">Le comptoir n’existe pas encore</div>
+        <p>
+          Le concept d’origine prévoit un <strong>comptoir commercial</strong>
+          (2 brique, 1 laine) donnant de l’Influence et de l’or. Son coût est
+          écrit dans le moteur, mais rien ne permet de le construire :
+          l’Influence n’existe pas. Voir <a href="horizon.html">L’horizon</a>.
+        </p>
+      </div>
+    </section>
+
+<!--FIL-->
+  </main>
+</div>
+
+<!--PIED-->
+<script src="doc.js"></script>
+</body>
+</html>

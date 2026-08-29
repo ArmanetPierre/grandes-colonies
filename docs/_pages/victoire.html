@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gagner — Grand Colonies</title>
+<meta name="description" content="Quinze points de victoire : le barème complet, les deux titres disputés, la vérification en fin de cycle et les égalités.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--BARRE-->
+
+<header class="bandeau">
+  <div class="bandeau-inner">
+    <div class="eyebrow">Jouer · 7</div>
+    <h1>Gagner</h1>
+    <p class="chapeau">
+      Quinze points, neuf façons d’en marquer, et <em>deux titres qui se
+      volent jusqu’au dernier cycle</em>. La victoire n’est jamais contrôlée
+      en plein geste.
+    </p>
+    <div class="faits">
+      <span class="fait"><b>15</b> points</span>
+      <span class="fait">Contrôle en <b>fin de cycle</b></span>
+      <span class="fait"><b>2</b> titres à prendre</span>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+<!--NAV-->
+  <main>
+
+    <section id="bareme">
+      <h2>Le barème</h2>
+      <p class="intro">
+        Quinze points au lieu des dix du Catan classique : c’est la
+        contrepartie d’une carte beaucoup plus grande. Il faut qu’une partie à
+        douze reste une course et non un sprint.
+      </p>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Sources de points</caption>
+          <thead><tr><th>Source</th><th>Détail</th><th class="num">Points</th></tr></thead>
+          <tbody>
+            <tr><td>Colonie</td><td>Chacune, jusqu’à 5</td><td class="num">1</td></tr>
+            <tr><td>Cité</td><td>Chacune, jusqu’à 4</td><td class="num">2</td></tr>
+            <tr><td>Métropole</td><td>Trois pour toute la partie — remplace les 2 points de la cité</td><td class="num">3</td></tr>
+            <tr><td>Monument</td><td>Un par joueur</td><td class="num">2</td></tr>
+            <tr><td>Objectif secret</td><td>S’il est rempli</td><td class="num">2</td></tr>
+            <tr><td>Plus long réseau</td><td>5 segments au moins — se vole</td><td class="num">2</td></tr>
+            <tr><td>Plus grande puissance militaire</td><td>3 chevaliers au moins — se vole</td><td class="num">2</td></tr>
+            <tr><td>Exploration majeure</td><td>Premier à fonder sur une île secondaire</td><td class="num">1</td></tr>
+            <tr class="inerte"><td>Jeton de Défenseur</td><td>Attend les barbares — inatteignable</td><td class="num">1</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Le jeton de Défenseur figure au barème sans pouvoir être obtenu : il
+        est conservé pour le jour où les barbares existeront, afin qu’il n’y
+        ait alors rien à rechiffrer. Voir <a href="horizon.html">L’horizon</a>.
+      </p>
+
+      <h3>Un chemin vers quinze</h3>
+      <pre class="schema"><code>4 colonies                        4
+3 cités                           6
+1 monument                        2
+plus long réseau                  2
+objectif secret rempli            2
+                                 ──
+                                 16   → gagné au cycle où le 15ᵉ point tombe</code></pre>
+      <p>
+        Ce n’est qu’un chemin parmi d’autres, et ce n’est pas le plus
+        fréquent : la plupart des parties se gagnent en améliorant en cité ce
+        qu’on a déjà, parce que les emplacements manquent avant les
+        ressources.
+      </p>
+    </section>
+
+    <section id="titres">
+      <h2>Les deux titres</h2>
+      <p class="intro">
+        Deux points chacun, et ils changent de main. À eux seuls, ils
+        renversent une fin de partie.
+      </p>
+
+      <h3>Le plus long réseau</h3>
+      <ul class="liste">
+        <li>Il faut au moins <strong>5 segments</strong> pour le prendre la première fois.</li>
+        <li>Ce n’est pas la taille du réseau mais <strong>la longueur du plus long chemin</strong> qu’on y trouve : quinze routes en étoile peuvent donner un réseau plus court que six routes en ligne.</li>
+        <li><strong>Une colonie adverse coupe le chemin.</strong> On peut y arriver, jamais la traverser — c’est le geste défensif le moins cher du jeu.</li>
+        <li>Les <strong>voies maritimes comptent</strong> comme n’importe quel segment.</li>
+        <li>Les boucles sont légales tant qu’aucune route ne ressert deux fois.</li>
+      </ul>
+
+      <h3>La plus grande puissance militaire</h3>
+      <ul class="liste">
+        <li>Il faut avoir joué au moins <strong>3 chevaliers</strong>.</li>
+        <li>Seules comptent les cartes <em>jouées</em>, pas celles gardées en main.</li>
+      </ul>
+
+      <div class="note">
+        <div class="note-titre">À égalité, le titre ne bouge pas</div>
+        <p>
+          Il faut faire <strong>strictement mieux</strong> que le détenteur
+          pour le lui prendre. Sans cette règle, un titre s’échangerait à
+          chaque tour et les scores deviendraient illisibles en pleine
+          partie — ce qui, à douze joueurs, est le pire défaut possible.
+        </p>
+      </div>
+    </section>
+
+    <section id="controle">
+      <h2>Quand la victoire est contrôlée</h2>
+      <p class="intro">
+        À la fin du cycle, jamais au moment où le point est marqué.
+      </p>
+      <p>
+        Personne n’est coupé en plein geste : toutes les actions engagées se
+        terminent, y compris celles des autres joueurs pendant la phase
+        simultanée, y compris les annonces qui se résolvent. <em>Puis</em> on
+        compte.
+      </p>
+      <p>
+        Cela veut dire qu’un joueur peut atteindre 15 points à la seconde 20
+        d’un tour et ne l’apprendre qu’à la seconde 120 — et que quelqu’un
+        d’autre peut le rejoindre entre-temps.
+      </p>
+
+      <h3>Si plusieurs joueurs atteignent le seuil</h3>
+      <ol class="liste">
+        <li><strong>Le plus haut total l’emporte.</strong> Seize bat quinze.</li>
+        <li>À égalité parfaite, <strong>l’ordre du tour tranche</strong>, en partant du joueur actif puis vers sa gauche.</li>
+      </ol>
+      <p>
+        Cette règle désigne toujours un vainqueur unique, et elle est
+        entièrement déterministe : rejouée depuis le même journal de commandes,
+        la partie se termine exactement de la même façon.
+      </p>
+    </section>
+
+    <section id="revelation">
+      <h2>La révélation</h2>
+      <p class="intro">
+        Tous les objectifs secrets sont retournés en même temps.
+      </p>
+      <p>
+        C’est le moment où l’on comprend enfin ce que chacun poursuivait — et
+        où l’on découvre parfois qu’un joueur avait deux points de plus que ce
+        que l’écran affichait depuis une heure. Les objectifs restent privés
+        jusque-là : ils ne sont jamais envoyés aux autres écrans, même
+        chiffrés.
+      </p>
+      <figure>
+        <img src="../assets/generated/backgrounds/bg_endgame.jpg" alt="Un port grec au couchant, trirèmes amarrées, quai de marbre et lumière de lanternes">
+        <figcaption>L’écran de fin de partie.</figcaption>
+      </figure>
+      <div class="note">
+        <div class="note-titre">Combien de temps</div>
+        <p>
+          Comptez <strong>2 h à 2 h 30 à huit joueurs</strong> et
+          <strong>3 h à 3 h 30 à douze</strong> sur le plateau en archipel.
+          Le plateau en disque ramène une partie à douze autour de
+          <strong>2 h 20</strong> : moins de traversées, donc moins de cycles.
+        </p>
+      </div>
+    </section>
+
+<!--FIL-->
+  </main>
+</div>
+
+<!--PIED-->
+<script src="doc.js"></script>
+</body>
+</html>

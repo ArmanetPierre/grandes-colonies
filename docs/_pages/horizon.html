@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L’horizon — Grand Colonies</title>
+<meta name="description" content="Ce que le concept d’origine décrit et que le jeu ne contient pas encore : barbares, Influence, contrats, exploration cachée, villes spécialisées.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--BARRE-->
+
+<header class="bandeau">
+  <div class="bandeau-inner">
+    <div class="eyebrow">Coulisses · 2</div>
+    <h1>L’horizon</h1>
+    <p class="chapeau">
+      Le concept d’origine décrit plus de jeu qu’il n’en existe.
+      <em>Voici précisément ce qui manque</em>, et ce dont chaque pièce a
+      besoin pour arriver.
+    </p>
+  </div>
+</header>
+
+<div class="page">
+<!--NAV-->
+  <main>
+
+    <section id="pourquoi">
+      <h2>Pourquoi cette page existe</h2>
+      <p class="intro">
+        Une documentation qui décrit des mécaniques absentes rend le jeu
+        incompréhensible : on cherche un bouton qui n’existe pas.
+      </p>
+      <p>
+        Le reste de ce site ne parle que de ce qui se joue aujourd’hui. Tout
+        ce qui est décrit ici est écrit dans le concept d’origine, parfois
+        chiffré dans le moteur, mais <strong>n’est pas jouable</strong>. Rien
+        n’a été supprimé : ce qui est déclaré sans être atteignable est
+        conservé plutôt que retiré, pour qu’il n’y ait rien à rechiffrer le
+        jour où le système arrive.
+      </p>
+    </section>
+
+    <section id="barbares">
+      <h2>Les barbares <span class="badge badge--projet">À venir</span></h2>
+      <p class="intro">
+        Une menace collective, des récompenses individuelles, et un mécanisme
+        de rattrapage naturel.
+      </p>
+      <p>
+        Le concept prévoit une piste de menace qui avance toutes les X
+        productions. Quand elle arrive au bout, les barbares attaquent, et
+        leur force dépend du <strong>nombre de cités et du développement
+        global de la table</strong> : plus la colonie est riche, plus elle est
+        difficile à défendre. C’est l’anti-emballement du jeu — un joueur qui
+        prend trop d’avance rend l’attaque plus dure pour lui-même.
+      </p>
+      <p>
+        Si la défense combinée ne suffit pas, le joueur ayant le moins
+        contribué perd une cité ; celui qui a le plus contribué gagne un
+        <strong>jeton de Défenseur</strong>.
+      </p>
+      <div class="note note--absent">
+        <div class="note-titre">Ce qui existe déjà</div>
+        <p>
+          Le jeton de Défenseur vaut <strong>1 point</strong> au barème de
+          victoire et n’est jamais attribué. Il attend ce système, et
+          uniquement lui.
+        </p>
+      </div>
+    </section>
+
+    <section id="influence">
+      <h2>L’Influence <span class="badge badge--projet">À venir</span></h2>
+      <p class="intro">
+        La statistique qui manque le plus, parce que quatre autres mécaniques
+        en dépendent.
+      </p>
+      <p>
+        L’Influence représenterait le pouvoir politique, commercial et
+        militaire d’une maison. Elle se gagnerait par les comptoirs, les ports
+        royaux, la défense contre les barbares, certains objectifs et certaines
+        cartes. Elle servirait à départager des conflits et à obtenir des
+        cartes politiques.
+      </p>
+      <p>Quatre choses attendent qu’elle existe :</p>
+      <ul class="liste">
+        <li>
+          <strong>Le gel d’emplacement.</strong> Le concept prévoit qu’une
+          égalité d’Influence gèle un emplacement contesté jusqu’à la fin du
+          cycle. La mécanique de gel est écrite et testée dans le moteur, mais
+          le départage par ancienneté tranche tout : elle ne se déclenche
+          jamais. Le jour venu, l’Influence s’insérera entre les règles 1 et 2
+          de la <a href="cycle.html#annonces">résolution des conflits</a>.
+        </li>
+        <li>
+          <strong>Le comptoir commercial.</strong> Son coût — 2 brique,
+          1 laine — est écrit dans le moteur, mais rien ne permet de le
+          construire : son effet principal est de donner de l’Influence.
+        </li>
+        <li>
+          <strong>Le port royal.</strong> Il donnerait un bonus d’Influence à
+          qui contrôle sa région. Ni l’Influence ni la notion de région
+          n’existent, donc il n’est <em>ni semé ni déclaré</em> —
+          contrairement au jeton de Défenseur, un type de port inutilisé ne se
+          contente pas d’être inerte : il occuperait un sommet de côte.
+        </li>
+        <li>
+          <strong>Les cartes politiques.</strong> Déplacer un marché, modifier
+          un port, forcer une négociation, réduire l’Influence d’un joueur.
+          Elles ne sont pas dans le paquet de soixante cartes.
+        </li>
+      </ul>
+    </section>
+
+    <section id="contrats">
+      <h2>Les contrats et la diplomatie <span class="badge badge--projet">À venir</span></h2>
+      <p class="intro">
+        Des accords entre deux joueurs qui survivent au cycle où ils ont été
+        conclus.
+      </p>
+      <p>
+        Aujourd’hui, un échange est instantané : on donne, on reçoit, c’est
+        fini. Le concept prévoit des accords à terme —
+        <em>« je te donne 1 minerai par cycle pendant 3 cycles contre 2 bois
+        maintenant »</em> — des alliances territoriales et des pactes de
+        protection.
+      </p>
+      <p>
+        Les contrats ne seraient pas juridiquement contraignants : on peut les
+        rompre, mais rompre coûte <strong>2 Influence</strong>. C’est
+        suffisamment pénalisant pour créer de la diplomatie sans forcer la
+        main à personne — et cela dépend donc, encore, de l’Influence.
+      </p>
+      <div class="note note--absent">
+        <div class="note-titre">Ce qui existe déjà</div>
+        <p>
+          L’objectif secret <strong>Diplomate</strong> (« honorer 3 contrats »)
+          est déclaré dans le moteur mais jamais distribué : tirer une carte
+          impossible à remplir serait pire que de ne pas l’avoir.
+        </p>
+      </div>
+    </section>
+
+    <section id="exploration">
+      <h2>L’exploration cachée <span class="badge badge--projet">À venir</span></h2>
+      <p class="intro">
+        Huit natures de tuiles à concevoir, chacune avec ses propres règles.
+      </p>
+      <p>
+        Le concept prévoit que les îles secondaires commencent
+        <strong>face cachée</strong> : en atteignant une zone d’exploration, on
+        révèle un hexagone qui peut contenir une ressource rare, un village
+        neutre, un port, de l’or, un événement, une zone dangereuse, une
+        colonie autochtone ou un territoire particulièrement rentable.
+      </p>
+      <p>
+        Rien de tout cela n’existe : toutes les tuiles sont visibles dès le
+        début. Ce qui est en jeu, c’est la lecture la plus économe du même
+        paragraphe — <strong>1 point au premier joueur qui fonde sur une île
+        secondaire</strong>, une fois par île. Elle récompense déjà ce qui
+        compte : avoir traversé le premier.
+      </p>
+      <div class="note note--absent">
+        <div class="note-titre">Ce qui existe déjà</div>
+        <p>
+          La tuile <em>brume</em> est dessinée et le terrain
+          <code>unexplored</code> existe dans le moteur ; aucun plateau ne
+          l’emploie. L’objectif <strong>Explorateur</strong> (« découvrir
+          5 territoires ») est déclaré mais indisponible.
+        </p>
+      </div>
+    </section>
+
+    <section id="villes">
+      <h2>Les villes spécialisées et les chevaliers <span class="badge badge--projet">À venir</span></h2>
+      <p class="intro">
+        Deux systèmes de <em>Cities&nbsp;&amp;&nbsp;Knights</em> repris par le
+        concept, absents du jeu.
+      </p>
+      <h3>Les villes spécialisées</h3>
+      <p>
+        Une cité pourrait recevoir une spécialisation unique — agricole,
+        forestière, industrielle, commerciale ou militaire — qui augmenterait
+        sa production ou ses capacités. Aujourd’hui, une cité produit le
+        double, une métropole autant qu’une cité, et c’est tout.
+      </p>
+      <h3>Les chevaliers comme unités</h3>
+      <p>
+        Le concept décrit des chevaliers <em>construits</em>, dotés d’une force
+        de 1 à 3, servant à repousser les barbares, protéger des routes et
+        contester des régions. Ce qui existe est la
+        <a href="cartes.html#cinq-cartes">carte Chevalier</a> du Catan
+        classique : elle déplace l’Errant et compte pour la puissance
+        militaire. Il n’y a pas d’unité sur le plateau.
+      </p>
+    </section>
+
+    <section id="poisson">
+      <h2>Le poisson <span class="badge badge--projet">À venir</span></h2>
+      <p>
+        La ressource existe, son terrain existe, son image existe, son cours
+        d’ouverture est chiffré à 4. Aucun plateau ne sème de haut-fond, donc
+        elle n’apparaît jamais en partie. Il suffirait d’en semer pour qu’elle
+        entre en jeu — mais il faudrait alors lui donner des usages, ce que le
+        concept laisse volontairement ouvert.
+      </p>
+    </section>
+
+    <section id="mesures">
+      <h2>Ce qui est en jeu mais mal mesuré</h2>
+      <p class="intro">
+        Une catégorie à part : des mécaniques qui fonctionnent, mais dont
+        l’équilibrage n’a pas été validé en conditions réelles.
+      </p>
+      <ul class="liste">
+        <li>
+          <strong>Les annonces hors tour.</strong> C’est la plus grosse
+          mécanique du jeu, et les bots ne l’utilisent jamais : ils
+          n’annoncent pas hors de leur tour. Toutes les mesures de durée et
+          d’équilibre l’ignorent donc complètement.
+        </li>
+        <li>
+          <strong>Le port minier.</strong> Zéro usage mesuré : les bots n’y
+          touchent pas, parce que l’or ne leur sert qu’à la métropole.
+          L’exemption de marché dont il bénéficie — la décision la plus
+          discutable du lot — n’a été validée que par le raisonnement.
+        </li>
+        <li>
+          <strong>Le choix de l’objectif secret.</strong> Les bots gardent
+          celui qu’on leur attribue sans regarder s’il colle à leur position.
+        </li>
+        <li>
+          <strong>La fenêtre de commerce de 30 secondes.</strong> À douze
+          joueurs, négocier <em>et</em> valider en trente secondes est très
+          court. Si le playtest le confirme, les leviers sont : l’allonger, ou
+          ouvrir le commerce pendant tout le cycle.
+        </li>
+        <li>
+          <strong>L’effet du Bâtisseur.</strong> Son nom autorisait plusieurs
+          lectures ; celle retenue — une construction offerte au choix — est
+          la plus économe, mais reste à confirmer en partie réelle.
+        </li>
+      </ul>
+      <p>
+        Le détail chiffré de toutes ces mesures est dans
+        <a href="../SIMULATION_FINDINGS.md">SIMULATION_FINDINGS.md</a>. Elles
+        disent où se situe le <strong>plancher</strong> du jeu, pas son plafond :
+        les bots sont volontairement simples, et un humain fait mieux partout.
+      </p>
+    </section>
+
+<!--FIL-->
+  </main>
+</div>
+
+<!--PIED-->
+<script src="doc.js"></script>
+</body>
+</html>

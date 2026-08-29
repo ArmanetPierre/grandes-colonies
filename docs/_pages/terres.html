@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Les terres et leurs dons — Grand Colonies</title>
+<meta name="description" content="Les dix terrains de Grand Colonies, les cinq ressources de base, l’or, le poisson — et comment lire un emplacement avant d’y fonder.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--BARRE-->
+
+<header class="bandeau">
+  <div class="bandeau-inner">
+    <div class="eyebrow">Le monde · 3</div>
+    <h1>Les terres et leurs dons</h1>
+    <p class="chapeau">
+      Dix terrains, sept ressources, et une seule question à chaque
+      fondation : <em>qu’est-ce que je ne pourrai plus obtenir autrement ?</em>
+    </p>
+  </div>
+</header>
+
+<div class="page">
+<!--NAV-->
+  <main>
+
+    <section id="terrains">
+      <h2>Les dix terrains</h2>
+      <p class="intro">
+        Chaque hexagone de terre productive donne une ressource, et une seule.
+        Une colonie adjacente en reçoit une par production ; une cité, deux.
+      </p>
+
+      <div class="terrains">
+        <div class="terrain">
+          <img class="hex" src="../assets/generated/tiles/tile_forest.jpg" alt="Bois méditerranéen vu de dessus : pins parasols, oliviers, quelques cyprès">
+          <span class="terrain-nom">Forêt</span>
+          <span class="terrain-rend">donne du <b>bois</b></span>
+        </div>
+        <div class="terrain">
+          <img class="hex" src="../assets/generated/tiles/tile_hills.jpg" alt="Coteau grec en terrasses d’argile rouge, fours de potier et amphores empilées">
+          <span class="terrain-nom">Collines</span>
+          <span class="terrain-rend">donnent de la <b>brique</b></span>
+        </div>
+        <div class="terrain">
+          <img class="hex" src="../assets/generated/tiles/tile_pasture.jpg" alt="Pâture d’île grecque, murets de pierre sèche, moutons">
+          <span class="terrain-nom">Pâturage</span>
+          <span class="terrain-rend">donne de la <b>laine</b></span>
+        </div>
+        <div class="terrain">
+          <img class="hex" src="../assets/generated/tiles/tile_field.jpg" alt="Champ d’orge doré parsemé de petits oliviers">
+          <span class="terrain-nom">Champ</span>
+          <span class="terrain-rend">donne du <b>blé</b></span>
+        </div>
+        <div class="terrain">
+          <img class="hex" src="../assets/generated/tiles/tile_mountain.jpg" alt="Carrière de marbre grecque, blocs taillés et tambours de colonnes">
+          <span class="terrain-nom">Montagne</span>
+          <span class="terrain-rend">donne du <b>minerai</b></span>
+        </div>
+        <div class="terrain">
+          <img class="hex" src="../assets/generated/tiles/tile_gold.jpg" alt="Mine d’or antique vue de dessus, galeries, étais de bois, veines d’or">
+          <span class="terrain-nom">Mine d’or</span>
+          <span class="terrain-rend">donne de l’<b>or</b> — rare</span>
+        </div>
+        <div class="terrain">
+          <img class="hex" src="../assets/generated/tiles/tile_desert.jpg" alt="Garrigue égéenne sèche, pierres claires et touffes d’herbe dorée">
+          <span class="terrain-nom">Désert</span>
+          <span class="terrain-rend">ne produit rien</span>
+        </div>
+        <div class="terrain">
+          <img class="hex" src="../assets/generated/tiles/tile_sea.jpg" alt="Mer Égée profonde et calme vue de dessus">
+          <span class="terrain-nom">Mer</span>
+          <span class="terrain-rend">se franchit, ne produit pas</span>
+        </div>
+        <div class="terrain">
+          <img class="hex" src="../assets/generated/tiles/tile_fish.jpg" alt="Haut-fond égéen clair, bancs de petits poissons visibles à travers l’eau">
+          <span class="terrain-nom">Haut-fond</span>
+          <span class="terrain-rend">donne du <b>poisson</b> — pas encore semé</span>
+        </div>
+        <div class="terrain">
+          <img class="hex" src="../assets/generated/tiles/tile_unexplored.jpg" alt="Brume grise et violacée, épaisse, rien d’identifiable dessous">
+          <span class="terrain-nom">Brume</span>
+          <span class="terrain-rend">terrain inexploré — pas en jeu</span>
+        </div>
+      </div>
+
+      <p>
+        Les images ci-dessus sont exactement celles du plateau. Elles sont
+        pensées pour être reconnues à cent vingt pixels de large et de loin :
+        chaque terrain impose <strong>une couleur dominante franche</strong>,
+        parce que c’est la couleur — et elle seule — qui permet de lire un
+        plateau de cinquante hexagones dézoomé sur un téléphone.
+      </p>
+    </section>
+
+    <section id="cinq">
+      <h2>Les cinq ressources de base</h2>
+      <p class="intro">
+        Ce sont elles qui bâtissent. Tout le reste du jeu consiste à les
+        obtenir dans les bonnes proportions.
+      </p>
+      <div class="tableau-cadre">
+        <table>
+          <caption>Ce que chaque ressource paye</caption>
+          <thead><tr><th>Ressource</th><th>Vient de</th><th>Sert à</th><th class="num">Cours d’ouverture</th></tr></thead>
+          <tbody>
+            <tr><td><span class="piece"><span class="pastille" data-r="bois"></span>Bois</span></td><td>Forêts</td><td>Routes, voies maritimes, colonies</td><td class="num">5</td></tr>
+            <tr><td><span class="piece"><span class="pastille" data-r="brique"></span>Brique</span></td><td>Collines</td><td>Routes, voies maritimes, colonies</td><td class="num">4</td></tr>
+            <tr><td><span class="piece"><span class="pastille" data-r="laine"></span>Laine</span></td><td>Pâturages</td><td>Colonies, voies maritimes, cartes</td><td class="num">4</td></tr>
+            <tr><td><span class="piece"><span class="pastille" data-r="ble"></span>Blé</span></td><td>Champs</td><td>Colonies, cités, métropoles, cartes</td><td class="num">3</td></tr>
+            <tr><td><span class="piece"><span class="pastille" data-r="minerai"></span>Minerai</span></td><td>Montagnes</td><td>Cités, métropoles, cartes</td><td class="num">3</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Le cours d’ouverture n’est pas décoratif : il dit déjà ce que vaut
+        chaque chose. Le bois est partout et coûte 5 cartes à la banque ; le
+        minerai est rare et n’en coûte que 3. Ces prix bougent ensuite selon
+        ce que la table vend — voir <a href="commerce.html#marche">le marché</a>.
+      </p>
+      <div class="note">
+        <div class="note-titre">Le début et la fin d’une partie</div>
+        <p>
+          Bois et brique dominent la première demi-heure : on pose des routes
+          et des colonies. Puis la demande bascule vers le
+          <strong>minerai et le blé</strong>, qui font les cités, les
+          métropoles et les cartes. Un pâturage qui vous semblait faible au
+          départ devient une monnaie d’échange redoutable au milieu de partie.
+        </p>
+      </div>
+    </section>
+
+    <section id="or">
+      <h2>L’or</h2>
+      <p class="intro">
+        Deux ou trois tuiles sur tout le plateau, une seule construction qui
+        en réclame — et c’est la plus prestigieuse.
+      </p>
+      <p>
+        L’or ne se produit que sur les rares hexagones de mine, ou s’obtient
+        au <strong>port minier</strong>, qui fond 2 minerai en 1 or à prix
+        fixe. Il ne paye qu’une chose : la <a href="construction.html#metropole">métropole</a>,
+        qui en demande deux. Il n’y a que trois métropoles pour toute la
+        partie.
+      </p>
+      <p>
+        L’or est aussi la ressource la moins chère à la banque —
+        <strong>2 cartes</strong>, le plancher du jeu — ce qui en fait un
+        excellent moyen de se débloquer quand il vous manque une brique. Un
+        port n’améliore jamais ce prix : l’or est déjà au meilleur tarif
+        possible.
+      </p>
+      <div class="note note--recit">
+        <div class="note-titre">Ce qu’en dit le récit</div>
+        <p>
+          Un convoi ne repart de Kalythéra avec un sceau que s’il y arrive
+          chargé. Trois sceaux par génération, et le quatrième convoi rentre
+          les mains vides — <a href="monde.html#sceaux">Les trois sceaux</a>.
+        </p>
+      </div>
+    </section>
+
+    <section id="poisson">
+      <h2>Le poisson</h2>
+      <p class="intro">
+        Il existe dans le code, il a une image et un cours. Aucun plateau ne
+        le sème.
+      </p>
+      <p>
+        Le haut-fond est prévu, dessiné et chiffré, mais aucun des deux
+        plateaux actuels — archipel ni disque — ne contient de tuile qui en
+        produise. Vous ne verrez pas de poisson dans une partie aujourd’hui.
+        Il est conservé plutôt que retiré : le jour où un plateau le sèmera,
+        il n’y aura rien à rechiffrer.
+      </p>
+      <div class="note note--absent">
+        <div class="note-titre">Pas encore en jeu</div>
+        <p>
+          Le poisson porte une valeur d’ouverture de <strong>4</strong> pour
+          que le barème du marché soit complet, et rien d’autre.
+        </p>
+      </div>
+    </section>
+
+    <section id="desert">
+      <h2>Le désert</h2>
+      <p class="intro">
+        Trois ou quatre hexagones qui ne donnent rien — et où l’Errant
+        commence sa carrière.
+      </p>
+      <p>
+        Un désert ne porte pas de jeton et ne produit jamais. Fonder à côté
+        n’est pas une erreur en soi : un carrefour touche jusqu’à trois
+        hexagones, et deux bons voisins valent mieux que trois médiocres. Mais
+        deux déserts sur un même carrefour condamnent l’emplacement.
+      </p>
+      <p>
+        C’est aussi là que le <a href="voleur.html">voleur</a> est déposé
+        quand personne ne décide de sa place — un hexagone qui ne touche
+        aucune construction, pour ne léser personne.
+      </p>
+    </section>
+
+    <section id="lire">
+      <h2>Lire un emplacement</h2>
+      <p class="intro">
+        Trois questions, dans cet ordre, avant de poser une colonie.
+      </p>
+      <ol class="liste">
+        <li>
+          <strong>Combien de chances par lancer ?</strong> Additionnez les
+          chances des jetons voisins : un 6 et un 8 valent 10 sur 36, un 3 et
+          un 11 valent 4. Un carrefour à trois hexagones forts vaut mieux
+          qu’un carrefour à quatre hexagones faibles — et il n’y a jamais plus
+          de trois hexagones autour d’un sommet.
+        </li>
+        <li>
+          <strong>Quelles natures ?</strong> À douze joueurs, le blocage n’est
+          presque jamais la pénurie : c’est la <em>dispersion</em>. Dix cartes
+          réparties sur cinq types ne font jamais une cité. Un emplacement qui
+          double une ressource que vous avez déjà vaut moins qu’un
+          emplacement qui vous en apporte une que vous n’avez pas.
+        </li>
+        <li>
+          <strong>Y a-t-il un port ?</strong> Un port spécialisé sur une
+          ressource que vous produisez en excès transforme votre surplus en
+          n’importe quoi. À cet effectif, l’accès au commerce conditionne
+          l’expansion bien plus que dans un Catan à quatre.
+        </li>
+      </ol>
+      <div class="note">
+        <div class="note-titre">Le piège classique</div>
+        <p>
+          Prendre deux fois le même bon nombre. Un 8 de forêt et un 8 de
+          colline sur le même carrefour, c’est un carrefour muet
+          près de neuf lancers sur dix, puis quatre cartes d’un coup. La régularité
+          vaut mieux que le pic : vous jouez un tour actif sur douze, mais
+          vous produisez <em>à chaque lancer</em>.
+        </p>
+      </div>
+    </section>
+
+<!--FIL-->
+  </main>
+</div>
+
+<!--PIED-->
+<script src="doc.js"></script>
+</body>
+</html>
