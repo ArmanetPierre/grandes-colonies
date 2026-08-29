@@ -17,10 +17,21 @@ import { useState } from 'react';
 
 import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
 
-import { Cours } from './Cours.jsx';
+import { Cours, TRADED } from './Cours.jsx';
 import { ResourceIcon } from './ResourceIcon.jsx';
 
-const CORE = ['wood', 'brick', 'wool', 'grain', 'ore'] as const;
+/**
+ * Ce que les menus proposent : les six ressources cotées du §10.
+ *
+ * L'or en faisait partie dans la bande des cours mais pas dans les menus, et
+ * l'interface annonçait donc un tarif qu'elle refusait d'honorer. Le trou
+ * était le pire là où l'or compte : c'est le seul débouché du port minier
+ * (§11) et un tiers du coût d'une métropole, si bien qu'un joueur qui venait
+ * de convertir son minerai en or n'avait plus aucun moyen de le dépenser, et
+ * qu'un joueur sans tuile d'or ni port minier n'avait aucun moyen d'en
+ * obtenir — alors que le moteur acceptait les deux échanges depuis toujours.
+ */
+export const TRADEABLE = TRADED;
 const SHORT: Record<string, string> = {
   wood: 'Bois', brick: 'Brique', wool: 'Laine',
   grain: 'Blé', ore: 'Minerai', gold: 'Or', fish: 'Poisson',
@@ -93,7 +104,7 @@ export function Trade({
           <span className="gc-trade-pick">
             <ResourceIcon resource={give} size={20} />
           <select value={give} onChange={(e) => setGive(e.target.value)}>
-            {CORE.map((r) => (
+            {TRADEABLE.map((r) => (
               <option key={r} value={r}>{SHORT[r]} ({held(r)})</option>
             ))}
           </select>
@@ -104,7 +115,7 @@ export function Trade({
           <span className="gc-trade-pick">
             <ResourceIcon resource={want} size={20} />
             <select value={want} onChange={(e) => setWant(e.target.value)}>
-              {CORE.map((r) => <option key={r} value={r}>{SHORT[r]}</option>)}
+              {TRADEABLE.map((r) => <option key={r} value={r}>{SHORT[r]}</option>)}
             </select>
           </span>
         </label>
@@ -169,7 +180,7 @@ export function Trade({
                   <span className="gc-trade-pick">
                     <ResourceIcon resource={appoint} size={20} />
                     <select value={appoint} onChange={(e) => setAppoint(e.target.value)}>
-                      {CORE.map((r) => (
+                      {TRADEABLE.map((r) => (
                         <option key={r} value={r}>{SHORT[r]} ({held(r)})</option>
                       ))}
                     </select>

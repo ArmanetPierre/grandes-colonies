@@ -26,8 +26,15 @@ import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol
 
 import { RESOURCE_LABELS, ResourceIcon } from './ResourceIcon.jsx';
 
-/** Les six du §10. Le poisson n'a de terrain sur aucun plateau actuel. */
-const TRADED = ['wood', 'brick', 'wool', 'grain', 'ore', 'gold'] as const;
+/**
+ * Les six du §10. Le poisson n'a de terrain sur aucun plateau actuel.
+ *
+ * Exportée parce que le panneau de commerce doit offrir **exactement** ces
+ * ressources : afficher un prix de l'or dans cette bande sans le proposer
+ * dans les menus revenait à annoncer un tarif que l'interface refusait
+ * ensuite d'honorer.
+ */
+export const TRADED = ['wood', 'brick', 'wool', 'grain', 'ore', 'gold'] as const;
 
 export interface CoursProps {
   readonly pub: PublicGameView;

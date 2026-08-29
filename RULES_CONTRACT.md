@@ -441,6 +441,21 @@ désormais sur l'eau que borde chaque sommet de port, et les trois ports à
 contrat y portent la couleur d'accent : leur taux ne les distingue pas d'un
 2:1 ordinaire, seule leur seconde ligne le fait.
 
+### L'or est négociable, et le panneau le dit enfin
+
+La bande des cours affichait un prix de l'or, les menus de commerce ne le
+proposaient pas : l'interface annonçait un tarif qu'elle refusait ensuite
+d'honorer. Le moteur, lui, acceptait les deux sens depuis toujours.
+
+Le trou était le pire là où l'or compte. C'est le **seul débouché du port
+minier** et un tiers du coût d'une métropole : un joueur qui venait de
+convertir son minerai en or n'avait plus aucun moyen de le dépenser, et un
+joueur sans tuile d'or ni port minier n'avait aucun moyen d'en obtenir.
+
+Au passage, la crainte que la banque rende le port minier inutile ne tient
+pas : on paie au cours de la carte **donnée**, pas de celle reçue. Le port
+minier prend 2 minerai là où la banque en prend 3 — ou 5 bois, ou 4 laine.
+
 ### Le port royal reste à faire
 
 Le §11 lui donne « un bonus d'Influence aux joueurs qui contrôlent sa
@@ -498,3 +513,4 @@ il occupe un sommet de côte.
 | 2026-08-28 | Semis des ports particuliers | **Un seul de chaque par plateau**, plafonnés au tiers des ports |
 | 2026-08-28 | Port royal | **Non semé** — il attend l'Influence, et un port inutilisé occupe une côte |
 | 2026-08-29 | Ports sur l'écran de table | **Dessinés**, sur l'eau du sommet — les contrats en couleur d'accent |
+| 2026-08-29 | L'or dans le panneau de commerce | **Proposé** — la bande en chiffrait le prix, les menus le cachaient |
