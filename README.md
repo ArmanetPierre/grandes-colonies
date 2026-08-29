@@ -95,7 +95,7 @@ lsof -ti:2567 -ti:5173 | xargs kill -9
 ## Développement
 
 ```bash
-npm test          # 476 tests
+npm test          # 480 tests
 npm run typecheck # les six paquets
 npm run assets    # met les images générées à la portée du client
 

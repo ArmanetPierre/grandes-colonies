@@ -1112,6 +1112,27 @@ function piecesLeftFor(player: PlayerState, target: IntentTarget): number {
 function declareBuild(state: GameState, playerId: string, target: IntentTarget): CommandResult {
   if (state.phase !== 'activeTurn' && state.phase !== 'freeTrade') return reject('wrong-phase');
 
+  /*
+   * Trois sortes seulement, et le dire ici.
+   *
+   * Le type dit que `target` ne peut être qu'une route, une colonie ou une
+   * ville ; le réseau, lui, ne dit rien du tout. Un client qui annonçait une
+   * métropole traversait le `switch` du coût sans y trouver de branche,
+   * repartait avec `undefined`, et faisait tomber la commande sur une
+   * exception : le joueur voyait un refus sans motif et le serveur écrivait
+   * une pile d'appels dans ses journaux. Une commande venue du dehors se
+   * valide, même quand le type promet qu'elle est valide.
+   *
+   * Le contrat (§3) parle d'annoncer « une construction » sans restreindre la
+   * sorte ; le moteur, lui, ne sait résoudre que ces trois-là. Le refus est
+   * donc motivé plutôt que muet — c'est une limite, pas un accident, et le
+   * joueur a le droit de la lire.
+   */
+  const sorte: string = target.kind;
+  if (sorte !== 'road' && sorte !== 'settlement' && sorte !== 'city') {
+    return reject('invalid-placement', 'on n\'annonce qu\'une route, une colonie ou une ville');
+  }
+
   const location = locationOf(target);
   if (state.frozenLocations.has(location)) return reject('location-frozen');
   if (state.intents.some((i) => i.player === playerId && locationOf(i.target) === location)) {

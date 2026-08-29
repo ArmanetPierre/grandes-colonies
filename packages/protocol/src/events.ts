@@ -38,7 +38,18 @@ export type WireEvent =
   | { readonly type: 'DiscardRequired'; readonly players: readonly Pair<number>[] }
   /** `card` n'est présent que pour l'acheteur (voir `redactFor`). */
   | { readonly type: 'DevCardBought'; readonly player: PlayerId; readonly card?: DevCardKind }
-  /** `resource` n'est présent que pour le voleur et sa victime. */
+  /**
+   * `resource` est servi à tout le monde, comme les mains elles-mêmes.
+   *
+   * Le masquer ne protégeait plus rien depuis que la vue publique porte
+   * l'inventaire détaillé : la carte manquante se lisait de toute façon en
+   * comparant deux diffusions. Restait le seul effet du masque — un client
+   * incapable d'annoncer ce qui venait d'être volé alors que le panneau d'à
+   * côté l'affichait déjà.
+   *
+   * Optionnel encore dans le type : les journaux de parties déjà enregistrées
+   * en sont dépourvus, et `fromWire` doit continuer à les relire.
+   */
   | {
       readonly type: 'ResourceStolen';
       readonly thief: PlayerId;
@@ -91,18 +102,18 @@ export function fromWire(event: WireEvent): DomainEvent {
  *
  * Le flux d'événements contournait entièrement les vues : il diffusait à tout
  * le monde la nature exacte de la carte développement que chacun venait
- * d'acheter, et la ressource dérobée par le voleur. Toute l'étanchéité
- * construite dans `publicView` tombait par cette porte.
+ * d'acheter. Toute l'étanchéité construite dans `publicView` tombait par
+ * cette porte.
  *
- * Une carte achetée n'est connue que de son acheteur ; une carte volée, du
- * voleur et de sa victime — cette dernière voit bien ce qui lui manque.
+ * Une carte développement achetée n'est connue que de son acheteur.
+ *
+ * Le vol, lui, n'est plus expurgé : les ressources sont publiques (voir
+ * l'en-tête de `views.ts`), et cacher ici ce que la vue publique montre juste
+ * après n'aurait masqué que l'annonce, jamais le fait.
  */
 export function redactFor(event: WireEvent, viewer: PlayerId): WireEvent {
   if (event.type === 'DevCardBought' && event.player !== viewer) {
     return { type: 'DevCardBought', player: event.player };
-  }
-  if (event.type === 'ResourceStolen' && event.thief !== viewer && event.victim !== viewer) {
-    return { type: 'ResourceStolen', thief: event.thief, victim: event.victim };
   }
   return event;
 }

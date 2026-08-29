@@ -79,6 +79,15 @@ export interface GameServerOptions {
   readonly autoStart?: boolean;
   /** Forme du plateau : archipel (défaut) ou disque. */
   readonly boardKind?: 'archipelago' | 'disc';
+  /**
+   * Taille des terres : normale (défaut), grande ou immense.
+   *
+   * Comme `boardKind`, c'est un point de départ et non une décision figée :
+   * l'écran de l'hôte la change tant que la partie n'est pas lancée. Sans
+   * elle, ouvrir une soirée sur un plateau immense demandait de construire le
+   * serveur en normal puis de le reconfigurer aussitôt.
+   */
+  readonly boardScale?: BoardScale;
 }
 
 const DEFAULT_TICK_MS = 250;
@@ -224,7 +233,10 @@ export class GameServer {
     this.seed = options.seed ?? `partie-${Date.now()}`;
     this.configOverride = options.config;
     this.settingsValue = {
-      ...normaliseSettings({ ...(options.boardKind ? { boardKind: options.boardKind } : {}) }),
+      ...normaliseSettings({
+        ...(options.boardKind ? { boardKind: options.boardKind } : {}),
+        ...(options.boardScale ? { boardScale: options.boardScale } : {}),
+      }),
       // L'effectif suit les noms reçus, sans bornage : un test peut monter
       // une table de deux, l'écran de l'hôte reste borné de son côté.
       playerCount: names.length,

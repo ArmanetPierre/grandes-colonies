@@ -108,23 +108,23 @@ describe('étanchéité du flux d événements', () => {
     expect(JSON.stringify(other)).not.toContain('knight');
   });
 
-  /** La victime voit bien ce qui lui manque : elle a le droit de savoir. */
-  it('ne révèle la carte volée qu au voleur et à sa victime', () => {
+  /**
+   * La carte volée est annoncée à toute la table.
+   *
+   * Elle l'était déjà de fait : les mains étant publiques, il suffisait de
+   * comparer deux vues successives pour lire ce qui avait changé de camp. Le
+   * masque n'empêchait plus que le client d'en faire l'annonce.
+   */
+  it('révèle la carte volée à toute la table', () => {
     const event = toWire({ type: 'ResourceStolen', thief: 'p1', victim: 'p2', resource: 'ore' });
 
-    for (const viewer of ['p1', 'p2']) {
+    for (const viewer of ['p1', 'p2', 'p3']) {
       const seen = redactFor(event, viewer);
       if (seen.type !== 'ResourceStolen') throw new Error('mauvais type');
       expect(seen.resource).toBe('ore');
+      expect(seen.thief).toBe('p1');
+      expect(seen.victim).toBe('p2');
     }
-
-    const third = redactFor(event, 'p3');
-    if (third.type !== 'ResourceStolen') throw new Error('mauvais type');
-    expect(third.resource).toBeUndefined();
-    expect(JSON.stringify(third)).not.toContain('ore');
-    // Le vol reste public : seule la carte est cachée.
-    expect(third.thief).toBe('p1');
-    expect(third.victim).toBe('p2');
   });
 
   it('laisse les autres événements intacts', () => {

@@ -187,6 +187,23 @@ describe('annonces de construction', () => {
     expect(state.intents).toHaveLength(1);
   });
 
+  it('refuse une sorte qu il ne sait pas résoudre, sans tomber', () => {
+    // Le client propose six sortes de constructions, le moteur n'en annonce
+    // que trois. La quatrième doit repartir avec un motif, pas avec une
+    // exception : c'est du dehors que la commande arrive.
+    const state = newGame(6);
+    const p3 = playerOf(state, 'p3');
+    if (p3) p3.hand = counts({ ore: 3, grain: 2, gold: 2 });
+
+    const refus = dispatch(state, cmd('DECLARE_BUILD', 'p3', {
+      target: { kind: 'metropolis', vertex: 'x' } as never,
+    }));
+    expect(refus.ok).toBe(false);
+    expect(state.intents).toHaveLength(0);
+    // Et la main n'a pas bougé : rien n'a été réservé au passage.
+    expect(total(p3?.hand ?? counts({}))).toBe(7);
+  });
+
   it('refuse une annonce sans les ressources', () => {
     const state = newGame(6);
     const p3 = playerOf(state, 'p3');

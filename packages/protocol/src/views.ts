@@ -1,14 +1,22 @@
 /**
  * Vues publique et privée — la frontière du secret.
  *
- * Règle absolue : **une information privée ne quitte jamais le serveur.**
- * Il ne suffit pas de compter sur le client pour ne pas l'afficher — un
- * client modifié lirait tout ce qu'on lui envoie. La séparation est donc
- * faite ici, à la source, et le serveur n'a le droit d'envoyer qu'une vue.
+ * Règle de fond : **ce qui reste secret ne quitte jamais le serveur.** Il ne
+ * suffit pas de compter sur le client pour ne pas l'afficher — un client
+ * modifié lirait tout ce qu'on lui envoie. La séparation est donc faite ici,
+ * à la source, et le serveur n'a le droit d'envoyer qu'une vue.
  *
- * Concrètement, la vue publique dit *combien* de cartes tient un joueur,
- * jamais lesquelles. Elle ignore les objectifs secrets et le contenu de la
- * pioche.
+ * **Les ressources, elles, sont publiques.** La vue publique dit non
+ * seulement *combien* de cartes tient un joueur, mais lesquelles. C'est un
+ * choix de jeu assumé et non un oubli : à douze joueurs, une négociation à
+ * l'aveugle tourne à la devinette et fait traîner chaque tour, alors qu'un
+ * inventaire ouvert laisse proposer un échange qui a une chance d'aboutir.
+ * Le prix payé est réel — le bluff sur ce qu'on possède disparaît — et il est
+ * payé sciemment.
+ *
+ * Restent secrets : les cartes développement en main, les objectifs secrets
+ * et le contenu de la pioche. Eux ne sont pas des ressources et rien ici ne
+ * les révèle.
  */
 
 import {
@@ -54,8 +62,20 @@ export interface PublicPlayer {
   readonly role: PlayerRole;
   /** Points visibles de tous. L'objectif secret n'y est pas compté. */
   readonly publicPoints: number;
-  /** Nombre de cartes, jamais leur nature. */
+  /** Nombre total de cartes ressource. Redondant avec `hand`, gardé parce
+   * que c'est lui qu'on affiche quand la place manque — une pastille, une
+   * ligne de tableau — sans avoir à resommer sept quantités à chaque rendu. */
   readonly handSize: number;
+  /**
+   * L'inventaire détaillé, ressource par ressource.
+   *
+   * Public, contrairement à l'usage de Catan : voir l'en-tête du fichier. Les
+   * quantités nulles sont absentes plutôt que mises à zéro, comme partout
+   * ailleurs dans le moteur (`counts` élague), ce qui évite d'envoyer sept
+   * champs par joueur à chaque diffusion — à douze joueurs et plusieurs
+   * diffusions par seconde, ce n'est pas rien.
+   */
+  readonly hand: ResourceCounts;
   readonly devCardCount: number;
   readonly knightsPlayed: number;
   readonly roadsLeft: number;
@@ -284,6 +304,7 @@ export function publicView(state: GameState, connectivity?: Connectivity): Publi
       // reviendrait à ne plus avoir de secret du tout.
       publicPoints: publicPointsOf(state, p.id),
       handSize: total(p.hand),
+      hand: p.hand,
       devCardCount: heldCount(p.devCards),
       knightsPlayed: knightsPlayed(p.devCards),
       roadsLeft: p.roadsLeft,

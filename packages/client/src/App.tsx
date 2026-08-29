@@ -357,6 +357,20 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
   }, [jet]);
 
   const caps = useMemo(() => new Set(priv?.capabilities ?? []), [priv]);
+
+  /*
+   * L'annonce se désarme dès qu'on peut construire.
+   *
+   * Le bouton « Annoncer » disparaît quand le tour arrive — on construit, on
+   * n'annonce plus — mais l'interrupteur, lui, restait enclenché : un joueur
+   * qui avait armé l'annonce hors de son tour se retrouvait, son tour venu,
+   * dans un mode dont plus rien à l'écran ne disait qu'il était actif. Ses
+   * constructions partaient en annonces, dont trois sortes — métropole,
+   * monument, voie maritime — que le moteur ne sait pas résoudre.
+   */
+  useEffect(() => {
+    if (caps.has('CAN_BUILD')) setDeclaring(false);
+  }, [caps]);
   const order = useMemo(() => pub?.players.map((p) => p.id) ?? [], [pub]);
 
   /**

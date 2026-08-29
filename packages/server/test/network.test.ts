@@ -8,8 +8,11 @@ import { GameServer } from '../src/gameServer.js';
  *
  * Ces tests montent un vrai serveur et de vrais clients WebSocket. Ils
  * vérifient ce qu'aucun test en mémoire ne peut vérifier : qu'un
- * rafraîchissement de page rend bien son siège, et qu'une main privée ne
- * traverse jamais le réseau.
+ * rafraîchissement de page rend bien son siège, et que ce qui doit rester
+ * secret — le jeton d'un autre, sa vue privée — ne traverse jamais le réseau.
+ *
+ * Les ressources, elles, sont publiques et doivent au contraire arriver :
+ * c'est aussi ce qu'on éprouve ici, sur la trame réellement transmise.
  */
 
 let nextPort = 2600;
@@ -202,6 +205,42 @@ describe('spike réseau', () => {
     // Et le jeton de A n'a jamais transité par B.
     expect(JSON.stringify(b.received)).not.toContain(seatA.payload['token'] as string);
     expect(idA).not.toBe(idB);
+
+    await a.close();
+    await b.close();
+    await pause(150);
+  }), 20000);
+
+  /**
+   * L'inventaire de chacun arrive bien jusqu'aux autres.
+   *
+   * On le lit sur la trame `public` telle qu'elle a été reçue, et non sur
+   * `publicView` : c'est le trajet complet — sérialisation comprise — qu'on
+   * veut voir aboutir, puisque c'est là qu'un `Map` ou un `Set` se viderait
+   * silencieusement.
+   */
+  it('publie l inventaire de chaque joueur à toute la table', async () => withServer(async (url) => {
+    const a = await TestClient.connect(url);
+    a.send({ type: 'join' });
+    const seatA = await a.waitFor('seat');
+    const idA = seatA.payload['playerId'] as string;
+
+    const b = await TestClient.connect(url);
+    b.send({ type: 'join' });
+    await b.waitFor('seat');
+
+    await pause(200);
+
+    const latest = b.framesOf('public').at(-1);
+    const players = latest?.payload['players'] as { id: string; hand: unknown; handSize: number }[];
+    const seenByB = players.find((p) => p.id === idA);
+
+    // B voit le détail de la main de A, et non le seul total.
+    expect(seenByB?.hand).toBeTypeOf('object');
+    // Le total et le détail racontent la même chose — sans quoi l'affichage
+    // dirait sept cartes en n'en montrant que trois.
+    const detail = Object.values(seenByB?.hand as Record<string, number>);
+    expect(detail.reduce((sum, n) => sum + n, 0)).toBe(seenByB?.handSize);
 
     await a.close();
     await b.close();

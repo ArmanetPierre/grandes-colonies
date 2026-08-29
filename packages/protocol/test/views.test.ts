@@ -53,24 +53,56 @@ function startedGame(playerCount = 6): GameState {
 
 describe('étanchéité de la vue publique', () => {
   /**
-   * Le test qui compte. On donne à un joueur une main très reconnaissable,
-   * puis on inspecte la vue publique SÉRIALISÉE : si une quantité privée
-   * s'y trouve, elle apparaîtra dans le JSON.
+   * Les ressources sont ouvertes : la vue publique porte l'inventaire exact.
+   *
+   * On donne une main très reconnaissable, puis on inspecte la vue publique
+   * SÉRIALISÉE — c'est ce qui part réellement sur le fil, et non l'objet.
    */
-  it('ne laisse jamais fuir le contenu d une main', () => {
+  it('publie le contenu détaillé des mains', () => {
     const state = startedGame();
     const p1 = playerOf(state, 'p1');
     if (!p1) throw new Error('joueur absent');
     p1.hand = counts({ wood: 41, ore: 37 });
 
+    const view = publicView(state);
+
+    expect(view.players[0]?.hand).toEqual({ wood: 41, ore: 37 });
+    // Le total reste servi tel quel : c'est lui qu'on affiche en pastille, et
+    // il doit s'accorder au détail plutôt que de vivre sa vie.
+    expect(view.players[0]?.handSize).toBe(78);
+    expect(JSON.stringify(view)).toContain('41');
+  });
+
+  /**
+   * Les quantités nulles restent absentes.
+   *
+   * Sans cela on enverrait sept champs par joueur à chaque diffusion — à
+   * douze joueurs et plusieurs diffusions par seconde, la trame enfle pour
+   * ne rien dire de plus qu'un inventaire vide.
+   */
+  it('n envoie pas les ressources à zéro', () => {
+    const state = startedGame();
+    const p1 = playerOf(state, 'p1');
+    if (!p1) throw new Error('joueur absent');
+    p1.hand = counts({ wood: 2, ore: 0 });
+
+    expect(publicView(state).players[0]?.hand).toEqual({ wood: 2 });
+  });
+
+  /** Ce qui n'est pas une ressource, lui, ne fuit toujours pas. */
+  it('ne laisse pas fuir les cartes développement en main', () => {
+    const state = startedGame();
+    const p1 = playerOf(state, 'p1');
+    if (!p1) throw new Error('joueur absent');
+    p1.devCards = { ...p1.devCards, playable: ['knight'], pending: ['monopoly'] };
+
     const json = JSON.stringify(publicView(state));
 
-    // Les quantités exactes ne doivent apparaître nulle part.
-    expect(json).not.toContain('41');
-    expect(json).not.toContain('37');
-    // En revanche, le nombre total de cartes est public : c'est lui qui
-    // permet aux autres de juger d'une menace de défausse.
-    expect(publicView(state).players[0]?.handSize).toBe(78);
+    // Guillemets compris : `knightsPlayed` est un champ public, et sans eux
+    // le test se déclencherait sur son propre nom.
+    expect(json).not.toContain('"knight"');
+    expect(json).not.toContain('"monopoly"');
+    expect(publicView(state).players[0]?.devCardCount).toBe(2);
   });
 
   it('ne laisse jamais fuir les objectifs secrets', () => {
