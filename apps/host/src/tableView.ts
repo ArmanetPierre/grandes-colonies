@@ -5,11 +5,13 @@
  * code. Il devient le plateau commun — celui qu'on regarde quand on cherche
  * qui mène, où en est le voleur, ou combien de cartes tient son voisin.
  *
- * **Ce qu'il ne montre pas, et pourquoi.** Le contenu des mains reste caché.
- * Cet écran est vu de toute la pièce : y afficher qui détient quel minerai
- * détruirait la négociation, qui repose entièrement sur le fait qu'on ignore
- * ce que l'autre possède. Seul le **nombre** de cartes est public, et c'est
- * déjà lui qui permet de juger une menace de défausse.
+ * **Ce qu'il ne montre pas, et pourquoi.** Le détail des mains n'est plus un
+ * secret — la vue publique le porte désormais, ressource par ressource — mais
+ * cet écran s'en tient au **nombre** de cartes. Ce n'est plus une question
+ * d'étanchéité, c'est une question de place : la colonne des joueurs tient
+ * douze lignes lisibles à trois mètres, et y ajouter sept quantités par
+ * joueur les rendrait toutes illisibles. Qui veut le détail le lit sur son
+ * propre écran, où il tient.
  *
  * Le plateau est dessiné en SVG plutôt qu'en tuiles texturées : à cette
  * taille et à trois mètres, un aplat lisible vaut mieux qu'une image détaillée
