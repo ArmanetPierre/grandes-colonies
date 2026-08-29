@@ -151,6 +151,54 @@ describe('remplacement par un bot', () => {
   });
 });
 
+/**
+ * Céder la place d'un parti pour de bon.
+ *
+ * `seatsEligibleForBot` désignait ces sièges depuis toujours sans que rien
+ * n'en fasse quoi que ce soit : la table attendait indéfiniment quelqu'un qui
+ * ne reviendrait pas, son tour joué d'office à chaque cycle.
+ */
+describe('céder un siège à un bot', () => {
+  it('rouvre la place au prochain arrivant', () => {
+    const session = joinedSession(4);
+    runSetup(session);
+    session.disconnect('p2');
+
+    // Tant qu'il a joué, son siège lui reste : un rechargement de page ne
+    // doit pas le lui coûter.
+    expect(session.claimFreeSeat('Un autre')).toBeUndefined();
+
+    expect(session.handToBot('p2')).toBe(true);
+    expect(session.claimFreeSeat('Robot')?.playerId).toBe('p2');
+  });
+
+  /**
+   * L'ancien jeton meurt avec la cession.
+   *
+   * Sans cela le joueur parti reviendrait s'asseoir sur le siège désormais
+   * tenu par un bot : deux connexions sur une même place, chacune jouant
+   * pour l'autre.
+   */
+  it('invalide le jeton de celui qui a cédé sa place', () => {
+    const session = joinedSession(4);
+    runSetup(session);
+    const ancien = session.seatOf('p2')!.token;
+    session.disconnect('p2');
+
+    session.handToBot('p2');
+
+    expect(session.reconnect(ancien)).toBeUndefined();
+    expect(session.seatOf('p2')!.token).not.toBe(ancien);
+  });
+
+  it('ne prend jamais la place de quelqu un qui est là', () => {
+    const session = joinedSession(4);
+    runSetup(session);
+    expect(session.handToBot('p2')).toBe(false);
+    expect(session.handToBot('inconnu')).toBe(false);
+  });
+});
+
 describe('chronomètre', () => {
   it('arme un délai sur les phases chronométrées', () => {
     const time = clock();
@@ -222,6 +270,135 @@ describe('chronomètre', () => {
     time.advance(91_000);
     session.tick();
     expect(session.state.cycle).toBeLessThanOrEqual(startCycle + 1);
+  });
+});
+
+/**
+ * La pause de l'hôte — quelqu'un va chercher à boire.
+ *
+ * Trois choses doivent s'arrêter ensemble, et les trois comptent : le
+ * chronomètre, le tour joué d'office pour les absents, et les commandes des
+ * joueurs. Il suffit qu'une seule continue pour que la pause vole la partie à
+ * ceux qui se sont levés.
+ */
+describe('pause et reprise', () => {
+  it('fige le chronomètre, et le rend intact à la reprise', () => {
+    const time = clock();
+    const session = joinedSession(4, time);
+    runSetup(session);
+
+    time.advance(30_000);
+    expect(session.remainingMs()).toBe(60_000);
+
+    expect(session.pause()).toBe(true);
+    time.advance(300_000);
+    // Cinq minutes de pause n'ont pas entamé la minute qui restait.
+    expect(session.remainingMs()).toBe(60_000);
+
+    expect(session.resume()).toBe(true);
+    expect(session.remainingMs()).toBe(60_000);
+    time.advance(10_000);
+    expect(session.remainingMs()).toBe(50_000);
+  });
+
+  it('ne joue le tour de personne pendant la pause', () => {
+    const time = clock();
+    const session = joinedSession(4, time);
+    runSetup(session);
+    session.pause();
+
+    const before = `${session.state.phase}:${session.state.cycle}`;
+    time.advance(600_000);
+
+    expect(session.tick()).toHaveLength(0);
+    expect(`${session.state.phase}:${session.state.cycle}`).toBe(before);
+  });
+
+  it('refuse les commandes des joueurs tant qu on est en pause', () => {
+    const session = joinedSession(4);
+    runSetup(session);
+    session.pause();
+
+    const refus = session.submit(cmd('ROLL_DICE', 'p1'));
+    expect(refus.result.ok).toBe(false);
+
+    session.resume();
+    expect(session.submit(cmd('ROLL_DICE', 'p1')).result.ok).toBe(true);
+  });
+
+  it('ne met en pause ni deux fois, ni avant le lancement', () => {
+    const lobby = lobbySession(4);
+    expect(lobby.pause()).toBe(false);
+
+    const session = joinedSession(4);
+    runSetup(session);
+    expect(session.pause()).toBe(true);
+    expect(session.pause()).toBe(false);
+    expect(session.resume()).toBe(true);
+    expect(session.resume()).toBe(false);
+  });
+
+  /**
+   * Rejoindre pendant une pause ne doit pas faire courir le temps.
+   *
+   * L'arrivée d'un joueur réarme le chronomètre. Poser une échéance alors que
+   * la partie est suspendue l'aurait laissée filer : au retour, la phase
+   * aurait déjà expiré.
+   */
+  it('garde le temps figé même si quelqu un rejoint', () => {
+    const time = clock();
+    const session = joinedSession(4, time);
+    runSetup(session);
+    session.pause();
+
+    session.disconnect('p2');
+    const seat = session.seatOf('p2');
+    session.reconnect(seat!.token);
+
+    time.advance(300_000);
+    expect(session.remainingMs()).toBe(90_000);
+    session.resume();
+    expect(session.remainingMs()).toBe(90_000);
+  });
+});
+
+/** La rallonge de l'hôte, quand la table négocie encore. */
+describe('prolongation du chronomètre', () => {
+  it('ajoute du temps à la phase en cours', () => {
+    const time = clock();
+    const session = joinedSession(4, time);
+    runSetup(session);
+
+    time.advance(60_000);
+    expect(session.remainingMs()).toBe(30_000);
+    expect(session.extendTimer(45)).toBe(true);
+    expect(session.remainingMs()).toBe(75_000);
+  });
+
+  it('prolonge aussi une partie en pause', () => {
+    const session = joinedSession(4);
+    runSetup(session);
+    session.pause();
+    session.extendTimer(30);
+    expect(session.remainingMs()).toBe(120_000);
+  });
+
+  /**
+   * Rien à prolonger sur une phase sans chronomètre : inventer une échéance
+   * y imposerait une limite que la phase n'a jamais eue.
+   */
+  it('ne pose pas d échéance là où il n y en avait pas', () => {
+    const lobby = lobbySession(4);
+    expect(lobby.extendTimer(30)).toBe(false);
+    expect(lobby.remainingMs()).toBeUndefined();
+  });
+
+  it('peut aussi raccourcir, sans passer sous zéro', () => {
+    const time = clock();
+    const session = joinedSession(4, time);
+    runSetup(session);
+    session.extendTimer(-300);
+    expect(session.remainingMs()).toBe(0);
   });
 });
 

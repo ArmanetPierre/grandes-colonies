@@ -54,8 +54,13 @@ export function tableViewMarkup(): string {
       <div class="table-roll" id="t-roll"></div>
       <!-- Le retour aux réglages : discret pendant la partie, franc une fois
            qu'elle est finie, parce que c'est là qu'on veut en relancer une. -->
+      <!-- Les gestes d'une soirée réelle : suspendre, rallonger, refaire. -->
+      <button class="table-again" id="t-pause">Pause</button>
+      <button class="table-again" id="t-extend">+30 s</button>
       <button class="table-again" id="t-again">Nouvelle partie</button>
     </header>
+
+    <div class="table-veil" id="t-veil" hidden>Partie en pause</div>
 
     <div class="table-body">
       <div class="table-board"><svg id="t-svg" role="img" aria-label="Plateau"></svg></div>
@@ -89,6 +94,31 @@ export function tableViewStyles(): string {
     background:var(--accent); color:#F7F1E1; border-color:transparent; font-size:14px;
     padding:10px 20px;
   }
+
+  /* En pause, le bouton cesse d'être discret : c'est l'état à quitter. */
+  .table-again.is-paused {
+    background:var(--accent); color:#F7F1E1; border-color:transparent;
+  }
+  /*
+   * Le voile de pause.
+   *
+   * Vu de trois mètres, un bouton qui change de couleur ne se remarque pas.
+   * Il faut que la pièce entière comprenne d'un regard pourquoi plus rien ne
+   * bouge, sans quoi chacun cherche la panne de son côté.
+   */
+  .table-veil {
+    position:fixed; inset:0; z-index:5; display:flex;
+    align-items:center; justify-content:center;
+    background:rgba(24,20,14,.72); backdrop-filter:blur(2px);
+    font-family:'Marcellus',Georgia,serif; font-size:56px; color:#F7F1E1;
+    letter-spacing:.06em;
+  }
+
+  .player-bot {
+    font-family:'Inter',sans-serif; font-size:11px; cursor:pointer; margin-top:4px;
+    padding:3px 8px; background:var(--accent); color:#F7F1E1; border:none;
+  }
+  .player-bot:disabled { opacity:.5; cursor:default; }
 
   .table-body { display:flex; gap:18px; align-items:flex-start; }
   .table-board {
@@ -216,8 +246,12 @@ export function tableViewScript(): string {
     freeTrade:'Commerce libre', ended:'Partie terminée',
   };
 
-  function drawPlayers(view) {
+  function drawPlayers(view, seats) {
     const order = view.players.map((p) => p.id);
+    // Un siège abandonné depuis deux tours de table : la partie l'attend en
+    // vain, cycle après cycle, et rien ne le signalait à l'hôte.
+    const perdus = {};
+    (seats || []).forEach((s) => { if (s.abandoned) perdus[s.playerId] = true; });
     document.getElementById('t-players').innerHTML = view.players.map((p) => {
       const titles = [];
       if (p.hasMonument) titles.push('Monument');
@@ -236,13 +270,19 @@ export function tableViewScript(): string {
           (titles.length ? '<span class="player-title">' + titles.join(' · ') + '</span>' : '') +
           (p.mustDiscard > 0 ? '<span class="player-warn">défausse ' + p.mustDiscard + '</span>' : '') +
           (p.connected ? '' : '<span>absent</span>') +
+          (perdus[p.id]
+            ? '<button class="player-bot" data-seat="' + p.id + '">Confier à un bot</button>'
+            : '') +
         '</span></div>';
     }).join('');
   }
 
   async function refreshTable() {
     try {
-      const view = await (await fetch('/api/view')).json();
+      const [view, seats] = await Promise.all([
+        (await fetch('/api/view')).json(),
+        (await fetch('/api/seats')).json(),
+      ]);
       const join = document.getElementById('join-panel');
       const table = document.getElementById('table');
       // Avant le lancement, l'écran sert à faire entrer les joueurs ; après,
@@ -264,8 +304,18 @@ export function tableViewScript(): string {
       again.classList.toggle('is-done', Boolean(view.winner));
       again.textContent = view.winner ? 'Nouvelle partie' : 'Abandonner et refaire';
 
+      // La pause n'a plus lieu d'être une fois la partie gagnée : il ne reste
+      // rien à suspendre, et les deux boutons n'y mèneraient qu'à confusion.
+      const pause = document.getElementById('t-pause');
+      const extend = document.getElementById('t-extend');
+      pause.hidden = Boolean(view.winner);
+      extend.hidden = Boolean(view.winner) || view.paused;
+      pause.textContent = view.paused ? 'Reprendre' : 'Pause';
+      pause.classList.toggle('is-paused', Boolean(view.paused));
+      document.getElementById('t-veil').hidden = !view.paused;
+
       drawBoard(view);
-      drawPlayers(view);
+      drawPlayers(view, seats);
     } catch { /* le serveur redémarre : on réessaiera */ }
   }
 
@@ -281,7 +331,34 @@ export function tableViewScript(): string {
     await fetch('/api/new', { method: 'POST' });
     // Le basculement suit l'indicateur de lancement : le rafraîchissement
     // suivant ramène l'écran des réglages tout seul.
+    document.getElementById('t-players').addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-seat]');
+    if (!button) return;
+    button.disabled = true;
+    await fetch('/api/handToBot', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ playerId: button.dataset.seat }),
+    });
     refreshTable();
+  });
+
+  document.getElementById('t-pause').addEventListener('click', async () => {
+    const paused = document.getElementById('t-pause').classList.contains('is-paused');
+    await fetch(paused ? '/api/resume' : '/api/pause', { method: 'POST' });
+    refreshTable();
+  });
+
+  document.getElementById('t-extend').addEventListener('click', async () => {
+    await fetch('/api/extend', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ seconds: 30 }),
+    });
+    refreshTable();
+  });
+
+  refreshTable();
   });
 
   refreshTable();

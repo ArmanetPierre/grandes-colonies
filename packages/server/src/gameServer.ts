@@ -16,6 +16,8 @@
  * `GameSession`, qui se teste sans réseau.
  */
 
+import { join } from 'node:path';
+
 import {
   createServer,
   type IncomingMessage,
@@ -31,7 +33,8 @@ import {
 } from '@grand-colonies/engine';
 import { redactAllFor, toWireAll } from '@grand-colonies/protocol';
 
-import { GameSession } from './session.js';
+import { JournalWriter, type Journal } from './journal.js';
+import { GameSession, restoreSession } from './session.js';
 
 export interface JoinMessage {
   readonly type: 'join';
@@ -78,6 +81,23 @@ export interface GameServerOptions {
    * bouton.
    */
   readonly autoStart?: boolean;
+  /**
+   * Dossier où déposer le journal de partie, s'il en faut un.
+   *
+   * Absent, rien n'est écrit : les tests montent des dizaines de serveurs et
+   * n'ont aucune raison de laisser des fichiers derrière eux. C'est l'écran
+   * de l'hôte qui l'active, parce que c'est lui qui tient une vraie soirée.
+   */
+  readonly journalDir?: string;
+  /**
+   * Journal à reprendre, au lieu d'une partie neuve.
+   *
+   * La session est refabriquée par rejeu des commandes : même graine, même
+   * plateau, mêmes gestes. Les sièges reçoivent des jetons neufs — les
+   * anciens sont morts avec le processus précédent — donc chacun rejoint
+   * comme il l'avait fait la première fois.
+   */
+  readonly restore?: Journal;
   /** Forme du plateau : archipel (défaut) ou disque. */
   readonly boardKind?: 'archipelago' | 'disc';
   /**
@@ -278,6 +298,18 @@ export class GameServer {
   private readonly botSockets = new Set<WebSocket>();
   private heartbeat: ReturnType<typeof setInterval> | undefined;
   private readonly tickMs: number;
+  private readonly journalDir: string | undefined;
+  private journal: JournalWriter | undefined;
+  /**
+   * Commandes déjà couchées dans le journal.
+   *
+   * On journalise en comparant à la longueur du log plutôt qu'en écrivant
+   * depuis `handleCommand` : les tours joués d'office pour les absents ne
+   * passent pas par là, et seraient absents du journal — donc du rejeu.
+   */
+  private journalled = 0;
+  /** Dernier nom couché au journal pour chaque siège, pour n'écrire que les changements. */
+  private readonly journalledNames = new Map<string, string>();
 
   constructor(options: GameServerOptions = {}) {
     const names = options.playerNames ?? seatNames(DEFAULT_SETTINGS.playerCount);
@@ -285,6 +317,7 @@ export class GameServer {
     this.seed = options.seed ?? `partie-${Date.now()}`;
     this.configOverride = options.config;
     this.landCountPinned = options.boardSize !== undefined;
+    this.journalDir = options.journalDir;
     this.settingsValue = {
       ...normaliseSettings({
         ...(options.boardKind ? { boardKind: options.boardKind } : {}),
@@ -306,13 +339,43 @@ export class GameServer {
      * chiffre, et une mise en place annoncée à trente secondes qui en durait
      * soixante.
      */
-    this.current = new GameSession({
+    const reprise = options.restore ? restoreSession(options.restore) : undefined;
+    if (reprise && !reprise.ok) {
+      throw new Error(
+        `journal illisible : la commande ${reprise.at} (${reprise.command.type}) a été refusée au rejeu`,
+      );
+    }
+
+    this.current = reprise?.session ?? new GameSession({
       seed: this.seed,
       playerNames: names,
       config: options.config ?? configFor(this.settingsValue),
       ...(options.boardKind ? { boardKind: options.boardKind } : {}),
       boardSize: this.settingsValue.landCount,
     });
+    if (options.restore) {
+      // Ce qui vient d'être rejoué est déjà dans le fichier : le recompter
+      // comme à écrire le dupliquerait à la première commande suivante.
+      this.journalled = this.current.commandLog().length;
+      for (const seat of this.current.allSeats()) {
+        this.journalledNames.set(seat.playerId, seat.name);
+      }
+      this.journal = JournalWriter.continuing(options.restore);
+
+      /*
+       * Une partie reprise revient **en pause**.
+       *
+       * Sans cela le battement redémarre sur une table où personne n'est
+       * encore reconnecté : chaque tour est aussitôt joué d'office, et la
+       * partie qu'on venait de sauver est dévorée en quelques secondes. On a
+       * mesuré six cent soixante-neuf cycles avalés avant que le premier
+       * joueur ait eu le temps de rouvrir son lien.
+       *
+       * C'est aussi le bon geste humain : après une coupure, l'hôte attend
+       * que la pièce se rebranche, puis reprend.
+       */
+      this.current.pause();
+    }
 
     const handle = options.onRequest;
     this.http = createServer((req, res) => {
@@ -432,6 +495,9 @@ export class GameServer {
       boardSize: next.landCount,
     });
     this.settingsValue = next;
+    this.journal = undefined;
+    this.journalled = 0;
+    this.journalledNames.clear();
     this.seatOf.clear();
 
     for (const { socket, name } of occupants) {
@@ -471,8 +537,113 @@ export class GameServer {
    */
   startGame(): boolean {
     const launched = this.current.start();
-    if (launched) this.broadcastAll();
+    if (launched) {
+      this.openJournal();
+      this.broadcastAll();
+    }
     return launched;
+  }
+
+  /**
+   * Ouvre le journal de la partie qui commence.
+   *
+   * Au lancement et non à la construction : tant que l'hôte règle son salon,
+   * la session est reconstruite à chaque changement, et l'on sèmerait un
+   * fichier par tour de molette.
+   */
+  private openJournal(): void {
+    if (this.journalDir === undefined) return;
+    const gameId = `${this.seed}-${this.rebuilds}`;
+    this.journal = new JournalWriter(join(this.journalDir, `${gameId}.jsonl`), {
+      gameId,
+      startedAt: Date.now(),
+      recipe: this.current.recipe,
+    });
+    this.journalled = this.current.commandLog().length;
+    // Les noms déjà pris dans le salon doivent figurer dès l'ouverture : ils
+    // ont été choisis avant le lancement, donc avant la première commande.
+    this.journalledNames.clear();
+    this.flushJournal();
+  }
+
+  /**
+   * Couche au journal tout ce qui a été accepté depuis le dernier passage.
+   *
+   * En comparant les longueurs plutôt qu'en écrivant à chaque commande reçue :
+   * les tours joués d'office pour les absents n'arrivent pas par le réseau et
+   * manqueraient au rejeu, qui divergerait sans rien dire.
+   */
+  private flushJournal(): void {
+    if (!this.journal) return;
+    const log = this.current.commandLog();
+    const at = Date.now();
+    for (let i = this.journalled; i < log.length; i++) this.journal.append(log[i]!, at);
+    this.journalled = log.length;
+
+    /*
+     * Les noms, au même endroit que les commandes.
+     *
+     * Ils ne passent pas par le moteur — on se baptise en rejoignant, pas en
+     * jouant — et ne laissaient donc aucune trace. Une partie reprise
+     * revenait peuplée de « Joueur 1 » : la même partie, mais plus celle de
+     * personne. On ne réécrit que ce qui a changé.
+     */
+    for (const seat of this.current.allSeats()) {
+      if (this.journalledNames.get(seat.playerId) === seat.name) continue;
+      this.journalledNames.set(seat.playerId, seat.name);
+      this.journal.seat(seat.playerId, seat.name, at);
+    }
+  }
+
+  /**
+   * Suspend la partie, et le dit à tout le monde.
+   *
+   * Passer par la session seule laisserait les douze écrans sur leur dernier
+   * état : le compte à rebours s'arrêterait sans que rien n'explique
+   * pourquoi, ce qui ressemble exactement à une connexion perdue.
+   */
+  pauseGame(): boolean {
+    const done = this.current.pause();
+    if (done) this.broadcastAll();
+    return done;
+  }
+
+  resumeGame(): boolean {
+    const done = this.current.resume();
+    if (done) this.broadcastAll();
+    return done;
+  }
+
+  /** Rallonge la phase en cours. Le battement diffusera le nouveau compte. */
+  extendTimer(seconds: number): boolean {
+    return this.current.extendTimer(seconds);
+  }
+
+  /**
+   * Confie le siège d'un absent à un adversaire automatique.
+   *
+   * La connexion éventuellement restée ouverte sur ce siège est coupée et
+   * oubliée : son jeton vient d'être invalidé, et la laisser en place ferait
+   * transiter les vues d'un siège désormais tenu par quelqu'un d'autre.
+   */
+  handSeatToBot(playerId: string): boolean {
+    if (!this.current.handToBot(playerId)) return false;
+
+    for (const [socket, seated] of this.seatOf) {
+      if (seated !== playerId) continue;
+      this.seatOf.delete(socket);
+      this.botSockets.delete(socket);
+      this.send(socket, 'full', { reason: 'siège confié à un adversaire automatique' });
+      socket.close();
+    }
+
+    this.broadcastAll();
+    return true;
+  }
+
+  /** Sièges absents depuis assez longtemps pour qu'on propose un bot. */
+  seatsEligibleForBot(): readonly string[] {
+    return this.current.seatsEligibleForBot().map((seat) => seat.playerId);
   }
 
   async close(): Promise<void> {
@@ -553,6 +724,7 @@ export class GameServer {
       return;
     }
 
+    this.flushJournal();
     if (outcome.events.length > 0) this.broadcastEvents(outcome.events);
     this.broadcastAll();
   }
@@ -572,6 +744,7 @@ export class GameServer {
 
   private tick(): void {
     const events = this.session.tick();
+    this.flushJournal();
     if (events.length > 0) {
       this.broadcastEvents(events);
       this.broadcastAll();
@@ -582,6 +755,7 @@ export class GameServer {
     this.broadcast('timer', {
       remainingMs: this.session.remainingMs(),
       phase: this.session.state.phase,
+      paused: this.session.isPaused,
     });
   }
 

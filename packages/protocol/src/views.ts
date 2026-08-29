@@ -165,6 +165,15 @@ export interface PublicGameView {
    */
   readonly started: boolean;
   /**
+   * La partie est-elle suspendue par l'hôte ?
+   *
+   * Public et non déduit du chronomètre arrêté : un client qui verrait
+   * seulement le compte à rebours figé ne saurait pas dire si l'hôte a mis en
+   * pause ou si sa connexion a lâché — et ces deux situations n'appellent
+   * pas du tout le même geste de la part du joueur.
+   */
+  readonly paused: boolean;
+  /**
    * Classement final, révélé seulement quand la partie est finie.
    *
    * Les objectifs secrets y figurent : ils cessent d'être secrets au moment
@@ -258,6 +267,8 @@ export interface Connectivity {
   isConnected(playerId: PlayerId): boolean;
   /** Par défaut vrai : le moteur seul ne connaît pas le salon d'attente. */
   readonly started?: boolean;
+  /** Par défaut faux : la pause est une décision d'hôte, pas un état de jeu. */
+  readonly paused?: boolean;
 }
 
 /** L'état vu par tout le monde. */
@@ -335,6 +346,7 @@ export function publicView(state: GameState, connectivity?: Connectivity): Publi
     handLimit: state.config.handLimit,
     victoryTarget: state.config.victory.target,
     started: connectivity?.started ?? true,
+    paused: connectivity?.paused ?? false,
     standings: finalStandings(state),
   };
 }

@@ -15,3 +15,7 @@ packages/client/public/assets/
 # Scripts de test jetables, jamais versionnés.
 scratch-*
 __pycache__/
+
+# Journaux de parties : ils appartiennent à la machine qui a hébergé la
+# soirée, pas au dépôt.
+parties/

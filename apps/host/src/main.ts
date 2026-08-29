@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
 
 import { defaultLandCount } from '@grand-colonies/engine';
+import { readJournal } from '@grand-colonies/server';
 import { type GameSettings, GameServer, SETTINGS_LIMITS } from '@grand-colonies/server';
 
 import { renderHostPage } from './hostPage.js';
@@ -209,6 +210,27 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
    * de départ qu'on fixe ici, pour n'avoir rien à régler quand la pièce se
    * remplit. Sans elle, la taille équilibrée pour l'effectif (§4).
    */
+  /*
+   * Le journal de partie, déposé à côté du dépôt.
+   *
+   * Écrit sans qu'on le demande : une soirée qui plante est exactement le
+   * moment où l'on découvre qu'on aurait aimé l'avoir. `PARTIES=` vide le
+   * désactive pour qui n'en veut pas.
+   */
+  const journalDir = process.env['PARTIES'] ?? resolve(ROOT, 'parties');
+
+  /*
+   * `REPRENDRE=parties/xxx.jsonl` relance une partie là où elle s'était
+   * arrêtée. Les jetons de reconnexion sont morts avec le processus
+   * précédent : chacun rouvre le lien et reprend un siège.
+   */
+  const repriseFile = process.env['REPRENDRE'];
+  const restore = repriseFile ? readJournal(resolve(ROOT, repriseFile)) : undefined;
+  if (repriseFile && !restore) {
+    console.error(`  Journal introuvable ou illisible : ${repriseFile}`);
+    process.exit(1);
+  }
+
   const terres = Number(process.env['TERRES']);
   const boardSize = Number.isFinite(terres) && terres > 0 ? terres : defaultLandCount(playerCount);
 
@@ -218,6 +240,8 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
     seed,
     boardKind,
     boardSize,
+    ...(journalDir ? { journalDir } : {}),
+    ...(restore ? { restore } : {}),
     playerNames: Array.from({ length: playerCount }, (_, i) => `Joueur ${i + 1}`),
     onRequest: (req, res) => {
       if (req.url === '/' || req.url === '/hote') {
@@ -242,6 +266,62 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
         const launched = server.startGame();
         res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({ started: true, launched }));
+        return true;
+      }
+      /*
+       * Pause, reprise, rallonge — les trois gestes d'une soirée réelle.
+       *
+       * Ils vivent sur l'écran de l'hôte et non dans le jeu : c'est la
+       * personne qui tient la pièce qui voit qu'on part chercher à boire ou
+       * qu'une négociation n'est pas finie, pas le serveur.
+       */
+      if (req.url === '/api/pause' && req.method === 'POST') {
+        // L'état est lu *après* le changement : l'ordre d'évaluation d'un
+        // littéral aurait sinon renvoyé « pas en pause » juste après avoir
+        // mis en pause, et l'écran s'y serait fié.
+        const changed = server.pauseGame();
+        sendJson(res, 200, { changed, paused: server.session.isPaused });
+        return true;
+      }
+      if (req.url === '/api/resume' && req.method === 'POST') {
+        const changed = server.resumeGame();
+        sendJson(res, 200, { changed, paused: server.session.isPaused });
+        return true;
+      }
+      /*
+       * Confier un siège abandonné à un bot.
+       *
+       * C'est le seul geste qui débloque une table qu'un départ laisse
+       * boiteuse : sans lui, le tour de l'absent est joué d'office cycle
+       * après cycle et sa position ne bouge plus jamais.
+       */
+      if (req.url === '/api/handToBot' && req.method === 'POST') {
+        void readJson(req)
+          .then((body) => {
+            const playerId = String(body['playerId'] ?? '');
+            const done = server.handSeatToBot(playerId);
+            // Un bot de plus, pour venir occuper la place qu'on vient
+            // d'ouvrir : la libérer sans en lancer un ne ferait que créer un
+            // siège vide de plus.
+            if (done) bots.set(Math.min(bots.status.count + 1, server.settings.playerCount));
+            sendJson(res, done ? 200 : 409, { done, bots: bots.status });
+          })
+          .catch(() => sendJson(res, 400, { error: 'requête illisible' }));
+        return true;
+      }
+      if (req.url === '/api/extend' && req.method === 'POST') {
+        void readJson(req)
+          .then((body) => {
+            const seconds = Number(body['seconds'] ?? 30);
+            // Borné : une rallonge d'une heure ne se distingue plus d'une
+            // phase sans chronomètre, et la table n'aurait plus de repère.
+            const clamped = Math.max(-600, Math.min(600, Number.isFinite(seconds) ? seconds : 30));
+            sendJson(res, 200, {
+              changed: server.extendTimer(clamped),
+              remainingMs: server.session.remainingMs(),
+            });
+          })
+          .catch(() => sendJson(res, 400, { error: 'requête illisible' }));
         return true;
       }
       /*
@@ -314,12 +394,16 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
       }
       if (req.url === '/api/seats') {
         const automatic = server.botSeats();
+        const abandoned = new Set(server.seatsEligibleForBot());
         const seats = server.session.allSeats().map((seat) => ({
+          playerId: seat.playerId,
           name: seat.name,
           connected: seat.connected,
           // L'hôte doit voir d'un coup combien de vraies personnes sont là :
           // dix sièges pleins dont neuf de bots ne se lisent pas autrement.
           bot: automatic.has(seat.playerId),
+          // Absent depuis assez longtemps pour qu'on propose de le remplacer.
+          abandoned: abandoned.has(seat.playerId),
         }));
         res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify(seats));
@@ -339,6 +423,8 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
   console.log(`  Code         ${code}`);
   console.log(`  Plateau      ${boardKind === 'disc' ? 'disque' : 'archipel'}, ${server.settings.landCount} terres`);
   console.log(`  Sièges       ${playerCount}`);
+  if (restore) console.log(`  Reprise      ${restore.entries.length} commandes rejouées`);
+  else if (journalDir) console.log(`  Journal      ${journalDir}`);
   console.log('');
 
   // Le nombre de bots demandé au lancement, s'il y en a un : la ligne de

@@ -19,7 +19,9 @@ Le terminal affiche alors :
   Écran hôte   http://192.168.1.34:2567
   Joueurs      http://192.168.1.34:5173
   Code         AMPHORE-46
-  Plateau      archipel
+  Plateau      archipel, 44 terres
+  Sièges       8
+  Journal      /chemin/vers/grand-colonies/parties
 ```
 
 **Ouvre l'écran hôte sur le PC** (la première adresse). Il affiche un QR code
@@ -34,6 +36,37 @@ joués au minimum, et ils reprendront leur place en arrivant.
 
 `Ctrl+C` arrête tout.
 
+### Pendant la soirée, sur l'écran hôte
+
+**Pause** suspend tout : le chronomètre, les tours joués d'office, et les
+commandes des joueurs. Un voile s'affiche sur l'écran de table pour que la
+pièce entière comprenne d'un regard pourquoi plus rien ne bouge. Le temps
+restant est rendu intact à la reprise — la pause ne vole ni n'offre de temps.
+
+**+30 s** rallonge la phase en cours, quand la table négocie encore.
+
+**Confier à un bot** apparaît sur la fiche d'un joueur parti depuis deux
+tours de table. Sans ce geste, la partie l'attend indéfiniment : son tour est
+joué au minimum, cycle après cycle, et sa position ne bouge plus. Le jeton de
+reconnexion du partant est invalidé — céder sa place, c'est la céder.
+
+### Si le serveur tombe
+
+Chaque partie écrit son journal dans `parties/` : la graine, la
+configuration, et la suite ordonnée des commandes, horodatées. Le moteur
+étant déterministe, cela suffit à rejouer la partie à l'identique.
+
+```bash
+REPRENDRE=parties/partie-1787966450972-0.jsonl npm run play
+```
+
+La partie revient **en pause**, exactement où elle s'était arrêtée, noms des
+joueurs compris. Chacun rouvre le lien et reprend un siège — les jetons de
+reconnexion sont morts avec le processus précédent — puis l'hôte reprend.
+
+Le fichier est du JSON par lignes, ajouté au fil de l'eau : une coupure de
+courant n'en abîme que la dernière ligne, et la relecture l'ignore.
+
 ### Options
 
 | Commande | Effet |
@@ -41,6 +74,9 @@ joués au minimum, et ils reprendront leur place en arrivant.
 | `PLAYERS=8 npm run play` | Huit joueurs au lieu de douze |
 | `BOARD=disque npm run play` | Plateau en disque : soirée plus courte (≈ 2 h 20 au lieu de 3 h 30 à douze) |
 | `BOTS=11 npm run play` | Onze adversaires automatiques, une place pour toi |
+| `TERRES=72 npm run play` | Soixante-douze hexagones de terre. Réglable aussi depuis l'écran hôte, de 19 à 130, indépendamment du nombre de joueurs |
+| `REPRENDRE=parties/xxx.jsonl npm run play` | Reprend une partie interrompue là où elle s'était arrêtée |
+| `PARTIES= npm run play` | N'écrit aucun journal de partie |
 
 Les bots passent par le même WebSocket que les joueurs et ne voient que ce
 qu'un joueur voit : ils ne peuvent pas tricher. Ils construisent par ordre de
@@ -99,7 +135,7 @@ lsof -ti:2567 -ti:5173 | xargs kill -9
 ## Développement
 
 ```bash
-npm test          # 480 tests
+npm test          # 512 tests
 npm run typecheck # les six paquets
 npm run assets    # met les images générées à la portée du client
 
