@@ -159,6 +159,40 @@ describe('étanchéité de la vue publique', () => {
     expect(view.victoryTarget).toBe(15);
   });
 
+  it('désigne le même associé dans l en-tête et dans la liste des joueurs', () => {
+    /*
+     * Le retour de soirée disait « parfois l'associé se décale ». La règle
+     * était écrite deux fois — une copie en clair ici, l'autre dans
+     * `roleOf()` — et le client lit les deux : `pairedPlayer` pour l'en-tête,
+     * `role` pour la surbrillance. Elles passent désormais par la même
+     * fonction ; ce test est ce qui les y garde.
+     */
+    const state = startedGame();
+    for (let cycle = 0; cycle < 8; cycle++) {
+      const view = publicView(state);
+      const parRole = view.players.filter((p) => p.role === 'paired').map((p) => p.id);
+
+      expect(parRole).toHaveLength(1);
+      expect(view.pairedPlayer).toBe(parRole[0]);
+      // Et l'associé n'est jamais l'actif : ce serait un joueur qui joue deux fois.
+      expect(view.pairedPlayer).not.toBe(view.activePlayer);
+
+      state.activeIndex = (state.activeIndex + 1) % state.players.length;
+    }
+  });
+
+  it('ne désigne ni actif ni associé hors du tour', () => {
+    // Pendant la mise en place, personne n'a le tour. L'en-tête et la liste
+    // doivent le dire de la même façon.
+    const state = startedGame();
+    state.phase = 'setup';
+    const view = publicView(state);
+
+    expect(view.activePlayer).toBeUndefined();
+    expect(view.pairedPlayer).toBeUndefined();
+    expect(view.players.every((p) => p.role === 'idle')).toBe(true);
+  });
+
   it('signale les emplacements contestés sans dire par qui', () => {
     const state = startedGame();
     dispatch(state, cmd('ROLL_DICE', 'p1'));

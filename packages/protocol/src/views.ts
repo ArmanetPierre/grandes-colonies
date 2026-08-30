@@ -46,6 +46,7 @@ import {
   canUpgradeToMetropolis,
   metropolisesBuilt,
   robberVictims,
+  pairedPlayer,
   playerOf,
   playerInfluence,
   playerPoints,
@@ -302,13 +303,22 @@ export interface Connectivity {
 
 /** L'état vu par tout le monde. */
 export function publicView(state: GameState, connectivity?: Connectivity): PublicGameView {
-  const active = state.phase === 'setup' || state.phase === 'ended'
-    ? undefined
-    : state.players[state.activeIndex]?.id;
-
-  const paired = state.players.length >= 4 && active !== undefined
-    ? state.players[(state.activeIndex + 3) % state.players.length]?.id
-    : undefined;
+  /*
+   * Qui joue, et avec qui.
+   *
+   * La règle de l'associé n'est pas recopiée ici. Elle l'était — le calcul
+   * `(activeIndex + 3) % players.length` figurait en clair — et c'est
+   * exactement la forme qu'aurait pris un décalage entre le nom affiché en
+   * en-tête et la ligne surlignée dans la liste des joueurs, qui vient de
+   * `roleOf()`. Les deux passent maintenant par `pairedPlayer()` et ne
+   * peuvent plus diverger.
+   *
+   * Hors tour — mise en place, partie finie — personne n'est actif ni
+   * associé : l'affichage ne doit désigner personne.
+   */
+  const enTour = state.phase !== 'setup' && state.phase !== 'ended';
+  const active = enTour ? state.players[state.activeIndex]?.id : undefined;
+  const paired = enTour ? pairedPlayer(state)?.id : undefined;
 
   // Un emplacement est contesté dès que deux annonces le visent.
   const perLocation = new Map<string, number>();
