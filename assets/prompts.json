@@ -8,7 +8,7 @@
     "backgrounds": "wide atmospheric background illustration for a board game interface, ancient Greek Aegean setting, heavily desaturated, low contrast, out of focus in the lower half, no strong focal point, designed to sit behind readable white text, no text, no characters",
     "sheets": "stylised 3D rendered board game art, the look of a modern digital board game with real crafted volumes and soft rounded shapes, warm key light from above shared by every panel, soft ambient occlusion, rich saturated but natural colour, smooth clean materials with a soft matte finish, shallow relief seen from directly above in strict orthographic projection, ancient Greek Aegean setting, lively and inviting, thin neutral grey gutters between the panels, flat neutral background"
   },
-  "negative": "playing card object, rounded corners, card lying on a surface, photograph of a card, slab, plaque, tile base, platform, pedestal, diorama base, isolated object, floating island, single tile on a background, product render, studio backdrop, strong perspective, tilted camera, isometric view, deep dark shadows, paper margin, white margin, white border, canvas edge, framed picture, text, letters, numbers, greek key meander pattern, watermark, signature, logo, frame, border, vignette, UI elements, people, characters, hexagon shape, hexagonal tile, photorealistic, high contrast details near edges, dark corners, parallel stripes, repeated banding, paving, cobblestones, tiled floor, repeated spiral motif, vivid saturated color, neon, flat empty surface with no texture",
+  "negative": "playing card object, rounded corners, card lying on a surface, photograph of a card, slab, plaque, tile base, platform, pedestal, diorama base, isolated object, floating island, single tile on a background, product render, studio backdrop, strong perspective, tilted camera, isometric view, deep dark shadows, paper margin, white margin, white border, canvas edge, framed picture, text, letters, numbers, greek key meander pattern, watermark, signature, logo, frame, border, vignette, UI elements, people, characters, hexagon shape, hexagonal tile, photorealistic, high contrast details near edges, dark corners, parallel stripes, repeated banding, paving, cobblestones, tiled floor, repeated spiral motif, vivid saturated color, neon, flat empty surface with no texture, repeated arrangement of identical objects, tileable texture, regular lattice, objects all the same size",
   "assets": [
     {
       "id": "sheet_terrains",
@@ -41,7 +41,7 @@
       "aspect": "1:1",
       "resource": "laine",
       "color": "#86A54F",
-      "subject": "Greek island pasture seen from directly above, springy green grass with small round shrubs, a few grazing sheep as soft white shapes, and low dry stone walls. Olive green clearly dominant. This is panel 4 of the reference sheet, top row fourth from the left: a clear step darker than the barley. The walls are short, broken and differently oriented, never a continuous line crossing the surface, never a closed enclosure in the centre",
+      "subject": "Greek island pasture seen from directly above, springy green grass cropped at uneven heights, small round shrubs and thistles, grazing sheep as soft white shapes turned in different directions, and low dry stone walls. Olive green clearly dominant. This is panel 4 of the reference sheet, top row fourth from the left: a clear step darker than the barley. The walls are short, broken and differently oriented, never a continuous line crossing the surface, never a closed enclosure in the centre. No two parts of the surface alike — sizes, angles and spacing all vary across the tile — while the overall density stays even. No repeated arrangement, no grid, nothing that reads as a tileable motif",
       "ref": [
         "sheet_terrains"
       ],
@@ -54,7 +54,7 @@
       "aspect": "1:1",
       "resource": "blé",
       "color": "#C0A355",
-      "subject": "Ancient Greek barley field seen from directly above, a thick carpet of golden grain with individual tufts catching the light, a few small olive trees scattered through it. Warm gold clearly dominant. This is panel 3 of the reference sheet, top row centre. Plots small, irregular and differently oriented, their edges barely suggested and never continuous — no rectangular grid, no paving, no stone slabs, no tiled pattern, no bare path crossing the surface",
+      "subject": "Ancient Greek barley field seen from directly above, a thick carpet of golden grain with individual tufts catching the light, small olive trees and a few poppies scattered through it. Warm gold clearly dominant. This is panel 3 of the reference sheet, top row centre. Plots of clearly different shapes and sizes, none rectangular, their edges barely suggested and never continuous. No two parts of the surface alike — sizes, angles and spacing all vary across the tile — while the overall density stays even. No repeated arrangement, no grid, nothing that reads as a tileable motif. No paving, no stone slabs, no tiled pattern, no bare path crossing the surface, no straight furrows",
       "ref": [
         "sheet_terrains"
       ],
@@ -67,7 +67,7 @@
       "aspect": "1:1",
       "resource": "brique",
       "color": "#A16344",
-      "subject": "Terraced Greek hillside of red clay seen from directly above, short irregular earth terraces facing different directions, a few potters kilns and stacked amphorae resting among them. Warm terracotta clearly dominant. This is panel 6 of the reference sheet, bottom row far left: a clear step darker than the shallows. Terraces and retaining walls short and broken, no long continuous line, no concentric arc, no parallel bands running across the surface, no stripes",
+      "subject": "Terraced Greek hillside of red clay seen from directly above, short earth terraces of clearly different lengths facing different directions, potters kilns and stacked amphorae of varied sizes resting among them. Warm terracotta clearly dominant, the clay rich and earthy rather than orange. This is panel 6 of the reference sheet, bottom row far left: a clear step darker than the shallows. No two parts of the surface alike — sizes, angles and spacing all vary across the tile — while the overall density stays even. No repeated arrangement, no grid, nothing that reads as a tileable motif. No long continuous line, no concentric arc, no parallel bands running across the surface, no stripes, no row of identical jars",
       "ref": [
         "sheet_terrains"
       ],
@@ -79,8 +79,8 @@
       "priority": "P0",
       "aspect": "1:1",
       "resource": "minerai",
-      "color": "#9EB8CA",
-      "subject": "Greek marble quarry seen from directly above, individual pale cut stone blocks and fallen column drums resting on shallow quarry steps, soft shading nestling between them. Cool grey marble clearly dominant. This is panel 2 of the reference sheet, top row second from the left: clearly darker than the sand of panel 1, and the coolest surface of the series. Blocks of similar size spread evenly, angular cut geometry against organic ground, no dominant ridge line, no deep shadow pit, never white, never cracked plaster, no snow",
+      "color": "#A4B6C3",
+      "subject": "Greek marble quarry seen from directly above, cut stone blocks and fallen column drums of clearly different sizes lying at different angles on shallow quarry steps, pale dust and chips gathered between them, soft shading nestling under each block. Grey stone clearly dominant — the cool grey of quarried marble, never the blue of ice. This is panel 2 of the reference sheet, top row second from the left: clearly darker than the sand of panel 1, and the coolest surface of the series. No two parts of the surface alike — sizes, angles and spacing all vary across the tile — while the overall density stays even. No repeated arrangement, no grid, nothing that reads as a tileable motif. No dominant ridge line, no deep shadow pit, never white, never cracked plaster, no snow",
       "ref": [
         "sheet_terrains"
       ],
