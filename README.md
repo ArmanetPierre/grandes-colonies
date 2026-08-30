@@ -247,7 +247,16 @@ presque au même niveau que ses voisines**, parce que les routes courent sur
 les arêtes et les colonies sur les sommets. Tout le volume est au centre. Tout est instancié —
 une partie à douze tient en une trentaine d'appels de dessin, ce qui laisse
 un téléphone d'entrée de gamme à soixante images par seconde. Un doigt
-déplace la carte, deux doigts zooment et la font pivoter, un tap construit.
+déplace la carte, deux doigts zooment et la font pivoter, un tap construit —
+et trois boutons au bord droit font la même chose sans geste, parce qu'un
+pincement raté laissait le joueur sans recours.
+
+Le cadrage tient **les terres, pas la mer**, et couche le plateau dans le sens
+où l'écran est long : sur un téléphone tenu debout, tenir la bordure de mer de
+l'archipel reléguait les îles au tiers de la hauteur. Les deux orientations
+sont essayées et c'est **la surface couverte** qui tranche, pas la distance
+atteinte — couché en travers, un archipel laisse approcher davantage mais ne
+forme plus qu'un bandeau.
 
 Ce qui bouge répond à une question que l'écran posait sans y répondre. Une
 pièce posée **tombe du ciel** et soulève un peu de poussière : à douze

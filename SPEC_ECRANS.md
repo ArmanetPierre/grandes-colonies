@@ -183,6 +183,12 @@ Le timer doit changer d'apparence sous 10 secondes, sans devenir agressif au poi
 
 3. **Le cadrage.** Quand l'action se déroule à l'autre bout de la carte, faut-il recadrer automatiquement, ou signaler la direction sans bouger la vue ? Un recadrage automatique pendant qu'un joueur compose un échange serait pénible.
 
+> **Tranché le 30/08/2026 — le cadrage d'ouverture.** Il tient **les terres et les ports, pas la mer** : l'archipel pose une large bordure d'eau, et la tenir reléguait les îles au tiers de la hauteur sur un téléphone. Il **couche le plateau dans le sens où l'écran est long**, en essayant les deux orientations et en gardant celle qui **couvre le plus de surface** — et non celle qui laisse approcher le plus, qui est le pire des deux : en travers, un archipel laisse s'approcher davantage mais ne forme plus qu'un bandeau. Mesuré sur le plateau à douze : 27,6 % de l'écran contre 19,8 %.
+>
+> Le recadrage automatique en cours de partie reste écarté. Le joueur dispose de **trois commandes explicites** — plus, moins, « Tout voir » — au bord droit, à portée du pouce ; « Tout voir » n'apparaît que lorsqu'il y a quelque chose à défaire.
+>
+> **Reste ouvert** : cadrer d'emblée sur l'île centrale, où la mise en place a lieu (contrat §9), remplirait bien mieux l'écran mais cacherait les îles secondaires au démarrage. C'est un arbitrage de jeu, pas de cadrage.
+
 ### 5.4 Zone ③ — Les 12 joueurs
 
 **Contenu affiché en permanence, par joueur** : identité (couleur + forme + motif), pseudo, PV publics, nombre de cartes en main, Influence publique, statut (actif / associé / passif), état de connexion.
@@ -193,6 +199,10 @@ Le timer doit changer d'apparence sous 10 secondes, sans devenir agressif au poi
 - **Ne pas reposer sur le survol** : la moitié des joueurs sont sur tablette ou téléphone, où le survol n'existe pas. Clic/tap obligatoire, survol en bonus.
 - Le joueur actif et le joueur associé doivent ressortir immédiatement dans la liste.
 - Sur téléphone, comment donner accès à 11 adversaires sans occuper l'écran ? Barre horizontale scrollable, tiroir, vue dédiée ?
+
+> **Tranché le 30/08/2026 — ni l'un ni l'autre : les douze tiennent sur une ligne.** La barre défilante avait été essayée et elle échoue : soixante-dix pixels par joueur sur un écran qui en offre trois cent soixante-quinze donnent trois joueurs visibles sur douze, et à douze, savoir qui est où *est* le jeu. Sur écran étroit le **nom cède la place à la couleur** — c'est déjà l'identité que le §2.2 donne aux douze joueurs — et il ne reste que la pastille et les points. Un toucher ouvre la fiche complète, avec les noms.
+>
+> Actif et associé se marquent d'un **trait plein en pied**, et non d'une teinte de fond : à trente pixels de large, un fond teinté derrière une pastille de couleur ne se distingue plus — et c'est justement la case où l'on cherche qui joue.
 
 ### 5.5 Zone ④ — Ma main
 
@@ -207,6 +217,8 @@ Le timer doit changer d'apparence sous 10 secondes, sans devenir agressif au poi
 **Principe** : les actions disponibles sont calculées par le serveur (système de capacités, §5.5 du plan). L'interface ne devine rien.
 
 **Point d'attention** : une action indisponible ne doit pas seulement être grisée, elle doit **dire pourquoi** — « pas assez de brique », « ce n'est pas ton tour », « emplacement gelé ». C'est ce qui permet d'apprendre les règles sans que le développeur explique en permanence, ce qui est un critère de sortie explicite du projet.
+
+> **Tranché le 30/08/2026 — l'annonce n'est pas un mode.** Un interrupteur « Annoncer » se posait à côté du choix de construction ; une fois armé, plus rien à l'écran ne le rappelait, et l'on cliquait « Colonie » en croyant bâtir. Le bouton dit désormais lui-même ce qu'il fait : hors de son tour, « **Annoncer une colonie** », avec « fin de cycle » en dessous ; à son tour, « Colonie ». Un état invisible ne doit pas décider du sens d'un clic — c'est la même exigence que celle du paragraphe ci-dessus, appliquée à l'action plutôt qu'à son indisponibilité.
 
 ### 5.7 Zone ⑥ — Commerce
 
@@ -227,6 +239,10 @@ Je veux  : [⛏️]                 2 🌲  ↔  1 ⛏️
 - Le panneau doit-il rester visible en permanence, ou n'apparaître que pendant la fenêtre de commerce ?
 - Comment afficher plusieurs offres reçues simultanément sans noyer le joueur ? À 12 joueurs, en 30 secondes, plusieurs offres peuvent arriver en même temps.
 - Comment signaler qu'une offre est devenue **caduque** parce que l'inventaire de l'un des deux joueurs a changé entre-temps ?
+
+> **Ajouté le 30/08/2026 — le panneau s'ouvre sur ce qui manque.** Avant le formulaire, une ligne par construction posable : ce qui manque, et le premier échange qui rapprocherait — la ressource la moins chère à céder, au cours du moment, ports compris. Rien qui ne soit déjà à l'écran, mais la soustraction est faite, ce que personne ne fait de tête en trente secondes.
+>
+> Le taux de la banque y est affiché comme un **prix plancher** : c'est ce que le voisin doit battre. Le panneau ne sert pas à acheter, il sert à faire parler — le levier que la simulation chiffre à quarante pour cent de cycles en moins.
 
 ### 5.8 Zone ⑦ — Journal
 
