@@ -27,6 +27,7 @@ import { Cadrage } from './camera.js';
 import { CASCADE, DUREE_CHUTE, DUREE_RECOLTE, chute, poussiere, recolte } from './chute.js';
 import { Couche } from './couche.js';
 import { Des } from './des.js';
+import { azimutDepuisTorsion, ecartAngulaire, estGlissement, TORSION_MORTE } from './gestes.js';
 import {
   EPAISSEUR, MER, SOL, type Point3, barycentre, bornes, centreHex, hexDe, ilesDuLarge,
   rotationArete,
@@ -1044,37 +1045,48 @@ export class ScenePlateau {
   // ── gestes ───────────────────────────────────────────────────────────
 
   private readonly pointeurs = new Map<number, { x: number; y: number }>();
+  /** Où chaque doigt s'est posé : c'est de là que se mesure la dérive. */
+  private readonly origines = new Map<number, { x: number; y: number }>();
   private ecart = 0;
   private angleDoigts = 0;
+  /** Le couple de doigts qui sert de base au pincement, dans l'ordre. */
+  private paire: [number, number] | null = null;
+  /** Torsion cumulée depuis que la paire s'est formée, en valeur absolue. */
+  private torsion = 0;
   private glisse = false;
   private orbite = false;
 
   /**
-   * Un doigt déplace, deux doigts zooment et tournent, un tap construit.
+   * Un doigt déplace, deux doigts zooment et tournent, un appui construit.
    *
-   * Le fil ténu de tout cela est la distinction entre un geste et un clic.
+   * Le fil ténu de tout cela est la distinction entre un geste et un appui.
    * Sans elle, chaque déplacement de la carte finissait par poser une route
-   * là où le doigt s'était levé. On garde donc la tolérance de quelques
-   * pixels de l'ancien plateau : un doigt n'est jamais parfaitement immobile,
-   * et un clic ne doit pas devenir un glissement pour autant.
+   * là où le doigt s'était levé ; avec une tolérance trop serrée, c'est
+   * l'inverse qui se produit et le voleur ne se pose plus. Les deux seuils
+   * qui l'arbitrent sont dans `gestes.ts`, où ils se testent.
    */
   private brancherGestes(): void {
     const toile = this.renderer.domElement;
 
     toile.addEventListener('pointerdown', (e) => {
-      this.pointeurs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      this.glisse = false;
-      // Le clic droit et la touche majuscule font tourner : sur un ordinateur
-      // il n'y a pas de second doigt, et sans eux la caméra restait figée
-      // dans l'axe où elle était née.
-      this.orbite = e.button === 2 || e.shiftKey;
-      if (this.pointeurs.size === 2) {
-        const [a, b] = [...this.pointeurs.values()];
-        if (a && b) {
-          this.ecart = Math.hypot(a.x - b.x, a.y - b.y);
-          this.angleDoigts = Math.atan2(b.y - a.y, b.x - a.x);
-        }
+      const point = { x: e.clientX, y: e.clientY };
+      this.pointeurs.set(e.pointerId, point);
+      this.origines.set(e.pointerId, point);
+
+      // Un second doigt qui se pose ne relance pas le geste. Sans cette
+      // garde, il effaçait le glissement en cours : on faisait glisser la
+      // carte, on posait un second doigt, et le lever reposait une route.
+      if (this.pointeurs.size === 1) {
+        this.glisse = false;
+        // Le clic droit et la touche majuscule font tourner : sur un
+        // ordinateur il n'y a pas de second doigt, et sans eux la caméra
+        // restait figée dans l'axe où elle était née.
+        this.orbite = e.button === 2 || e.shiftKey;
       }
+
+      // La base du pincement se refera au premier mouvement, avec les doigts
+      // réellement posés à ce moment-là.
+      this.paire = null;
       toile.setPointerCapture(e.pointerId);
     });
 
@@ -1085,29 +1097,57 @@ export class ScenePlateau {
       this.pointeurs.set(e.pointerId, apres);
 
       if (this.pointeurs.size >= 2) {
-        const [a, b] = [...this.pointeurs.values()];
+        const ids = [...this.pointeurs.keys()].slice(0, 2) as [number, number];
+        const a = this.pointeurs.get(ids[0]);
+        const b = this.pointeurs.get(ids[1]);
         if (!a || !b) return;
+
         const distance = Math.hypot(a.x - b.x, a.y - b.y);
         const angle = Math.atan2(b.y - a.y, b.x - a.x);
-        if (this.ecart > 0 && distance > 0) {
-          this.glisse = true;
-          this.cadrage.zoomer(distance / this.ecart);
-          // La torsion des deux doigts fait pivoter la carte. C'est le seul
-          // geste dont un joueur n'a pas idée avant de l'essayer, et le seul
-          // qui ne manque à personne s'il l'ignore.
-          this.cadrage.tourner(-(angle - this.angleDoigts), 0);
+
+        /*
+         * La base se refait dès que le couple change de doigts.
+         *
+         * L'ordre du couple suit l'ordre d'arrivée : un doigt relevé puis
+         * reposé passe derrière l'autre, et l'angle mesuré bascule d'un
+         * demi-tour d'un coup. Repartir de zéro coûte une image ; ne pas le
+         * faire coûte une embardée.
+         */
+        if (!this.paire || this.paire[0] !== ids[0] || this.paire[1] !== ids[1]) {
+          this.paire = ids;
+          this.ecart = distance;
+          this.angleDoigts = angle;
+          this.torsion = 0;
+          return;
         }
+
+        this.glisse = true;
+        if (this.ecart > 0 && distance > 0) this.cadrage.zoomer(distance / this.ecart);
+
+        // La torsion des deux doigts fait pivoter la carte. C'est le seul
+        // geste dont un joueur n'a pas idée avant de l'essayer, et le seul
+        // qui ne manque à personne s'il l'ignore.
+        const torsion = ecartAngulaire(this.angleDoigts, angle);
+        this.torsion += Math.abs(torsion);
+        if (this.torsion > TORSION_MORTE) this.cadrage.tourner(azimutDepuisTorsion(torsion), 0);
+
         this.ecart = distance;
         this.angleDoigts = angle;
         this.signalerCadrage();
         return;
       }
 
-      const dx = apres.x - avant.x;
-      const dy = apres.y - avant.y;
-      if (Math.abs(dx) + Math.abs(dy) > 3) this.glisse = true;
+      // La dérive se mesure depuis le point de départ, pas depuis le dernier
+      // événement : c'est ce qui distingue un doigt qui s'étale d'un doigt
+      // qui glisse.
+      const origine = this.origines.get(e.pointerId);
+      if (!this.glisse && origine && estGlissement(origine, apres, e.pointerType)) {
+        this.glisse = true;
+      }
       if (!this.glisse) return;
 
+      const dx = apres.x - avant.x;
+      const dy = apres.y - avant.y;
       if (this.orbite) {
         this.cadrage.tourner(dx * 0.006, -dy * 0.005);
       } else {
@@ -1118,9 +1158,12 @@ export class ScenePlateau {
 
     const relacher = (e: PointerEvent): void => {
       const avait = this.pointeurs.delete(e.pointerId);
+      this.origines.delete(e.pointerId);
       if (!avait) return;
-      if (this.pointeurs.size >= 1) { this.ecart = 0; return; }
+      // Le couple a changé : la base du pincement ne vaut plus rien.
+      this.paire = null;
       this.ecart = 0;
+      if (this.pointeurs.size >= 1) return;
       if (!this.glisse) this.viser(e.clientX, e.clientY);
       this.glisse = false;
       this.orbite = false;
