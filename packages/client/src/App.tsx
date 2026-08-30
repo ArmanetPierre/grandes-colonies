@@ -227,14 +227,6 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
    */
   const [intent, setIntent] = useState<BuildKind>(null);
   /**
-   * Annoncer plutôt que construire.
-   *
-   * C'est le même geste — choisir un type, puis un emplacement — mais
-   * l'annonce réserve les ressources et attend la fin du cycle. Un
-   * interrupteur explicite évite qu'on annonce en croyant construire.
-   */
-  const [declaring, setDeclaring] = useState(false);
-  /**
    * La carte développement armée, et ce qu'elle a déjà collecté.
    *
    * Trois des cinq cartes se jouent sur le plateau, avec le même geste que la
@@ -358,19 +350,6 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
 
   const caps = useMemo(() => new Set(priv?.capabilities ?? []), [priv]);
 
-  /*
-   * L'annonce se désarme dès qu'on peut construire.
-   *
-   * Le bouton « Annoncer » disparaît quand le tour arrive — on construit, on
-   * n'annonce plus — mais l'interrupteur, lui, restait enclenché : un joueur
-   * qui avait armé l'annonce hors de son tour se retrouvait, son tour venu,
-   * dans un mode dont plus rien à l'écran ne disait qu'il était actif. Ses
-   * constructions partaient en annonces, dont trois sortes — métropole,
-   * monument, voie maritime — que le moteur ne sait pas résoudre.
-   */
-  useEffect(() => {
-    if (caps.has('CAN_BUILD')) setDeclaring(false);
-  }, [caps]);
   const order = useMemo(() => pub?.players.map((p) => p.id) ?? [], [pub]);
 
   /**
@@ -473,8 +452,22 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
   // Pendant la mise en place, le jeu impose la suite : colonie puis route.
   // Inutile de demander au joueur de choisir ce qu'il sait déjà.
   const freeBuilding = card?.kind === 'freeBuild';
-  const canPick = caps.has('CAN_BUILD') || freeBuilding
-    || (declaring && caps.has('CAN_DECLARE_BUILD'));
+  /*
+   * Annoncer ou construire : le mode se déduit, il ne s'arme plus.
+   *
+   * C'était un interrupteur séparé du choix de construction, et une fois
+   * armé plus rien à l'écran ne le rappelait : on cliquait « Colonie » en
+   * croyant bâtir, et on annonçait. Le correctif d'alors désarmait
+   * l'interrupteur au bon moment — il traitait la conséquence. La cause
+   * était qu'un état invisible décidait du sens d'un clic.
+   *
+   * Hors de son tour, on ne peut de toute façon qu'annoncer ; à son tour, on
+   * ne peut que construire. L'état était donc redondant avec les capacités,
+   * et les boutons peuvent dire eux-mêmes ce qu'ils font.
+   */
+  const annonce = !caps.has('CAN_BUILD') && !freeBuilding && caps.has('CAN_DECLARE_BUILD');
+
+  const canPick = caps.has('CAN_BUILD') || freeBuilding || annonce;
   const setupIntent: BuildKind = caps.has('CAN_PLACE_SETUP')
     ? ((priv?.spots.roads.length ?? 0) > 0 ? 'road' : 'settlement')
     : null;
@@ -529,7 +522,7 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
         target: kind === 'road' ? { kind: 'road', edge: target } : { kind, vertex: target },
       });
       setCard(null);
-    } else if (declaring && !setup) {
+    } else if (annonce && !setup) {
       // L'annonce vise un emplacement sans le prendre : les ressources sont
       // réservées, la résolution aura lieu en fin de cycle.
       send('DECLARE_BUILD', {
@@ -549,7 +542,7 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
       send('BUILD_CITY', { vertex: target });
     }
     setIntent(null);
-  }, [pub, send, declaring, card]);
+  }, [pub, send, annonce, card]);
 
   /** Construction de routes : deux clics, ou un seul si le joueur s'arrête. */
   const pickRoad = (edge: string): void => {
@@ -610,8 +603,7 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
     if (kind !== null) setDrawer(null);
   };
 
-  const canBuildNow = caps.has('CAN_BUILD') || freeBuilding
-    || (declaring && caps.has('CAN_DECLARE_BUILD'));
+  const canBuildNow = caps.has('CAN_BUILD') || freeBuilding || annonce;
 
   /** Tous les emplacements ouverts, types confondus : la pastille de l'onglet. */
   const spotCount = priv.spots.settlements.length + priv.spots.cities.length
@@ -705,11 +697,20 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
 
   const buildButtons = (
     <>
-      <Build label="Route" kind="road" count={priv.spots.roads.length}
+      {/*
+        * Route, colonie et ville sont les trois seules constructions que le
+        * moteur sait résoudre en annonce (contrat §3) — d'où le verbe ici et
+        * nulle part ailleurs. Les trois sont féminines, ce qui laisse une
+        * seule tournure à écrire.
+        */}
+      <Build label={annonce ? 'Annoncer une route' : 'Route'} kind="road"
+             count={priv.spots.roads.length} annonce={annonce}
              active={intent} setActive={chooseIntent} enabled={canBuildNow} priced={compact} />
-      <Build label="Colonie" kind="settlement" count={priv.spots.settlements.length}
+      <Build label={annonce ? 'Annoncer une colonie' : 'Colonie'} kind="settlement"
+             count={priv.spots.settlements.length} annonce={annonce}
              active={intent} setActive={chooseIntent} enabled={canBuildNow} priced={compact} />
-      <Build label="Ville" kind="city" count={priv.spots.cities.length}
+      <Build label={annonce ? 'Annoncer une ville' : 'Ville'} kind="city"
+             count={priv.spots.cities.length} annonce={annonce}
              active={intent} setActive={chooseIntent} enabled={canBuildNow} priced={compact} />
       {/* La voie maritime n'apparaît que là où il y a de la mer à longer. */}
       {priv.spots.maritime.length > 0 && (
@@ -724,17 +725,6 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
       {priv.spots.monuments.length > 0 && (
         <Build label="Monument" kind="monument" count={priv.spots.monuments.length}
                active={intent} setActive={chooseIntent} enabled={caps.has('CAN_BUILD')} priced={compact} />
-      )}
-      {caps.has('CAN_DECLARE_BUILD') && !caps.has('CAN_BUILD') && (
-        <Hint text={HINTS['declare']?.text ?? ''} note={HINTS['declare']?.note ?? ''}>
-          <button
-            className={`gc-action gc-action-quiet${declaring ? ' is-armed' : ''}`}
-            onClick={() => { setDeclaring((on) => !on); setIntent(null); }}
-          >
-            {declaring ? 'Annonce armée' : 'Annoncer'}
-            <small>{declaring ? 'choisis un emplacement' : 'hors de ton tour'}</small>
-          </button>
-        </Hint>
       )}
     </>
   );
@@ -918,7 +908,9 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
         ? { text: `Mise en place : pose ta ${BUILD_LABELS[setupIntent] ?? 'pièce'} sur le plateau.` }
         : intent !== null
           ? {
-            text: `Touche l’emplacement — ${BUILD_LABELS[intent] ?? intent}${declaring ? ' (annonce)' : ''}.`,
+            text: annonce
+              ? `Touche l’emplacement à réserver — ${BUILD_LABELS[intent] ?? intent} annoncée.`
+              : `Touche l’emplacement — ${BUILD_LABELS[intent] ?? intent}.`,
             undo: () => setIntent(null),
           }
           : caps.has('CAN_MOVE_ROBBER')
@@ -930,8 +922,8 @@ export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }
         <>
           {!canBuildNow && (
             <p className="gc-sheet-idle">
-              Tu ne peux rien poser pour l’instant : attends ton tour, ou annonce
-              une construction quand la fenêtre s’ouvre.
+              Tu ne peux rien poser pour l’instant. Dès que la fenêtre s’ouvre, les
+              boutons proposeront d’annoncer une construction pour la fin du cycle.
             </p>
           )}
           <div className="gc-sheet-grid">{buildButtons}</div>
@@ -1197,13 +1189,15 @@ function NameEntry({ onChoose }: { onChoose: (name: string) => void }) {
  * Le nombre d'emplacements disponibles est affiché : un joueur qui a les
  * ressources mais aucun endroit où bâtir doit le comprendre sans essayer.
  */
-function Build({ label, kind, count, active, setActive, enabled, priced = false }: {
+function Build({ label, kind, count, active, setActive, enabled, annonce = false, priced = false }: {
   label: string;
   kind: Exclude<BuildKind, null>;
   count: number;
   active: BuildKind;
   setActive: (kind: BuildKind) => void;
   enabled: boolean;
+  /** Le clic annoncera au lieu de bâtir : le bouton doit le dire lui-même. */
+  annonce?: boolean;
   /** Le prix écrit sur le bouton, au lieu d'une infobulle au survol. */
   priced?: boolean;
 }) {
@@ -1211,14 +1205,18 @@ function Build({ label, kind, count, active, setActive, enabled, priced = false 
   const hint = HINTS[kind];
   const button = (
     <button
-      className={`gc-action${active === kind ? ' is-armed' : ''}`}
+      className={`gc-action${active === kind ? ' is-armed' : ''}${annonce ? ' gc-action-quiet' : ''}`}
       disabled={!usable}
       onClick={() => setActive(active === kind ? null : kind)}
     >
       {label}
       {priced && hint?.cost && <CostLine cost={COSTS[hint.cost]} className="gc-action-cost" />}
       {enabled && count === 0 && <small>aucun emplacement</small>}
-      {usable && <small>{count} emplacement{count > 1 ? 's' : ''}</small>}
+      {usable && (
+        <small>
+          {count} emplacement{count > 1 ? 's' : ''}{annonce ? ' · fin de cycle' : ''}
+        </small>
+      )}
     </button>
   );
 
@@ -1233,9 +1231,13 @@ function Build({ label, kind, count, active, setActive, enabled, priced = false 
    */
   if (priced) return button;
 
+  // Hors de son tour, c'est la mécanique de l'annonce qu'il faut expliquer,
+  // pas celle de la construction : le geste est le même, la conséquence non.
+  const aide = annonce ? HINTS['declare'] : hint;
+
   return (
-    <Hint text={hint?.text ?? ''} {...(hint?.cost ? { cost: hint.cost } : {})}
-          {...(hint?.note ? { note: hint.note } : {})}>
+    <Hint text={aide?.text ?? ''} {...(aide?.cost ? { cost: aide.cost } : {})}
+          {...(aide?.note ? { note: aide.note } : {})}>
       {button}
     </Hint>
   );
