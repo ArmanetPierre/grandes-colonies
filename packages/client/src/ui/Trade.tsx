@@ -18,6 +18,7 @@ import { useState } from 'react';
 import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
 
 import { Cours, TRADED } from './Cours.jsx';
+import { Manques } from './Manques.jsx';
 import { ResourceIcon } from './ResourceIcon.jsx';
 
 /**
@@ -86,6 +87,10 @@ export function Trade({
       {/* Le cours d'abord : c'est lui qui dit s'il faut vendre maintenant,
           et il vaut aussi pour qui n'a pas le droit de proposer. */}
       <Cours pub={pub} priv={priv} />
+
+      {/* Puis ce qui manque : le cours dit le prix, celui-ci dit à quoi il
+          sert. Les deux se lisent ensemble, avant le formulaire. */}
+      <Manques priv={priv} />
 
       {/* Sans droit de proposer ni d'échanger avec la banque, le formulaire
           n'aurait aucun effet : on dit pourquoi plutôt que de le griser. */}

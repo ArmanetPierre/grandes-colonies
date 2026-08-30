@@ -504,6 +504,36 @@ body {
 
 .gc-trade-list { display: grid; gap: 5px; }
 .gc-trade-sub { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--gc-ink-soft); }
+
+/* ── Ce qui manque pour bâtir ──────────────────────────────────────────
+   Une ligne par construction : le nom, ce qui manque, le prix plancher.
+   Le tout doit tenir sur une ligne à 375 px, d'où les chiffres collés à
+   leur pictogramme et la voie reléguée en fin de ligne. */
+.gc-manques {
+  display: flex; flex-direction: column; gap: 4px;
+  margin: 10px 0 14px; padding: 10px 0;
+  border-top: 1px solid var(--gc-line);
+  border-bottom: 1px solid var(--gc-line);
+}
+.gc-manque {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
+  font-family: var(--gc-font-ui); font-size: 11.5px;
+}
+.gc-manque-nom { min-width: 68px; font-weight: 600; color: var(--gc-ink); }
+.gc-manque-liste { display: inline-flex; align-items: center; gap: 6px; }
+.gc-manque-carte {
+  display: inline-flex; align-items: center; gap: 2px;
+  font-variant-numeric: tabular-nums; color: var(--gc-danger);
+}
+.gc-manque-voie {
+  display: inline-flex; align-items: center; gap: 3px;
+  margin-left: auto; color: var(--gc-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+/* Rien à la banque : c'est la table qu'il faut solliciter, et ça se dit. */
+.gc-manque-loin { color: var(--gc-accent); }
+.gc-manque.is-pret .gc-manque-nom { color: var(--gc-gold); }
+.gc-manque-pret { margin-left: auto; color: var(--gc-gold); }
 .gc-offer {
   display: flex; align-items: center; gap: 6px; font-size: 11.5px;
   background: var(--gc-raised); border: 1px solid var(--gc-line); padding: 5px 7px;
