@@ -32,7 +32,7 @@ export class Cadrage {
 
   private distanceMin = 3;
   private distanceMax = 120;
-  private repos = { x: 0, z: 0, distance: 20 };
+  private repos = { x: 0, z: 0, distance: 20, azimut: 0 };
 
   /**
    * Cadre pour que tous ces points restent visibles.
@@ -82,9 +82,95 @@ export class Cadrage {
      * deux gestes ne le perd.
      */
     this.distanceMin = Math.max(6, rayon * 0.5);
-    this.distanceMax = Math.max(rayon * 3, 26);
+    /*
+     * La butée arrière tient compte du format.
+     *
+     * Le champ de la caméra est vertical : sur un écran tenu debout, le champ
+     * horizontal se réduit d'autant que l'écran est étroit, et il faut
+     * reculer d'autant plus pour faire tenir la largeur du plateau. La butée
+     * était calculée sur le seul rayon ; sur un téléphone, elle empêchait le
+     * cadrage d'aller assez loin et le plateau débordait par les côtés — sans
+     * que rien ne dise pourquoi, puisque la butée est invisible.
+     */
+    const etroitesse = Math.min(1, camera.aspect || 1);
+    this.distanceMax = Math.max(rayon * 3, 26) / etroitesse;
 
+    /*
+     * L'orientation du plateau suit celle de l'écran.
+     *
+     * Sur un téléphone tenu debout, la contrainte est la largeur : un plateau
+     * étalé en largeur recule jusqu'à tenir entre les bords, et laisse
+     * au-dessus et en dessous deux grandes bandes de mer vide — l'île
+     * n'occupait qu'un tiers de la hauteur disponible. Un archipel a
+     * pourtant une direction principale, et il suffit de la coucher dans le
+     * sens de l'écran.
+     *
+     * On ne calcule pas laquelle est la bonne : on essaie les deux et on
+     * garde celle qui couvre le plus d'écran. C'est la même méthode que pour
+     * la distance, et pour la même raison — la projection d'une carte vue de
+     * biais ne se déduit pas d'une formule.
+     *
+     * Le critère est la surface couverte, et non la distance atteinte. Ce
+     * n'est pas la même chose, et l'écart n'est pas marginal : couché en
+     * travers, un archipel laisse approcher davantage — la largeur bute la
+     * première — mais ne forme plus qu'un bandeau qui couvre quinze pour cent
+     * de l'écran. Couché dans la hauteur, la caméra reste plus loin et le
+     * plateau en couvre quarante-cinq. Choisir sur la distance revenait donc
+     * à choisir systématiquement le pire des deux.
+     */
+    let meilleur = { azimut: this.azimut, distance: this.distance, aire: -1 };
+    for (const azimut of this.orientationsCandidates(points, centre)) {
+      this.azimut = azimut;
+      this.distance = Math.max(rayon * 2, 6);
+      const aire = this.converger(points, camera, marge);
+      if (aire > meilleur.aire) meilleur = { azimut, distance: this.distance, aire };
+    }
+
+    this.azimut = meilleur.azimut;
+    this.distance = meilleur.distance;
+    this.appliquer(camera);
+
+    this.repos = { x: centre.x, z: centre.z, distance: this.distance, azimut: this.azimut };
+  }
+
+  /**
+   * Les deux orientations à essayer : la direction principale du plateau
+   * couchée dans le sens de la largeur, puis dans celui de la hauteur.
+   *
+   * La direction principale sort d'une analyse en composantes du nuage de
+   * points — c'est l'axe le long duquel le plateau s'étale le plus. Sur un
+   * plateau rond elle est arbitraire, et les deux essais donnent alors le
+   * même résultat : rien n'est perdu.
+   */
+  private orientationsCandidates(points: readonly Point3[], centre: Point3): number[] {
+    let xx = 0, xz = 0, zz = 0;
+    for (const p of points) {
+      const dx = p.x - centre.x;
+      const dz = p.z - centre.z;
+      xx += dx * dx; xz += dx * dz; zz += dz * dz;
+    }
+    // Direction propre dominante d'une matrice 2×2 symétrique.
+    const axe = 0.5 * Math.atan2(2 * xz, xx - zz);
+    const u = { x: Math.cos(axe), z: Math.sin(axe) };
+
+    // `deplacer()` fixe la convention : la droite de l'écran vaut
+    // (cos azimut, −sin azimut) et son haut (−sin azimut, −cos azimut).
+    const versLaLargeur = Math.atan2(-u.z, u.x);
+    const versLaHauteur = Math.atan2(-u.x, -u.z);
+    return [versLaLargeur, versLaHauteur];
+  }
+
+  /**
+   * Recule jusqu'à ce que tous les points tiennent, et rend la part d'écran
+   * que le plateau finit par couvrir — entre 0 et 1.
+   *
+   * C'est cette part, et non la distance atteinte, qui dit si le cadrage est
+   * bon : elle mesure ce que le joueur voit.
+   */
+  private converger(points: readonly Point3[], camera: PerspectiveCamera, marge: number): number {
     const projete = new Vector3();
+    let xMin = 0, xMax = 0, yMin = 0, yMax = 0;
+
     for (let tour = 0; tour < 4; tour++) {
       this.appliquer(camera);
       camera.updateMatrixWorld();
@@ -93,9 +179,12 @@ export class Cadrage {
       // Le plus grand écart au centre, en coordonnées d'écran normalisées :
       // 1 signifie « touche le bord ».
       let debord = 0;
+      xMin = Infinity; xMax = -Infinity; yMin = Infinity; yMax = -Infinity;
       for (const point of points) {
         projete.set(point.x, 0, point.z).project(camera);
         debord = Math.max(debord, Math.abs(projete.x), Math.abs(projete.y));
+        xMin = Math.min(xMin, projete.x); xMax = Math.max(xMax, projete.x);
+        yMin = Math.min(yMin, projete.y); yMax = Math.max(yMax, projete.y);
       }
       if (debord <= 0.0001) break;
       this.distance = Math.min(
@@ -104,20 +193,23 @@ export class Cadrage {
       );
     }
 
-    this.repos = { x: centre.x, z: centre.z, distance: this.distance };
+    // Le cadre normalisé mesure deux unités de côté, donc quatre de surface.
+    return ((xMax - xMin) * (yMax - yMin)) / 4;
   }
 
   /** Revient au cadrage d'origine, sans toucher à ce que le joueur regarde. */
   recentrer(): void {
     this.cible.set(this.repos.x, 0, this.repos.z);
     this.distance = this.repos.distance;
-    this.azimut = 0;
+    // On revient à l'orientation choisie pour cet écran, pas à zéro : sur un
+    // téléphone tenu debout, zéro est justement celle qui gaspille l'écran.
+    this.azimut = this.repos.azimut;
     this.polaire = POLAIRE_DEFAUT;
   }
 
   /** Le joueur a-t-il bougé la caméra ? Décide de l'offre de recentrage. */
   get deplace(): boolean {
-    return this.azimut !== 0
+    return this.azimut !== this.repos.azimut
       || this.polaire !== POLAIRE_DEFAUT
       || Math.abs(this.distance - this.repos.distance) > 0.01
       || Math.abs(this.cible.x - this.repos.x) > 0.01

@@ -1001,11 +1001,13 @@ body {
 /* Le plateau, plein cadre, sous tout le reste. */
 .gc-compact .gc-board-wrap { position: absolute; inset: 0; padding: 0; }
 .gc-compact .gc-board-fit { inset: 0; }
-/* Recentrer se pose sous la barre d'état, du côté opposé à la table. */
-.gc-compact .gc-recentrer {
-  top: calc(var(--gc-hud-h) + 8px); bottom: auto;
-  right: calc(8px + var(--gc-safe-r)); padding: 6px 10px; font-size: 11px;
+/* Sur téléphone, les commandes remontent au-dessus de la barre d'action et
+   restent contre le bord droit, là où le pouce arrive sans traverser. */
+.gc-compact .gc-cadrage {
+  right: calc(8px + var(--gc-safe-r));
+  bottom: calc(var(--gc-dock-h) + var(--gc-safe-b) + 10px);
 }
+.gc-compact .gc-cadrage-bouton { min-width: 40px; min-height: 40px; }
 
 /* ── barre d'état ─────────────────────────────────────────────────────
    Le minutier, la phase, et la phrase qui dit quoi faire. Rien d'autre :
@@ -1289,20 +1291,50 @@ body {
 @media (max-width: 780px) and (orientation: portrait) {
   .gc-compact { --gc-dock-h: 104px; --gc-rail-w: 0px; }
 
+  /*
+   * La table entière sur une ligne, sans défilement.
+   *
+   * Elle défilait : soixante-dix pixels par joueur sur un écran qui en offre
+   * trois cent soixante-quinze, donc trois joueurs visibles sur huit — et à
+   * douze, savoir qui est où *est* le jeu. Le nom saute, la couleur reste :
+   * c'est déjà l'identité que la spec des écrans donne aux douze joueurs
+   * (§2.2), et un toucher ouvre la fiche complète avec les noms.
+   */
   .gc-rail {
     top: var(--gc-hud-h); bottom: auto;
-    left: 0; right: 0; width: auto; height: 30px;
-    flex-direction: row; overflow-x: auto; overflow-y: hidden;
+    left: 0; right: 0; width: auto; height: 32px;
+    flex-direction: row; overflow: hidden;
     border-right: none; border-bottom: 1px solid var(--gc-line);
     padding-left: var(--gc-safe-l); padding-right: var(--gc-safe-r);
   }
   .gc-rail-player {
-    width: auto; height: 100%; flex: none; min-width: 70px;
+    width: auto; height: 100%; flex: 1 1 0; min-width: 0;
+    padding: 0 2px; gap: 3px; justify-content: center;
     border-bottom: none;
     border-right: 1px solid color-mix(in srgb, var(--gc-line) 60%, transparent);
   }
+  .gc-rail-player:last-child { border-right: none; }
+  .gc-rail-name { display: none; }
+  .gc-rail-player .gc-chip { width: 13px; height: 13px; flex: none; }
+  .gc-rail-pv { font-size: 12px; }
 
-  .gc-compact .gc-recentrer { top: calc(var(--gc-hud-h) + 38px); }
+  /*
+   * Actif et associé se marquent au trait, pas seulement au fond.
+   *
+   * À trente pixels de large, une teinte de fond posée derrière une pastille
+   * de couleur ne se distingue plus : c'est justement la case où l'on cherche
+   * qui joue. Un trait plein en pied se voit à bout de bras.
+   */
+  .gc-rail-player.is-active,
+  .gc-rail-player.is-paired { position: relative; }
+  .gc-rail-player.is-active::after,
+  .gc-rail-player.is-paired::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  }
+  .gc-rail-player.is-active::after { background: var(--gc-accent); }
+  .gc-rail-player.is-paired::after { background: var(--gc-second); }
+
+  .gc-compact .gc-cadrage { bottom: calc(var(--gc-dock-h) + var(--gc-safe-b) + 6px); }
 
   /*
    * Deux rangées : la main et l'action du moment, puis les onglets.
@@ -1403,14 +1435,24 @@ body {
  * lointaines y sont des volumes que la brume mange à distance.
  */
 
-.gc-recentrer {
+/* ── commandes de cadrage ──────────────────────────────────────────────
+   Au bord droit, empilées, à portée du pouce. Toujours présentes : le
+   pincement était le seul moyen de cadrer, et il n'a pas de recours. */
+.gc-cadrage {
   position: absolute; right: 10px; bottom: 10px; z-index: 2;
-  font-family: var(--gc-font-ui); font-size: 11.5px; font-weight: 600;
-  padding: 7px 12px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 4px; align-items: stretch;
+}
+.gc-cadrage-bouton {
+  font-family: var(--gc-font-ui); font-size: 16px; font-weight: 600;
+  line-height: 1; min-width: 36px; min-height: 36px; padding: 0 8px;
+  cursor: pointer;
   background: var(--gc-surface); color: var(--gc-ink);
   border: 1px solid var(--gc-line); box-shadow: var(--gc-shadow);
 }
-.gc-recentrer:hover { border-color: var(--gc-accent); }
+.gc-cadrage-bouton:hover { border-color: var(--gc-accent); }
+.gc-cadrage-bouton:focus-visible { outline: 2px solid var(--gc-accent); outline-offset: 1px; }
+/* « Tout voir » porte du texte : il lui faut une autre échelle. */
+.gc-cadrage-recentrer { font-size: 11px; letter-spacing: .02em; padding: 0 10px; }
 
 /* ── les ressources gagnées ────────────────────────────────────────────
    Une carte part de l'hexagone qui l'a produite et rejoint sa pile. Le

@@ -141,17 +141,41 @@ export function Board({
     );
   }
 
+  /*
+   * Les commandes de cadrage.
+   *
+   * Elles n'existaient pas : le pincement était le seul moyen de cadrer, et
+   * un geste raté laissait le joueur sans recours. Elles sont donc toujours
+   * là, au bord droit, à portée du pouce — « Recentrer » vient s'y ajouter
+   * quand il y a quelque chose à défaire.
+   */
   return (
     <div className="gc-board-fit" ref={cadre}>
-      {deplace && (
+      <div className="gc-cadrage">
         <button
-          className="gc-recentrer"
-          onClick={() => scene.current?.recentrer()}
-          title="Revoir tout le plateau"
+          className="gc-cadrage-bouton"
+          onClick={() => scene.current?.zoomer(1.25)}
+          title="Zoomer" aria-label="Zoomer"
         >
-          Recentrer
+          +
         </button>
-      )}
+        <button
+          className="gc-cadrage-bouton"
+          onClick={() => scene.current?.zoomer(1 / 1.25)}
+          title="Dézoomer" aria-label="Dézoomer"
+        >
+          −
+        </button>
+        {deplace && (
+          <button
+            className="gc-cadrage-bouton gc-cadrage-recentrer"
+            onClick={() => scene.current?.recentrer()}
+            title="Revoir tout le plateau" aria-label="Revoir tout le plateau"
+          >
+            Tout voir
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -636,8 +636,24 @@ export class ScenePlateau {
    */
   private pointsACadrer(view: PublicGameView): Point3[] {
     const points: Point3[] = [];
+    const terres = this.terresDe(view);
 
+    /*
+     * On cadre sur les terres, pas sur la mer.
+     *
+     * Toutes les tuiles y passaient, bordure de mer comprise — et l'archipel
+     * en pose une large tout autour. Le cadrage tenait donc cette bordure, et
+     * les îles n'occupaient qu'une fraction de l'écran ; sur un téléphone
+     * tenu debout, un petit quart de la hauteur. La mer n'a pas besoin d'être
+     * cadrée : elle est continue jusqu'à la brume, et il en restera toujours
+     * assez autour des terres pour qu'on voie qu'on est sur un archipel.
+     *
+     * Le rayon qui borne la course de zoom suit la même règle, sans quoi la
+     * butée avant, calculée sur un rayon gonflé par la mer, interdisait de
+     * s'approcher assez pour lire un carrefour.
+     */
     for (const hex of view.hexes) {
+      if (!terres.has(hex.id)) continue;
       const { x, z } = centreHex(hex.id);
       for (let k = 0; k < 6; k++) {
         const angle = (k * Math.PI) / 3;
@@ -645,7 +661,6 @@ export class ScenePlateau {
       }
     }
 
-    const terres = this.terresDe(view);
     for (const port of view.ports) {
       const { x, z } = this.positionPort(port.vertex, terres);
       for (const dx of [-0.42, 0.42]) for (const dz of [-0.42, 0.42]) {
@@ -690,7 +705,8 @@ export class ScenePlateau {
   /** Applique le cadrage d'ensemble : c'est lui que « Recentrer » rétablit. */
   private cadrerTout(view: PublicGameView): void {
     const points = this.pointsACadrer(view);
-    const emprise = bornes(view.hexes.map((h) => h.id));
+    const terres = [...this.terresDe(view)];
+    const emprise = bornes(terres.length > 0 ? terres : view.hexes.map((h) => h.id));
 
     // Le point visé est le barycentre de ce qu'on cadre. Viser le centre du
     // rectangle englobant décentrait le plateau dès qu'il n'était pas
@@ -1271,6 +1287,18 @@ export class ScenePlateau {
   recentrer(): void {
     if (this.etat) this.cadrerTout(this.etat.view);
     this.cadrage.recentrer();
+    this.signalerCadrage();
+  }
+
+  /**
+   * Le zoom par bouton, même course que la molette.
+   *
+   * Il existe parce que le pincement est le seul moyen de cadrer au doigt, et
+   * qu'un geste raté laissait le joueur sans recours : la carte restait où
+   * elle était, sans qu'aucune commande ne permette d'y revenir.
+   */
+  zoomer(facteur: number): void {
+    this.cadrage.zoomer(facteur);
     this.signalerCadrage();
   }
 
