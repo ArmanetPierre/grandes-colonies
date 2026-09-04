@@ -342,6 +342,40 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
         return true;
       }
       /*
+       * L'écran de l'hôte et son API ne sortent jamais sur Internet.
+       *
+       * Ils n'ont aucune authentification, et n'en ont jamais eu besoin :
+       * leur protection était de vivre sur un port que seuls les invités du
+       * salon connaissaient. Publier le jeu derrière un tunnel supprime cette
+       * protection — `/api/gm` permet de se donner des ressources, `/api/new`
+       * de rouvrir le salon en pleine partie.
+       *
+       * Une règle au bord (WAF Cloudflare) peut les bloquer, mais elle vit
+       * dans un tableau de bord, loin d'ici, et rien dans ce fichier ne
+       * rappellerait qu'elle est la seule chose qui tient. La protection
+       * voyage donc avec le code.
+       *
+       * `cf-connecting-ip` est posé par Cloudflare **au bord**, sur toute
+       * requête qui traverse le tunnel ; il est écrasé si un client tente de
+       * le fournir lui-même. Le trafic local — LAN, Tailscale, Traefik — ne
+       * le porte pas. Sa seule présence suffit donc à dire « ceci vient
+       * d'Internet ».
+       *
+       * On répond 404 et non 403 : inutile d'annoncer l'existence de ce
+       * qu'on refuse.
+       */
+      const parInternet = req.headers['cf-connecting-ip'] !== undefined;
+      const cheminReserve = req.url === '/hote'
+        || (req.url ?? '').startsWith('/api/')
+        // Sans client compilé, `/` est encore l'écran de l'hôte : il ne doit
+        // pas devenir public à la faveur d'un CLIENT_DIST oublié.
+        || (!servirClient && req.url === '/');
+      if (parInternet && cheminReserve) {
+        res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+        res.end('introuvable');
+        return true;
+      }
+      /*
        * `/` appartient aux joueurs dès qu'un client compilé est présent, et
        * l'écran de l'hôte se retire sur `/hote`. En développement, sans
        * client compilé, `/` reste l'écran de l'hôte comme avant.

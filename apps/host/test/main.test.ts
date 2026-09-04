@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { PORT_KINDS } from '@grandes-colonies/engine';
 
-import { lanAddress, readableCode } from '../src/main.js';
+import { lanAddress, readableCode, startHost } from '../src/main.js';
 import { CONTRACT_PORT_KINDS, PORT_LABELS, tableViewScript } from '../src/tableView.js';
 
 describe('adresse LAN', () => {
@@ -71,5 +71,42 @@ describe('ports de l écran de table', () => {
     expect(script).toContain('portAnchor');
     // Avant les pièces : une colonie posée sur un port doit rester lisible.
     expect(script.indexOf('view.ports')).toBeLessThan(script.indexOf('for (const road of view.roads)'));
+  });
+});
+
+describe('écran de l hôte, vu d Internet', () => {
+  /**
+   * Le panneau de maître de jeu n'a aucune authentification, et n'en a jamais
+   * eu besoin : sa protection était de vivre sur un port que seuls les invités
+   * du salon connaissaient. Depuis que le jeu est publié derrière un tunnel,
+   * c'est cette garde qui tient — et une garde sans test se fait supprimer un
+   * jour par mégarde.
+   */
+  it('refuse /hote et /api/* aux requêtes venues du tunnel', async () => {
+    process.env['PARTIES'] = ''; // pas de journal de partie pour un test
+    const hote = await startHost(4, 28567);
+    const base = 'http://127.0.0.1:28567';
+    const duTunnel = { 'cf-connecting-ip': '203.0.113.7' };
+
+    try {
+      // Sans l'en-tête de Cloudflare, c'est le réseau local : tout est ouvert.
+      expect((await fetch(`${base}/hote`)).status).toBe(200);
+      expect((await fetch(`${base}/api/seats`)).status).toBe(200);
+
+      // Avec, la requête a traversé le tunnel. 404 plutôt que 403 : inutile
+      // d'annoncer l'existence de ce qu'on refuse.
+      expect((await fetch(`${base}/hote`, { headers: duTunnel })).status).toBe(404);
+      expect((await fetch(`${base}/api/seats`, { headers: duTunnel })).status).toBe(404);
+      expect((await fetch(`${base}/api/settings`, { headers: duTunnel })).status).toBe(404);
+      expect((await fetch(`${base}/api/gm`, {
+        method: 'POST', headers: { ...duTunnel, 'content-type': 'application/json' }, body: '{}',
+      })).status).toBe(404);
+
+      // Les joueurs, eux, arrivent par le tunnel : rien de ce qui les concerne
+      // ne doit tomber avec la garde.
+      expect((await fetch(`${base}/healthz`, { headers: duTunnel })).status).toBe(200);
+    } finally {
+      await hote.close();
+    }
   });
 });
