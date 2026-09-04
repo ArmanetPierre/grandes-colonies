@@ -21,7 +21,10 @@
 import { WebSocket } from 'ws';
 
 import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
-import { type CaractereId, type Place, composerLaTable, estCaractere } from '@grand-colonies/sim';
+import {
+  type CaractereId, type Place,
+  Garde, composerLaTable, estCaractere, situationDe,
+} from '@grand-colonies/sim';
 
 const URL = process.env['BOT_URL'] ?? 'ws://localhost:2567';
 
@@ -53,7 +56,7 @@ function connecter(place: Place): void {
   const socket = new WebSocket(URL);
   let priv: PrivatePlayerView | undefined;
   let pub: PublicGameView | undefined;
-  let derniere = '';
+  const garde = new Garde();
   let enAttente = false;
 
   // `bot: true` ne donne aucun droit — mêmes vues, mêmes refus. Il sert à ce
@@ -68,20 +71,21 @@ function connecter(place: Place): void {
     if (frame.type === 'full') console.log(`  ${place.nom} : partie complète`);
     if (frame.type === 'public') pub = frame.payload as PublicGameView;
     if (frame.type === 'private') priv = frame.payload as PrivatePlayerView;
-    if (!priv || !pub || enAttente) return;
+    /*
+     * Rien avant que l'hôte n'ait lancé.
+     *
+     * Les adversaires se connectent dans le salon et y reçoivent déjà une vue
+     * complète, objectif proposé compris. Sans cette garde ils jouaient leur
+     * premier coup avant le départ, se le faisaient refuser, et n'en
+     * revenaient jamais — voir `Garde` dans le paquet de simulation.
+     */
+    if (!priv || !pub || enAttente || !pub.started) return;
 
     const coup = place.pilote.decider(pub, priv);
-    if (!coup) { derniere = ''; return; }
+    if (!coup) { garde.oublier(); return; }
 
-    /*
-     * Un garde-fou : si le serveur refuse toujours la même chose, on cesse de
-     * la répéter plutôt que d'inonder la partie. Le pilote est stable — deux
-     * appels dans le même état rendent le même coup — donc cette signature
-     * suffit à repérer une boucle.
-     */
-    const signature = JSON.stringify(coup);
-    if (signature === derniere) return;
-    derniere = signature;
+    // Le même coup dans la même situation ne donnerait que le même résultat.
+    if (!garde.autorise(situationDe(pub, priv), coup)) return;
 
     /*
      * Le temps de réflexion vient du niveau.
