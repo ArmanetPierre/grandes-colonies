@@ -1,0 +1,27 @@
+# Garde-fou sur les branches et les pull requests.
+#
+# Ne publie rien : il échoue tôt, sur un runner GitHub, plutôt qu'en prod sur
+# une VM à deux cœurs qui porte aussi le reverse proxy du reste du lab.
+name: CI
+
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

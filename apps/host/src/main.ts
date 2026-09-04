@@ -31,6 +31,7 @@ import { measure, readJournal } from '@grand-colonies/server';
 import { type GameSettings, GameServer, SETTINGS_LIMITS } from '@grand-colonies/server';
 
 import { renderHostPage } from './hostPage.js';
+import { serveStatic } from './static.js';
 
 const PORT = Number(process.env['PORT'] ?? 2567);
 
@@ -251,8 +252,26 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
 
   // En développement le client a son propre serveur ; en production il sera
   // servi par celui-ci. C'est l'adresse que les invités doivent ouvrir.
+  /*
+   * L'adresse que les invités ouvrent.
+   *
+   * En développement, le client a son propre serveur Vite sur un autre port.
+   * En production il sort de celui-ci, derrière un nom public : `PUBLIC_URL`
+   * porte alors cette adresse, et c'est elle que le QR code encode. Sans elle
+   * le code mènerait à une IP privée, illisible depuis l'extérieur.
+   */
+  const publicUrl = process.env['PUBLIC_URL'];
   const clientPort = Number(process.env['CLIENT_PORT'] ?? 5173);
-  const url = `http://${host}:${clientPort}`;
+  const url = publicUrl ?? `http://${host}:${clientPort}`;
+
+  /*
+   * Le client compilé, quand il y en a un.
+   *
+   * `CLIENT_DIST` est posée par l'image Docker. Vide en développement : Vite
+   * s'en charge, et ce serveur ne rend alors que l'écran de l'hôte.
+   */
+  const clientDist = process.env['CLIENT_DIST'];
+  const servirClient = clientDist ? serveStatic(clientDist) : undefined;
   const qrDataUrl = await QRCode.toDataURL(url, { width: 420, margin: 1 });
   // La page ne connaît plus les réglages : ils changent en cours de salon,
   // et elle les lit désormais au fil de l'eau comme la liste des sièges.
@@ -310,7 +329,24 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
     ...(restore ? { restore } : {}),
     playerNames: Array.from({ length: playerCount }, (_, i) => `Joueur ${i + 1}`),
     onRequest: (req, res) => {
-      if (req.url === '/' || req.url === '/hote') {
+      /*
+       * La sonde de santé, avant tout le reste.
+       *
+       * C'est elle que le surveillant de déploiement interroge pour décider
+       * si une version neuve tient debout ou s'il faut revenir à la
+       * précédente. Elle ne dit rien de la partie en cours : un salon vide
+       * est un serveur parfaitement sain.
+       */
+      if (req.url === '/healthz') {
+        sendJson(res, 200, { ok: true, started: server.session.isStarted });
+        return true;
+      }
+      /*
+       * `/` appartient aux joueurs dès qu'un client compilé est présent, et
+       * l'écran de l'hôte se retire sur `/hote`. En développement, sans
+       * client compilé, `/` reste l'écran de l'hôte comme avant.
+       */
+      if (req.url === '/hote' || (!servirClient && req.url === '/')) {
         res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
         res.end(page);
         return true;
@@ -518,7 +554,8 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
         res.end(JSON.stringify(seats));
         return true;
       }
-      return false;
+      // Ni l'écran de l'hôte ni son API : c'est une page du client.
+      return servirClient?.(req, res) ?? false;
     },
   });
 

@@ -1,0 +1,20 @@
+.git
+node_modules
+**/node_modules
+**/dist
+.vite
+
+# Journaux de parties : ils appartiennent à la machine qui a hébergé la soirée.
+parties
+
+# Le site des règles, les specs et les wireframes ne servent pas au jeu.
+docs
+*.md
+Wireframes*.html
+__pycache__
+scratch-*
+*.py
+
+.env
+.env.*
+.DS_Store

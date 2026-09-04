@@ -1,0 +1,87 @@
+# Build de l'image de production et publication sur GHCR.
+#
+# Le job `build` ne démarre que si `check` passe : une version cassée n'atteint
+# jamais le registre, donc jamais la VM. C'est tout l'intérêt d'avoir sorti le
+# build du homelab.
+#
+# Le déploiement lui-même n'est pas ici : web-dev va chercher l'image toutes
+# les minutes (voir le dépôt homelab, deploy/watcher/deploy.sh). Rien n'est
+# poussé vers le lab, et aucun port n'y est ouvert.
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/armanetpierre/grand-colonies
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  build:
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=long
+
+      # Aucun build arg : rien dans cette image ne dépend de l'environnement.
+      # L'adresse publique (PUBLIC_URL) est lue au démarrage, pas au build —
+      # la même image tournerait telle quelle sur une autre machine.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Le quota GHCR des paquets privés est modeste et l'image porte 36 Mo
+  # d'illustrations : sans purge, la publication finit par être refusée.
+  purge:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: grand-colonies
+          package-type: container
+          min-versions-to-keep: 5
+          ignore-versions: '^latest$'

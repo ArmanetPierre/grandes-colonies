@@ -20,6 +20,7 @@ import {
   GameConnection,
   newActionId,
 } from './net/connection.js';
+import { serverUrl } from './net/serverUrl.js';
 import { Board, type PoigneePlateau, colorOf, dureeDuJet } from './ui/Board.jsx';
 import { useCompact } from './ui/compact.js';
 import { Gains, type Vol, composerVols } from './ui/Gains.jsx';
@@ -153,7 +154,7 @@ const DRAWER_TITLES: Record<Exclude<Drawer, null>, string> = {
   players: 'La table',
 };
 
-export function App({ url = `ws://${location.hostname}:2567` }: { url?: string }) {
+export function App({ url = serverUrl() }: { url?: string }) {
   /**
    * Le nom est demandé avant toute connexion, et mémorisé.
    *
