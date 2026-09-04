@@ -30,8 +30,8 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import {
   type BoardSize, type Command, type DomainEvent, type GameConfig,
   defaultConfig, defaultLandCount, LAND_LIMITS, landCountFor, minLandFor,
-} from '@grand-colonies/engine';
-import { redactAllFor, toWireAll } from '@grand-colonies/protocol';
+} from '@grandes-colonies/engine';
+import { redactAllFor, toWireAll } from '@grandes-colonies/protocol';
 
 import { JournalWriter, type Journal } from './journal.js';
 import { GameSession, restoreSession } from './session.js';

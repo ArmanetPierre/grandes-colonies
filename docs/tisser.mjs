@@ -44,7 +44,7 @@ const BARRE = `<header class="barre">
 
 const PIED = `<footer class="pied">
   <div class="pied-inner">
-    <p><strong>Grand Colonies</strong> — variante de Catan pour 8 à 12 joueurs, jouable en réseau
+    <p><strong>Grandes Colonies</strong> — variante de Catan pour 8 à 12 joueurs, jouable en réseau
     local. Projet personnel, sans affiliation avec les éditeurs de Catan, Seafarers,
     Cities&nbsp;&amp;&nbsp;Knights, Traders&nbsp;&amp;&nbsp;Barbarians ou Explorers&nbsp;&amp;&nbsp;Pirates,
     dont il s’inspire.</p>

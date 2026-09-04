@@ -16,8 +16,8 @@
  */
 import {
   type MarketConfig, SeededRandom, archipelagoBoard, archipelagoOptionsFor, defaultConfig,
-} from '@grand-colonies/engine';
-import { GreedyBot, playGame } from '@grand-colonies/sim';
+} from '@grandes-colonies/engine';
+import { GreedyBot, playGame } from '@grandes-colonies/sim';
 
 const PARTIES = Number(process.env.PARTIES ?? 16);
 const TRADED = ['wood', 'brick', 'wool', 'grain', 'ore', 'gold'] as const;

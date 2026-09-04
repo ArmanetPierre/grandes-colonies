@@ -31,7 +31,7 @@ function illustrations(): Plugin {
   let sortie = 'dist';
 
   return {
-    name: 'grand-colonies:illustrations',
+    name: 'grandes-colonies:illustrations',
 
     configResolved(config) {
       sortie = config.build.outDir;

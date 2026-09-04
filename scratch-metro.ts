@@ -1,6 +1,6 @@
 /** La métropole est-elle prise, selon ce qu'elle rapporte ? */
-import { GreedyBot, RandomBot, playGame } from '@grand-colonies/sim';
-import { defaultConfig, type SeededRandom } from '@grand-colonies/engine';
+import { GreedyBot, RandomBot, playGame } from '@grandes-colonies/sim';
+import { defaultConfig, type SeededRandom } from '@grandes-colonies/engine';
 
 const GAMES = 20;
 const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)] ?? 0;

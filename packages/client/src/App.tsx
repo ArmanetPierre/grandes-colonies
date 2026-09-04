@@ -9,8 +9,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { BoardGraph, COSTS, type ResourceCounts, type Terrain, parseHexKey, yieldOf } from '@grand-colonies/engine';
-import type { Pair, PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
+import { BoardGraph, COSTS, type ResourceCounts, type Terrain, parseHexKey, yieldOf } from '@grandes-colonies/engine';
+import type { Pair, PrivatePlayerView, PublicGameView } from '@grandes-colonies/protocol';
 
 import {
   type ConnectionStatus,
@@ -63,7 +63,7 @@ function formatTimer(ms: number | undefined): string {
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
-const NAME_KEY = 'grand-colonies:name';
+const NAME_KEY = 'grandes-colonies:name';
 
 /**
  * Ce que chaque action fait, dit en une phrase.
@@ -578,7 +578,7 @@ export function App({ url = serverUrl() }: { url?: string }) {
   if (!pub || !priv || !seat) {
     return (
       <div className="gc-splash">
-        <h1>Grand Colonies</h1>
+        <h1>Grandes Colonies</h1>
         <p>{status === 'full' ? 'La partie est complète.' : 'Connexion au serveur…'}</p>
       </div>
     );
@@ -1160,7 +1160,7 @@ function NameEntry({ onChoose }: { onChoose: (name: string) => void }) {
 
   return (
     <div className="gc-splash">
-      <h1>Grand Colonies</h1>
+      <h1>Grandes Colonies</h1>
       <form
         className="gc-join"
         onSubmit={(event) => {

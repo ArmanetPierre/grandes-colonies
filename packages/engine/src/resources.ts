@@ -117,7 +117,7 @@ export type Buildable =
 
 /**
  * Coûts de construction. Les quatre premiers sont ceux de Catan ; la route
- * maritime et le comptoir viennent de Grand Colonies (§12 du game design).
+ * maritime et le comptoir viennent de Grandes Colonies (§12 du game design).
  */
 export const COSTS: Readonly<Record<Buildable, ResourceCounts>> = Object.freeze({
   road: counts({ wood: 1, brick: 1 }),

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { PORT_KINDS } from '@grand-colonies/engine';
+import { PORT_KINDS } from '@grandes-colonies/engine';
 
 import { lanAddress, readableCode } from '../src/main.js';
 import { CONTRACT_PORT_KINDS, PORT_LABELS, tableViewScript } from '../src/tableView.js';

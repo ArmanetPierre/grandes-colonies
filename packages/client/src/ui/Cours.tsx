@@ -22,7 +22,7 @@
  * c'est la seule chose que la bande ajoute à un simple prix affiché.
  */
 
-import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
+import type { PrivatePlayerView, PublicGameView } from '@grandes-colonies/protocol';
 
 import { RESOURCE_LABELS, ResourceIcon } from './ResourceIcon.jsx';
 

@@ -1,9 +1,9 @@
-# Plan de développement — Grand Colonies (v2)
+# Plan de développement — Grandes Colonies (v2)
 
-> Version numérique du jeu de plateau fan-made **"Grand Colonies"** (8–12 joueurs), inspiré de Catan, joué en réseau local : le serveur tourne sur le PC de l'hôte, les joueurs se connectent depuis leur navigateur sur le même LAN.
+> Version numérique du jeu de plateau fan-made **"Grandes Colonies"** (8–12 joueurs), inspiré de Catan, joué en réseau local : le serveur tourne sur le PC de l'hôte, les joueurs se connectent depuis leur navigateur sur le même LAN.
 >
 > **Documents de référence**
-> - Game design : [Catan_Grand_Colonies_8-12_joueurs.md](Catan_Grand_Colonies_8-12_joueurs.md)
+> - Game design : [Catan_Grandes_Colonies_8-12_joueurs.md](Catan_Grandes_Colonies_8-12_joueurs.md)
 > - Revue d'expert (conservée telle quelle) : [PLAN_UPDATED.md](PLAN_UPDATED.md)
 >
 > **v2 — 2026-08-26.** Intègre la revue d'expert. Les changements majeurs par rapport à la v1 sont signalés par ⚠️ **Révision v2**.
@@ -12,9 +12,9 @@
 
 ## 1. Principe directeur
 
-> Construire d'abord la plus petite version possible capable de démontrer que **8 joueurs peuvent jouer à Grand Colonies simultanément, comprendre ce qui se passe et rester engagés**.
+> Construire d'abord la plus petite version possible capable de démontrer que **8 joueurs peuvent jouer à Grandes Colonies simultanément, comprendre ce qui se passe et rester engagés**.
 
-Le premier succès du projet n'est **pas** « nous avons reproduit toutes les règles de Catan », mais « huit personnes ont terminé une partie numérique de Grand Colonies, et les cycles, le joueur associé, le commerce chronométré et la construction semi-simultanée fonctionnent ».
+Le premier succès du projet n'est **pas** « nous avons reproduit toutes les règles de Catan », mais « huit personnes ont terminé une partie numérique de Grandes Colonies, et les cycles, le joueur associé, le commerce chronométré et la construction semi-simultanée fonctionnent ».
 
 Toutes les décisions de périmètre se tranchent avec ce principe.
 
@@ -33,7 +33,7 @@ Le game design décrit une variante de Catan pour 8–12 joueurs dont les mécan
 
 **Le risque n° 1 n'est pas technique, il est ludique** : personne n'a jamais joué à ce jeu, même sur table. Les mécaniques différenciantes (cycles, joueur associé, commerce chronométré, construction semi-simultanée) peuvent très bien ne pas fonctionner humainement. Tout le plan est organisé pour répondre à cette question le plus tôt et le moins cher possible.
 
-⚠️ **Révision v2** — La v1 prévoyait de construire d'abord un « Catan classique complet » puis de l'étendre. C'était une erreur : cela repoussait très loin la validation des seules mécaniques réellement risquées, tout en produisant un livrable (un Catan à 4 joueurs) dont le projet n'a pas besoin. Le noyau moteur ne construit désormais que ce qui sert à Grand Colonies, et la première version jouable est une **vertical slice de Grand Colonies**, pas un clone de Catan.
+⚠️ **Révision v2** — La v1 prévoyait de construire d'abord un « Catan classique complet » puis de l'étendre. C'était une erreur : cela repoussait très loin la validation des seules mécaniques réellement risquées, tout en produisant un livrable (un Catan à 4 joueurs) dont le projet n'a pas besoin. Le noyau moteur ne construit désormais que ce qui sert à Grandes Colonies, et la première version jouable est une **vertical slice de Grandes Colonies**, pas un clone de Catan.
 
 ---
 
@@ -69,7 +69,7 @@ Le game design décrit une variante de Catan pour 8–12 joueurs dont les mécan
 ### 4.1 Structure du monorepo
 
 ```text
-grand-colonies/
+grandes-colonies/
 │
 ├── packages/
 │   ├── engine/      règles pures, état autoritaire, RNG déterministe
@@ -204,7 +204,7 @@ De même, la revue plaçait le « Client web » (sa Phase 5) **après** la verti
 
 ### Phase 0 — Cadrage (quelques jours)
 
-- Nom du projet sans la marque « CATAN » (déposée) : **Grand Colonies**. Aucun asset officiel réutilisé, mention fan-made.
+- Nom du projet sans la marque « CATAN » (déposée) : **Grandes Colonies**. Aucun asset officiel réutilisé, mention fan-made.
 - Licence : si du code GPL (catanatron, JSettlers2) est copié, le projet devient GPL. Recommandation : s'en servir uniquement comme référence de conception pour rester libre du choix de licence.
 - Monorepo TypeScript (pnpm workspaces), CI de tests, conventions de code.
 
@@ -233,7 +233,7 @@ Application serveur minimale et **destinée à être jetée**. Elle teste l'infr
 
 ### Phase 3 — Noyau moteur
 
-Moteur pur, sans réseau ni UI, testé unitairement. **Uniquement ce qui sert à Grand Colonies** — un Catan classique complet n'est pas un livrable.
+Moteur pur, sans réseau ni UI, testé unitairement. **Uniquement ce qui sert à Grandes Colonies** — un Catan classique complet n'est pas un livrable.
 
 **Géométrie** — `Hex`, `Vertex`, `Edge`, `Route`, `MaritimeRoute`, `Building`, `Port`, `Island`, `Board`. Le plateau est un **graphe explicite** ; les règles de placement ne dépendent jamais du rendu. Référence : [Red Blob Games](https://www.redblobgames.com/grids/hexagons/), lib possible [honeycomb](https://github.com/flauwekeul/honeycomb).
 
@@ -254,7 +254,7 @@ Moteur pur, sans réseau ni UI, testé unitairement. **Uniquement ce qui sert à
 ✓ aucune dépendance réseau dans engine
 ```
 
-### Phase 4 — Vertical slice Grand Colonies (le jalon décisif)
+### Phase 4 — Vertical slice Grandes Colonies (le jalon décisif)
 
 Première vraie version numérique, volontairement réduite et **volontairement laide**.
 
@@ -262,7 +262,7 @@ Première vraie version numérique, volontairement réduite et **volontairement 
 
 **Exclus temporairement** : exploration, or, ports spéciaux, objectifs secrets, double voleur, marché dynamique, contrats, barbares, chevaliers, Influence avancée, villes spécialisées, événements, équipes.
 
-Cette phase répond à **une seule question** : *Grand Colonies est-il amusant et fluide à plusieurs ?* Si la réponse est non, corriger le rythme avant d'ajouter quoi que ce soit.
+Cette phase répond à **une seule question** : *Grandes Colonies est-il amusant et fluide à plusieurs ?* Si la réponse est non, corriger le rythme avant d'ajouter quoi que ce soit.
 
 **Critères de sortie**
 
@@ -282,7 +282,7 @@ Consolidation après validation : chaque interaction devient une commande explic
 
 Voir §9 et §10.
 
-### Phase 7 — Ruleset Grand Colonies v1
+### Phase 7 — Ruleset Grandes Colonies v1
 
 Ajout progressif, dans cet ordre :
 
@@ -450,7 +450,7 @@ L'acceptation doit être **atomique côté serveur** : vérifier l'inventaire de
 Écran de l'hôte :
 
 ```text
-Grand Colonies
+Grandes Colonies
 
 Adresse LAN : 192.168.1.42:3000
 
@@ -492,7 +492,7 @@ Ne pas investir avant validation de la vertical slice : illustrations finales, a
 | Risque | Impact | Mitigation |
 |---|---|---|
 | Les mécaniques simultanées ne fonctionnent pas humainement | Critique | Prototype papier (Phase 1) et vertical slice (Phase 4) très tôt |
-| Trop de règles développées avant validation | Critique | MVP minimal Grand Colonies, périmètre gelé par le §1 |
+| Trop de règles développées avant validation | Critique | MVP minimal Grandes Colonies, périmètre gelé par le §1 |
 | **Budget d'actions par joueur insuffisant** (voir §16) | Critique | Simulation dédiée dès la Phase 3, avant la vertical slice |
 | Bugs de concurrence | Élevé | Commandes sérialisées côté serveur |
 | Divergence client / serveur | Élevé | Serveur autoritaire, client jamais décisionnaire |

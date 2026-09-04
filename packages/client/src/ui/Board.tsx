@@ -14,7 +14,7 @@
 
 import { type RefObject, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
-import type { PublicGameView } from '@grand-colonies/protocol';
+import type { PublicGameView } from '@grandes-colonies/protocol';
 
 import { ScenePlateau, couleurDe } from './board3d/scene.js';
 

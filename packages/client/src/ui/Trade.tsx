@@ -15,7 +15,7 @@
 
 import { useState } from 'react';
 
-import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
+import type { PrivatePlayerView, PublicGameView } from '@grandes-colonies/protocol';
 
 import { Cours, TRADED } from './Cours.jsx';
 import { Manques } from './Manques.jsx';

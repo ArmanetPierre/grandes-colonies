@@ -240,7 +240,7 @@ describe('production', () => {
     expect(computeProduction(board, 5).size).toBe(0);
   });
 
-  // Règle propre à Grand Colonies (§6) : les emplacements rares valent cher.
+  // Règle propre à Grandes Colonies (§6) : les emplacements rares valent cher.
   it('double la production sur un 2 et un 12', () => {
     for (const roll of [2, 12] as const) {
       const board = boardWithSettlement(roll);

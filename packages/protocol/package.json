@@ -1,10 +1,10 @@
 {
-  "name": "@grand-colonies/protocol",
+  "name": "@grandes-colonies/protocol",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
   "dependencies": {
-    "@grand-colonies/engine": "*"
+    "@grandes-colonies/engine": "*"
   }
 }

@@ -1,4 +1,4 @@
-# Catan: Grand Colonies
+# Catan: Grandes Colonies
 ## Concept de jeu pour 8 à 12 joueurs
 
 > Un "Catan XXL" inspiré de Catan classique, Seafarers, Cities & Knights, Traders & Barbarians, des règles de 5–6 joueurs et de plusieurs variantes communautaires.
@@ -9,7 +9,7 @@
 
 ## 1. Vision
 
-**Catan: Grand Colonies** est un jeu de stratégie et de négociation pour **8 à 12 joueurs**.
+**Catan: Grandes Colonies** est un jeu de stratégie et de négociation pour **8 à 12 joueurs**.
 
 Les joueurs développent des colonies sur un immense archipel composé de plusieurs îles reliées par des routes et des voies maritimes.
 
@@ -177,7 +177,7 @@ Les jetons utilisent toujours une fréquence similaire à Catan :
 
 ### Règle spéciale 2 / 12
 
-Dans la version Grand Colonies :
+Dans la version Grandes Colonies :
 
 **2 et 12 produisent 2 ressources au lieu d'une.**
 
@@ -337,7 +337,7 @@ Donne un bonus d'Influence aux joueurs qui contrôlent sa région.
 
 La construction de routes fonctionne comme dans Catan.
 
-Mais dans Grand Colonies, deux nouveautés apparaissent.
+Mais dans Grandes Colonies, deux nouveautés apparaissent.
 
 ### Comptoirs commerciaux
 
@@ -684,7 +684,7 @@ Pour 11–12 joueurs, la valeur de 13 devient la limite maximale recommandée.
 
 Le voleur conserve son fonctionnement de base.
 
-Mais dans Grand Colonies :
+Mais dans Grandes Colonies :
 
 - il peut être placé sur une zone terrestre ;
 - il bloque la production ;

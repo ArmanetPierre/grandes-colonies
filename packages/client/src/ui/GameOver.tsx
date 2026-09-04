@@ -9,7 +9,7 @@
  * simple classement — un total sans explication ne se discute pas.
  */
 
-import type { PublicGameView } from '@grand-colonies/protocol';
+import type { PublicGameView } from '@grandes-colonies/protocol';
 
 import { objectiveDescription, objectiveTitle } from './objectives.js';
 

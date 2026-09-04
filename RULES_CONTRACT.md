@@ -1,4 +1,4 @@
-# Rules Contract v1 — Grand Colonies
+# Rules Contract v1 — Grandes Colonies
 
 > Les règles exactes des mécaniques concurrentes, tranchées à partir du 2026-08-27.
 >
@@ -6,7 +6,7 @@
 >
 > Il fait autorité sur le code. En cas de désaccord entre ce document et le moteur, c'est le moteur qui a tort.
 >
-> Game design : [Catan_Grand_Colonies_8-12_joueurs.md](Catan_Grand_Colonies_8-12_joueurs.md) · Plan : [PLAN_DE_DEVELOPPEMENT.md](PLAN_DE_DEVELOPPEMENT.md)
+> Game design : [Catan_Grandes_Colonies_8-12_joueurs.md](Catan_Grandes_Colonies_8-12_joueurs.md) · Plan : [PLAN_DE_DEVELOPPEMENT.md](PLAN_DE_DEVELOPPEMENT.md)
 
 ---
 
@@ -222,7 +222,7 @@ quatre ressources) tout en laissant le choix au joueur.
 
 Le barème de victoire chiffrait ces deux constructions depuis le début — 3
 points et 2 points — mais rien ne les attribuait : la table était morte. Ce
-sont pourtant les mécaniques qui séparent Grand Colonies du Catan de base, et
+sont pourtant les mécaniques qui séparent Grandes Colonies du Catan de base, et
 elles répondent au problème mesuré en simulation : les parties s'éternisent
 parce que les joueurs finissent **à court d'emplacements**, pas à court de
 ressources. Métropole et monument font croître le score **en hauteur** plutôt

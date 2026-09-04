@@ -1,4 +1,4 @@
-# Spécification des images — Grand Colonies
+# Spécification des images — Grandes Colonies
 
 > Direction artistique, contraintes de production et méthode de contrôle des images du jeu.
 >

@@ -10,7 +10,7 @@
  * publique — donc rien ne fuit ici qui ne soit déjà connu de tous.
  */
 
-import type { PublicGameView, PublicOffer, PrivatePlayerView } from '@grand-colonies/protocol';
+import type { PublicGameView, PublicOffer, PrivatePlayerView } from '@grandes-colonies/protocol';
 
 import { colorOf } from './Board.jsx';
 import { ResourceIcon } from './ResourceIcon.jsx';

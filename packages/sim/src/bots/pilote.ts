@@ -11,8 +11,8 @@
  * exactement eux — même code, même information, mêmes erreurs.
  */
 
-import type { Command, GameState, PlayerId } from '@grand-colonies/engine';
-import { privateView, publicView } from '@grand-colonies/protocol';
+import type { Command, GameState, PlayerId } from '@grandes-colonies/engine';
+import { privateView, publicView } from '@grandes-colonies/protocol';
 
 import type { Bot } from '../bot.js';
 import { type Caractere, type CaractereId, CARACTERES, caractereDe, estCaractere } from '../pilote/caractere.js';

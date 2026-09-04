@@ -8,8 +8,8 @@
 import {
   type BoardScale, SeededRandom, archipelagoBoard, archipelagoOptionsFor,
   defaultConfig, xxlBoard, xxlOptionsFor,
-} from '@grand-colonies/engine';
-import { GreedyBot, playGame } from '@grand-colonies/sim';
+} from '@grandes-colonies/engine';
+import { GreedyBot, playGame } from '@grandes-colonies/sim';
 
 const PARTIES = 16;
 const scales: BoardScale[] = ['normal', 'grand', 'immense'];

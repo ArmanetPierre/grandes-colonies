@@ -14,7 +14,7 @@
  * ils regardent enfin ce qu'ils avaient sous les yeux.
  */
 
-import type { PublicGameView, PublicHex, PublicPlayer } from '@grand-colonies/protocol';
+import type { PublicGameView, PublicHex, PublicPlayer } from '@grandes-colonies/protocol';
 import {
   type Axial,
   type PlayerId,
@@ -32,7 +32,7 @@ import {
   verticesOfEdge,
   vertexIdsOfHex,
   yieldOf,
-} from '@grand-colonies/engine';
+} from '@grandes-colonies/engine';
 
 /**
  * Ce que vaut un jeton, en trente-sixièmes.

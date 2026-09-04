@@ -111,7 +111,7 @@ describe('générateur déterministe', () => {
 });
 
 describe('pioche de développement', () => {
-  it('compte soixante cartes pour Grand Colonies', () => {
+  it('compte soixante cartes pour Grandes Colonies', () => {
     expect(deckSize(GRAND_COLONIES_DECK)).toBe(60);
     expect(buildDeck(GRAND_COLONIES_DECK, new SeededRandom(1))).toHaveLength(60);
   });

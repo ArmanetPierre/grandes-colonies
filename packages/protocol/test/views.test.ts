@@ -15,7 +15,7 @@ import {
   playerOf,
   recordMarketTrade,
   settlementSpots,
-} from '@grand-colonies/engine';
+} from '@grandes-colonies/engine';
 
 import { privateView, publicView, revealedObjectives } from '../src/views.js';
 

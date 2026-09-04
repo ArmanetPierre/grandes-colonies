@@ -16,7 +16,7 @@ import {
   NIVEAU_IDS,
   PiloteBot,
   playGame,
-} from '@grand-colonies/sim';
+} from '@grandes-colonies/sim';
 
 const PARTIES = Number(process.argv[2] ?? 16);
 const JOUEURS = Number(process.argv[3] ?? 6);

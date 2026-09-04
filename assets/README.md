@@ -1,4 +1,4 @@
-# Assets — Grand Colonies
+# Assets — Grandes Colonies
 
 Génération, stockage et contrôle qualité des images du jeu.
 

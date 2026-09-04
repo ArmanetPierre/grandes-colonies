@@ -43,7 +43,7 @@ export function renderHostPage(data: HostPageData): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Grand Colonies — hôte</title>
+<title>Grandes Colonies — hôte</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -180,7 +180,7 @@ ${tableViewStyles()}
 </head>
 <body>
   <div class="card" id="join-panel">
-    <h1>Grand Colonies</h1>
+    <h1>Grandes Colonies</h1>
     <p class="sub">Les autres joueurs ouvrent cette adresse dans leur navigateur.</p>
 
     <div class="join">

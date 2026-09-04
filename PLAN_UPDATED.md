@@ -1,8 +1,8 @@
-Plan d’adaptation — Grand Colonies
+Plan d’adaptation — Grandes Colonies
 
 Objectif
 
-Réviser le plan de développement actuel de Grand Colonies, jeu numérique inspiré de Catan pour 8–12 joueurs en LAN, sans changer la stack principale :
+Réviser le plan de développement actuel de Grandes Colonies, jeu numérique inspiré de Catan pour 8–12 joueurs en LAN, sans changer la stack principale :
 
 • TypeScript
 • React
@@ -10,7 +10,7 @@ Réviser le plan de développement actuel de Grand Colonies, jeu numérique insp
 • monorepo
 • moteur de règles pur et indépendant du réseau
 
-L’objectif principal de cette adaptation est de réduire le risque projet en validant le plus tôt possible les mécaniques réellement différenciantes de Grand Colonies :
+L’objectif principal de cette adaptation est de réduire le risque projet en validant le plus tôt possible les mécaniques réellement différenciantes de Grandes Colonies :
 
 • cycles A–E ;
 • joueur actif + joueur associé ;
@@ -19,7 +19,7 @@ L’objectif principal de cette adaptation est de réduire le risque projet en v
 • 8–12 joueurs ;
 • faible temps d’attente.
 
-Le MVP ne doit donc pas être « Catan classique numérique », mais une version minimale, peu esthétique mais jouable de Grand Colonies, capable de démontrer que plusieurs joueurs peuvent agir régulièrement sans temps mort excessif.
+Le MVP ne doit donc pas être « Catan classique numérique », mais une version minimale, peu esthétique mais jouable de Grandes Colonies, capable de démontrer que plusieurs joueurs peuvent agir régulièrement sans temps mort excessif.
 
 ────────
 
@@ -28,7 +28,7 @@ Le MVP ne doit donc pas être « Catan classique numérique », mais une version
 Conserver l’architecture générale suivante :
 
 text
-grand-colonies/
+grandes-colonies/
 │
 ├── packages/
 │   ├── engine/
@@ -291,7 +291,7 @@ text
 
 6. Phase 1 — Noyau du moteur
 
-Remplacer la phase « Catan classique complet » par la création d’un noyau générique nécessaire à Grand Colonies.
+Remplacer la phase « Catan classique complet » par la création d’un noyau générique nécessaire à Grandes Colonies.
 
 Le but n’est pas de produire un clone complet de Catan à 4 joueurs.
 
@@ -343,7 +343,7 @@ SeededRandom
 
 Règles de base
 
-Implémenter uniquement les règles nécessaires au futur Grand Colonies :
+Implémenter uniquement les règles nécessaires au futur Grandes Colonies :
 
 • lancer de dés ;
 • production ;
@@ -436,9 +436,9 @@ liste ordonnée de commandes
 
 ────────
 
-9. Phase 2 — Vertical slice Grand Colonies
+9. Phase 2 — Vertical slice Grandes Colonies
 
-Créer très tôt une première vraie version numérique de Grand Colonies.
+Créer très tôt une première vraie version numérique de Grandes Colonies.
 
 Cette version doit être volontairement réduite.
 
@@ -480,14 +480,14 @@ villes spécialisées
 
 Cette phase doit répondre à une seule question :
 
-Est-ce que Grand Colonies est amusant et fluide avec plusieurs joueurs ?
+Est-ce que Grandes Colonies est amusant et fluide avec plusieurs joueurs ?
 
 
 Si cette version ne fonctionne pas, ne pas ajouter de nouveaux systèmes avant d’avoir corrigé le rythme de jeu.
 
 ────────
 
-10. Phase 3 — Serveur Grand Colonies robuste
+10. Phase 3 — Serveur Grandes Colonies robuste
 
 Une fois la vertical slice validée, consolider le serveur.
 
@@ -646,9 +646,9 @@ Prévoir également une commande administrateur permettant à l’hôte de réat
 
 ────────
 
-14. Phase 4 — Grand Colonies Ruleset v1
+14. Phase 4 — Grandes Colonies Ruleset v1
 
-Une fois le rythme du jeu validé, ajouter progressivement le contenu du ruleset Grand Colonies.
+Une fois le rythme du jeu validé, ajouter progressivement le contenu du ruleset Grandes Colonies.
 
 Ordre conseillé :
 
@@ -860,7 +860,7 @@ Objectifs de la simulation :
 • mesurer la valeur des ressources ;
 • comparer 8, 10 et 12 joueurs.
 
-Ne pas créer initialement un fork de catanatron pour Grand Colonies.
+Ne pas créer initialement un fork de catanatron pour Grandes Colonies.
 
 Utiliser directement le moteur TypeScript afin d’éviter deux implémentations des mêmes règles.
 
@@ -956,7 +956,7 @@ Ajouter une phase dédiée à l’usage réel dans une pièce.
 L’écran de l’hôte doit afficher clairement :
 
 text
-Grand Colonies
+Grandes Colonies
 
 Adresse LAN :
 192.168.1.42:3000
@@ -1080,7 +1080,7 @@ Spike réseau 12 joueurs
         ↓
 Noyau moteur
         ↓
-Vertical slice Grand Colonies
+Vertical slice Grandes Colonies
         ↓
 Premier playtest numérique
         ↓
@@ -1141,7 +1141,7 @@ villes spécialisées
 |Risque                                                    |Impact     |Mitigation                          |
 |----------------------------------------------------------|-----------|------------------------------------|
 |Les mécaniques simultanées ne fonctionnent pas humainement|Critique   |Prototype et vertical slice très tôt|
-|Trop de règles développées avant validation               |Critique   |MVP minimal Grand Colonies          |
+|Trop de règles développées avant validation               |Critique   |MVP minimal Grandes Colonies          |
 |Bugs de concurrence                                       |Élevé      |Commandes sérialisées côté serveur  |
 |Divergence client / serveur                               |Élevé      |Serveur autoritaire                 |
 |Fuite d’informations secrètes                             |Élevé      |PublicGameView + PrivatePlayerView  |
@@ -1207,7 +1207,7 @@ text
 
 Le principe à utiliser pour toutes les décisions de scope est :
 
-Construire d’abord la plus petite version possible capable de démontrer que 8 joueurs peuvent jouer à Grand Colonies simultanément, comprendre ce qui se passe et rester engagés.
+Construire d’abord la plus petite version possible capable de démontrer que 8 joueurs peuvent jouer à Grandes Colonies simultanément, comprendre ce qui se passe et rester engagés.
 
 
 Le premier succès du projet n’est donc pas :
@@ -1217,7 +1217,7 @@ Le premier succès du projet n’est donc pas :
 
 Le premier succès doit être :
 
-« Huit personnes ont terminé une partie numérique de Grand Colonies et le système de cycles, joueur associé, commerce chronométré et construction semi-simultanée fonctionne. »
+« Huit personnes ont terminé une partie numérique de Grandes Colonies et le système de cycles, joueur associé, commerce chronométré et construction semi-simultanée fonctionne. »
 
 
 Une fois cette hypothèse validée, le reste du contenu peut être ajouté progressivement.

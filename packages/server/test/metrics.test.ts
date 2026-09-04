@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { Command } from '@grand-colonies/engine';
+import type { Command } from '@grandes-colonies/engine';
 
 import type { Journal, JournalEntry } from '../src/journal.js';
 import { measure } from '../src/metrics.js';

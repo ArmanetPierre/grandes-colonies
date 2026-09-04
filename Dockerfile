@@ -1,4 +1,4 @@
-# Image de production de Grand Colonies.
+# Image de production de Grandes Colonies.
 #
 # Un seul serveur, un seul port, une seule origine : il sert le client compilé
 # sur `/`, l'écran de l'hôte sur `/hote`, l'API du maître de jeu sur `/api/*`

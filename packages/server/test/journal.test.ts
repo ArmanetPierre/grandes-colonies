@@ -14,7 +14,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import type { Command } from '@grand-colonies/engine';
+import type { Command } from '@grandes-colonies/engine';
 
 import { JournalWriter, readJournal } from '../src/journal.js';
 import { GameSession, restoreSession } from '../src/session.js';

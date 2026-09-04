@@ -16,8 +16,8 @@
 import {
   type BoardInit, type Port, type VertexId, SeededRandom,
   archipelagoBoard, archipelagoOptionsFor, defaultConfig, isContractPort,
-} from '@grand-colonies/engine';
-import { GreedyBot, playGame } from '@grand-colonies/sim';
+} from '@grandes-colonies/engine';
+import { GreedyBot, playGame } from '@grandes-colonies/sim';
 
 const PARTIES = Number(process.env.PARTIES ?? 40);
 

@@ -1,4 +1,4 @@
-# Grand Colonies
+# Grandes Colonies
 
 Version numérique d'une variante de Catan pour **8 à 12 joueurs**, jouable en
 réseau local : le serveur tourne sur un PC, chacun rejoint depuis son
@@ -21,7 +21,7 @@ Le terminal affiche alors :
   Code         AMPHORE-46
   Plateau      archipel, 44 terres
   Sièges       8
-  Journal      /chemin/vers/grand-colonies/parties
+  Journal      /chemin/vers/grandes-colonies/parties
 ```
 
 **Ouvre l'écran hôte sur le PC** (la première adresse). Il affiche un QR code
@@ -206,7 +206,7 @@ Les décisions prises là où le jeu d'origine était ambigu sont consignées da
 ## Si ça coince
 
 **« La partie est complète » alors que personne n'a rejoint.**
-Un onglet Grand Colonies resté ouvert reprend son siège à chaque
+Un onglet Grandes Colonies resté ouvert reprend son siège à chaque
 redémarrage. Ferme les onglets qui traînent, ou relance le serveur.
 
 **Un invité n'arrive pas à se connecter.**

@@ -28,7 +28,7 @@ import {
   canUpgradeToMetropolis,
   metropolisesBuilt,
   playerOf,
-} from '@grand-colonies/engine';
+} from '@grandes-colonies/engine';
 
 export interface Bot {
   readonly name: string;

@@ -10,7 +10,7 @@
  * deux objectifs et le choix n'avait tout simplement jamais lieu.
  */
 
-import type { PrivatePlayerView } from '@grand-colonies/protocol';
+import type { PrivatePlayerView } from '@grandes-colonies/protocol';
 
 import { objectiveDescription, objectiveTitle } from './objectives.js';
 

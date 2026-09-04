@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { type Command, type VertexId, settlementSpots } from '@grand-colonies/engine';
+import { type Command, type VertexId, settlementSpots } from '@grandes-colonies/engine';
 
 import { GameSession, ROUNDS_BEFORE_BOT } from '../src/session.js';
 

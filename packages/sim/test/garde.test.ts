@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
+import type { PrivatePlayerView, PublicGameView } from '@grandes-colonies/protocol';
 
 import { Garde, situationDe } from '../src/garde.js';
 

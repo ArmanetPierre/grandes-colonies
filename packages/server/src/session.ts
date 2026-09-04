@@ -34,14 +34,14 @@ import {
   usesXxlBoard,
   xxlBoard,
   xxlOptionsFor,
-} from '@grand-colonies/engine';
+} from '@grandes-colonies/engine';
 import type { GameRecipe, Journal } from './journal.js';
 import {
   type PrivatePlayerView,
   type PublicGameView,
   privateView,
   publicView,
-} from '@grand-colonies/protocol';
+} from '@grandes-colonies/protocol';
 
 export interface Seat {
   readonly playerId: PlayerId;

@@ -58,7 +58,7 @@ import {
   roleOf,
   settlementSpots,
   total,
-} from '@grand-colonies/engine';
+} from '@grandes-colonies/engine';
 
 export interface PublicPlayer {
   readonly id: PlayerId;

@@ -20,11 +20,11 @@
 
 import { WebSocket } from 'ws';
 
-import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
+import type { PrivatePlayerView, PublicGameView } from '@grandes-colonies/protocol';
 import {
   type CaractereId, type Place,
   Garde, composerLaTable, estCaractere, situationDe,
-} from '@grand-colonies/sim';
+} from '@grandes-colonies/sim';
 
 const URL = process.env['BOT_URL'] ?? 'ws://localhost:2567';
 

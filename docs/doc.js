@@ -1,5 +1,5 @@
 /*
- * Documentation Grand Colonies — le peu de script dont elle a besoin.
+ * Documentation Grandes Colonies — le peu de script dont elle a besoin.
  *
  * Trois choses, et rien d'autre : le registre clair ou sombre, le sommaire
  * dépliable sur téléphone, et le repère de lecture dans le sommaire. On lit
@@ -7,7 +7,7 @@
  */
 
 (() => {
-  const cle = 'grand-colonies-registre';
+  const cle = 'grandes-colonies-registre';
 
   /* ── registre clair / sombre ─────────────────────────────────────── */
   const applique = (valeur) => {

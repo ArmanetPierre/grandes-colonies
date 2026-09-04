@@ -16,14 +16,14 @@
  * simuler la table, et une soirée à douze n'attend pas.
  */
 
-import type { PublicGameView, PrivatePlayerView } from '@grand-colonies/protocol';
+import type { PublicGameView, PrivatePlayerView } from '@grandes-colonies/protocol';
 import {
   type ResourceCounts,
   type VertexId,
   COSTS,
   missingFor,
   total,
-} from '@grand-colonies/engine';
+} from '@grandes-colonies/engine';
 
 import type { Caractere } from './caractere.js';
 import type { Lecture } from './regard.js';

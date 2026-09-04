@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Génération des images de Grand Colonies via l'API Gemini (Google AI Studio).
+ * Génération des images de Grandes Colonies via l'API Gemini (Google AI Studio).
  *
  * La clé n'est jamais écrite dans le dépôt : elle est lue depuis la variable
  * d'environnement GEMINI_API_KEY, ou depuis un fichier .env local (gitignoré).

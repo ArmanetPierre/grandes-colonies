@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 import QRCode from 'qrcode';
 
-import { defaultLandCount } from '@grand-colonies/engine';
+import { defaultLandCount } from '@grandes-colonies/engine';
 import {
   type CaractereId,
   type NiveauId,
@@ -26,9 +26,9 @@ import {
   NIVEAU_IDS,
   estCaractere,
   niveauDe,
-} from '@grand-colonies/sim';
-import { measure, readJournal } from '@grand-colonies/server';
-import { type GameSettings, GameServer, SETTINGS_LIMITS } from '@grand-colonies/server';
+} from '@grandes-colonies/sim';
+import { measure, readJournal } from '@grandes-colonies/server';
+import { type GameSettings, GameServer, SETTINGS_LIMITS } from '@grandes-colonies/server';
 
 import { renderHostPage } from './hostPage.js';
 import { serveStatic } from './static.js';
@@ -562,7 +562,7 @@ export async function startHost(playerCount = 8, port = PORT): Promise<HostHandl
   await server.listen(port);
 
   console.log('');
-  console.log('  GRAND COLONIES');
+  console.log('  GRANDES COLONIES');
   console.log('');
   console.log(`  Écran hôte   http://${host}:${port}`);
   console.log(`  Joueurs      ${url}`);

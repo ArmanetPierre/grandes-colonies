@@ -100,7 +100,7 @@ Le simulateur recomposait le score à la main et **oubliait l'objectif secret**,
 
 ### Un second bug, plus grave
 
-`xxlOptionsFor(4)` renvoyait **44 hexagones — le plateau de douze joueurs pour une partie à quatre**. Chaque joueur ne touchait que six tuiles sur quarante-quatre et ne produisait presque jamais. En dessous de huit joueurs, le simulateur utilise désormais le plateau classique, conformément au §2 du game design qui réserve Grand Colonies aux effectifs de 8 à 12.
+`xxlOptionsFor(4)` renvoyait **44 hexagones — le plateau de douze joueurs pour une partie à quatre**. Chaque joueur ne touchait que six tuiles sur quarante-quatre et ne produisait presque jamais. En dessous de huit joueurs, le simulateur utilise désormais le plateau classique, conformément au §2 du game design qui réserve Grandes Colonies aux effectifs de 8 à 12.
 
 ---
 

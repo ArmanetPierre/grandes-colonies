@@ -13,7 +13,7 @@
  *     avoir à recharger la page pour la surmonter.
  */
 
-import type { PrivatePlayerView, PublicGameView, WireEvent } from '@grand-colonies/protocol';
+import type { PrivatePlayerView, PublicGameView, WireEvent } from '@grandes-colonies/protocol';
 
 export interface SeatInfo {
   readonly playerId: string;
@@ -87,7 +87,7 @@ export interface ConnectionOptions {
   readonly setTimeoutFn?: (fn: () => void, ms: number) => unknown;
 }
 
-const TOKEN_KEY = 'grand-colonies:token';
+const TOKEN_KEY = 'grandes-colonies:token';
 
 /**
  * Délais croissants : une coupure passagère se rattrape en un instant, une

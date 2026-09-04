@@ -30,7 +30,7 @@ import {
   hasPort,
   playerOf,
   suggestDiscard,
-} from '@grand-colonies/engine';
+} from '@grandes-colonies/engine';
 
 import {
   type Bot,

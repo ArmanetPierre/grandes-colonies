@@ -6,7 +6,7 @@
  * et un objectif mal décrit se choisit mal.
  */
 
-import { OBJECTIVES, type ObjectiveId } from '@grand-colonies/engine';
+import { OBJECTIVES, type ObjectiveId } from '@grandes-colonies/engine';
 
 export function objectiveTitle(id: string): string {
   return OBJECTIVES[id as ObjectiveId]?.title ?? id;

@@ -1,7 +1,7 @@
 /**
  * Production sur lancer de dés.
  *
- * Deux règles propres à Grand Colonies s'ajoutent à Catan :
+ * Deux règles propres à Grandes Colonies s'ajoutent à Catan :
  *   — 2 et 12 produisent double (§6), pour rendre les emplacements rares
  *     réellement attractifs ;
  *   — plusieurs voleurs peuvent bloquer simultanément (§25).
@@ -21,7 +21,7 @@ import {
 } from './resources.js';
 
 export interface ProductionConfig {
-  /** Valeurs dont la production est doublée. Grand Colonies : 2 et 12. */
+  /** Valeurs dont la production est doublée. Grandes Colonies : 2 et 12. */
   readonly doubledNumbers: readonly number[];
 }
 

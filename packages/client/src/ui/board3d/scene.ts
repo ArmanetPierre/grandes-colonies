@@ -21,7 +21,7 @@ import {
   Vector2, Vector3, WebGLRenderer,
 } from 'three';
 
-import type { PublicGameView } from '@grand-colonies/protocol';
+import type { PublicGameView } from '@grandes-colonies/protocol';
 
 import { Cadrage } from './camera.js';
 import { CASCADE, DUREE_CHUTE, DUREE_RECOLTE, chute, poussiere, recolte } from './chute.js';

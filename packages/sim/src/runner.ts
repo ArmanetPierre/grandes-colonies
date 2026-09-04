@@ -28,7 +28,7 @@ import {
   archipelagoBoard,
   archipelagoOptionsFor,
   usesXxlBoard,
-} from '@grand-colonies/engine';
+} from '@grandes-colonies/engine';
 
 import type { Bot } from './bot.js';
 

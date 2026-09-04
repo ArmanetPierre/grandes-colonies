@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { DomainEvent } from '@grand-colonies/engine';
+import type { DomainEvent } from '@grandes-colonies/engine';
 
 import { fromWire, redactAllFor, redactFor, toWire, toWireAll } from '../src/events.js';
 

@@ -9,7 +9,7 @@
  * inerte laisserait croire à une panne.
  */
 
-import type { PublicGameView } from '@grand-colonies/protocol';
+import type { PublicGameView } from '@grandes-colonies/protocol';
 
 import { colorOf } from './Board.jsx';
 
@@ -25,7 +25,7 @@ export function Lobby({ view, me, myName }: LobbyProps) {
 
   return (
     <div className="gc-splash">
-      <h1>Grand Colonies</h1>
+      <h1>Grandes Colonies</h1>
       <p className="gc-lobby-status">
         Bienvenue {myName}. On attend que l'hôte lance la partie.
       </p>

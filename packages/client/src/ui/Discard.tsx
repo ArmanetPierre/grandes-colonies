@@ -16,8 +16,8 @@
 
 import { useMemo, useState } from 'react';
 
-import { suggestDiscard } from '@grand-colonies/engine';
-import type { PrivatePlayerView, PublicGameView } from '@grand-colonies/protocol';
+import { suggestDiscard } from '@grandes-colonies/engine';
+import type { PrivatePlayerView, PublicGameView } from '@grandes-colonies/protocol';
 
 import { RESOURCE_LABELS, ResourceIcon } from './ResourceIcon.jsx';
 

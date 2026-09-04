@@ -24,7 +24,7 @@
 import { appendFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 
-import type { BoardSize, Command, GameConfig } from '@grand-colonies/engine';
+import type { BoardSize, Command, GameConfig } from '@grandes-colonies/engine';
 
 /** De quoi refabriquer le plateau et la partie à l'identique. */
 export interface GameRecipe {

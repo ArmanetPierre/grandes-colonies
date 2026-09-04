@@ -10,7 +10,7 @@
  * tenir ici comme ailleurs.
  */
 
-import type { PublicGameView, WireEvent } from '@grand-colonies/protocol';
+import type { PublicGameView, WireEvent } from '@grandes-colonies/protocol';
 
 import { colorOf } from './Board.jsx';
 import { CARD_LABELS } from './DevCards.jsx';

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { privateView, publicView } from '@grand-colonies/protocol';
-import { createGame, classicBoard, defaultConfig, SeededRandom } from '@grand-colonies/engine';
+import { privateView, publicView } from '@grandes-colonies/protocol';
+import { createGame, classicBoard, defaultConfig, SeededRandom } from '@grandes-colonies/engine';
 
 import { GreedyBot } from '../src/bots/greedy.js';
 import { PiloteBot } from '../src/bots/pilote.js';

@@ -204,7 +204,7 @@ export interface XxlOptions {
 /**
  * Le plateau XXL est-il pertinent à cet effectif ?
  *
- * Grand Colonies est conçu pour 8 à 12 joueurs (§2). En dessous, un plateau
+ * Grandes Colonies est conçu pour 8 à 12 joueurs (§2). En dessous, un plateau
  * de quarante-quatre hexagones disperse tellement les joueurs que la
  * production s'effondre : chacun ne touche que six tuiles sur quarante-quatre
  * et ne produit presque jamais. Le plateau classique convient mieux.
@@ -330,7 +330,7 @@ export function xxlOptionsFor(playerCount: number, size: BoardSize = 'normal'): 
 }
 
 /**
- * Plateau XXL de Grand Colonies.
+ * Plateau XXL de Grandes Colonies.
  *
  * Les terres occupent le cœur du disque, la mer forme le pourtour. La
  * répartition des jetons est ici tirée au sort plutôt que posée en spirale :

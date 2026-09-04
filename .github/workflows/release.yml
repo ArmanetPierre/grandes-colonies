@@ -19,7 +19,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  IMAGE: ghcr.io/armanetpierre/grand-colonies
+  IMAGE: ghcr.io/armanetpierre/grandes-colonies
 
 jobs:
   check:
@@ -81,7 +81,7 @@ jobs:
     steps:
       - uses: actions/delete-package-versions@v5
         with:
-          package-name: grand-colonies
+          package-name: grandes-colonies
           package-type: container
           min-versions-to-keep: 5
           ignore-versions: '^latest$'

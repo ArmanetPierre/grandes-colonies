@@ -28,7 +28,7 @@ export interface HexData {
 export type BuildingKind = 'settlement' | 'city' | 'metropolis';
 
 /**
- * Grand Colonies distingue routes terrestres et routes maritimes (§12), mais
+ * Grandes Colonies distingue routes terrestres et routes maritimes (§12), mais
  * les deux forment un seul « réseau commercial » pour le décompte du plus
  * long réseau — comme les navires de Seafarers.
  */
@@ -108,7 +108,7 @@ export class Board {
   }
 
   // ── voleurs ──────────────────────────────────────────────────────────
-  // Grand Colonies en autorise deux à 11–12 joueurs (§25), pour éviter
+  // Grandes Colonies en autorise deux à 11–12 joueurs (§25), pour éviter
   // qu'un seul hexagone puisse bloquer toute une région.
 
   placeRobber(h: Axial | HexId): void {

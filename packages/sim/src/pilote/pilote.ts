@@ -18,7 +18,7 @@
  * personnes.
  */
 
-import type { PrivatePlayerView, PublicGameView, PublicOffer } from '@grand-colonies/protocol';
+import type { PrivatePlayerView, PublicGameView, PublicOffer } from '@grandes-colonies/protocol';
 import {
   type Command,
   type IntentTarget,
@@ -39,7 +39,7 @@ import {
   missingFor,
   subtractCounts,
   total,
-} from '@grand-colonies/engine';
+} from '@grandes-colonies/engine';
 
 import type { Caractere } from './caractere.js';
 import type { Niveau } from './niveau.js';

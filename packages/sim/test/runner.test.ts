@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { SeededRandom, defaultConfig } from '@grand-colonies/engine';
+import { SeededRandom, defaultConfig } from '@grandes-colonies/engine';
 
 import { GreedyBot, RandomBot } from '../src/bots/greedy.js';
 import { playGame } from '../src/runner.js';

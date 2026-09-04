@@ -1,5 +1,5 @@
 /**
- * Moteur de règles de Grand Colonies.
+ * Moteur de règles de Grandes Colonies.
  *
  * Règle d'or : ce paquet ne dépend ni du réseau, ni du navigateur, ni du
  * rendu. Il doit pouvoir jouer une partie complète en mémoire, ce qui le

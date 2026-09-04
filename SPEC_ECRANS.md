@@ -1,16 +1,16 @@
-# Spécification des écrans — Grand Colonies
+# Spécification des écrans — Grandes Colonies
 
 > Brief destiné au **designer UI/UX**.
 >
 > Décrit le contexte, les contraintes, l'inventaire des écrans et le détail de chacun.
 >
-> Projet : [PLAN_DE_DEVELOPPEMENT.md](PLAN_DE_DEVELOPPEMENT.md) · Assets : [SPEC_ASSETS_IMAGES.md](SPEC_ASSETS_IMAGES.md) · Règles : [Catan_Grand_Colonies_8-12_joueurs.md](Catan_Grand_Colonies_8-12_joueurs.md)
+> Projet : [PLAN_DE_DEVELOPPEMENT.md](PLAN_DE_DEVELOPPEMENT.md) · Assets : [SPEC_ASSETS_IMAGES.md](SPEC_ASSETS_IMAGES.md) · Règles : [Catan_Grandes_Colonies_8-12_joueurs.md](Catan_Grandes_Colonies_8-12_joueurs.md)
 
 ---
 
 ## 1. Le projet en une page
 
-**Grand Colonies** est un jeu de plateau numérique inspiré de Catan, conçu pour **8 à 12 joueurs**. Il se joue en **réseau local** : le serveur tourne sur le PC de l'hôte, chaque joueur se connecte depuis le navigateur de son propre appareil. **Tous les joueurs sont physiquement dans la même pièce.**
+**Grandes Colonies** est un jeu de plateau numérique inspiré de Catan, conçu pour **8 à 12 joueurs**. Il se joue en **réseau local** : le serveur tourne sur le PC de l'hôte, chaque joueur se connecte depuis le navigateur de son propre appareil. **Tous les joueurs sont physiquement dans la même pièce.**
 
 ### Ce qui rend ce jeu différent de tout Catan numérique existant
 

@@ -13,7 +13,7 @@
 
 import { type ReactNode, useCallback, useLayoutEffect, useRef, useState } from 'react';
 
-import { COSTS, RESOURCES, type ResourceCounts, amount } from '@grand-colonies/engine';
+import { COSTS, RESOURCES, type ResourceCounts, amount } from '@grandes-colonies/engine';
 
 import { ResourceIcon } from './ResourceIcon.jsx';
 

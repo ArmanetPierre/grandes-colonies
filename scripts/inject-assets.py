@@ -22,8 +22,8 @@ import os
 import sys
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
-SOURCE = os.path.join(ROOT, 'Wireframes Grand Colonies.html')
-TARGET = os.path.join(ROOT, 'Wireframes Grand Colonies — avec assets.html')
+SOURCE = os.path.join(ROOT, 'Wireframes Grandes Colonies.html')
+TARGET = os.path.join(ROOT, 'Wireframes Grandes Colonies — avec assets.html')
 
 STYLE_CSS = """
   /* Spécificité renforcée : le bundle injecte sa feuille au runtime, donc

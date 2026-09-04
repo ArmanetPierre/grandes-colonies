@@ -14,7 +14,7 @@
  * perte et se relit sans dictionnaire de reprise.
  */
 
-import type { DevCardKind, DomainEvent, PlayerId, Resource, ResourceCounts } from '@grand-colonies/engine';
+import type { DevCardKind, DomainEvent, PlayerId, Resource, ResourceCounts } from '@grandes-colonies/engine';
 
 /** Une entrée de dictionnaire, sous une forme que JSON préserve. */
 export interface Pair<T> {

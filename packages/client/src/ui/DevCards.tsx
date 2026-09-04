@@ -13,7 +13,7 @@
 
 import { useState } from 'react';
 
-import type { PrivatePlayerView } from '@grand-colonies/protocol';
+import type { PrivatePlayerView } from '@grandes-colonies/protocol';
 
 import { CARD_TITLES, DevCardArt } from './DevCardArt.jsx';
 import { RESOURCE_LABELS, ResourceIcon } from './ResourceIcon.jsx';

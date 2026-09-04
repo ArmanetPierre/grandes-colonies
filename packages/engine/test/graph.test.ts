@@ -178,7 +178,7 @@ describe('plateau du Catan classique', () => {
   });
 });
 
-describe('plateau XXL de Grand Colonies', () => {
+describe('plateau XXL de Grandes Colonies', () => {
   // Le game design prévoit 44 à 52 hexagones ; un rayon de 4 en donne 61,
   // de quoi tailler un archipel dedans.
   const big = new BoardGraph(hexesWithin(ORIGIN, 4));

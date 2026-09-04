@@ -19,8 +19,8 @@
 
 import { useMemo } from 'react';
 
-import { type Buildable, besoinsPour } from '@grand-colonies/engine';
-import type { PrivatePlayerView } from '@grand-colonies/protocol';
+import { type Buildable, besoinsPour } from '@grandes-colonies/engine';
+import type { PrivatePlayerView } from '@grandes-colonies/protocol';
 
 import { ResourceIcon } from './ResourceIcon.jsx';
 

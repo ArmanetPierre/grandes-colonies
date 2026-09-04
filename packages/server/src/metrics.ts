@@ -19,7 +19,7 @@
  * qu'on en ait besoin.
  */
 
-import type { Command } from '@grand-colonies/engine';
+import type { Command } from '@grandes-colonies/engine';
 
 import type { Journal } from './journal.js';
 
