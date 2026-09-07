@@ -1,31 +1,31 @@
-Plan d’adaptation — Grandes Colonies
+Adaptation plan — Grandes Colonies
 
-Objectif
+Objective
 
-Réviser le plan de développement actuel de Grandes Colonies, jeu numérique inspiré de Catan pour 8–12 joueurs en LAN, sans changer la stack principale :
+Revise the current development plan of Grandes Colonies, a digital game inspired by Catan for 8–12 players over LAN, without changing the main stack:
 
 • TypeScript
 • React
 • Colyseus
 • monorepo
-• moteur de règles pur et indépendant du réseau
+• pure, network-independent rules engine
 
-L’objectif principal de cette adaptation est de réduire le risque projet en validant le plus tôt possible les mécaniques réellement différenciantes de Grandes Colonies :
+The main goal of this adaptation is to reduce project risk by validating as early as possible the genuinely differentiating mechanics of Grandes Colonies:
 
-• cycles A–E ;
-• joueur actif + joueur associé ;
-• commerce libre chronométré ;
-• construction semi-simultanée ;
-• 8–12 joueurs ;
-• faible temps d’attente.
+• cycles A–E;
+• active player + associated player;
+• timed free trade;
+• semi-simultaneous building;
+• 8–12 players;
+• low waiting time.
 
-Le MVP ne doit donc pas être « Catan classique numérique », mais une version minimale, peu esthétique mais jouable de Grandes Colonies, capable de démontrer que plusieurs joueurs peuvent agir régulièrement sans temps mort excessif.
+The MVP must therefore not be "digital classic Catan", but a minimal, unpolished but playable version of Grandes Colonies, able to demonstrate that several players can act regularly without excessive dead time.
 
 ────────
 
-1. Principes d’architecture à conserver
+1. Architecture principles to keep
 
-Conserver l’architecture générale suivante :
+Keep the following general architecture:
 
 text
 grandes-colonies/
@@ -41,59 +41,59 @@ grandes-colonies/
 └── apps/
     └── host/
 
-Rôle des packages :
+Role of the packages:
 
 text
 packages/engine
-    règles pures
-    état autoritaire
-    validation des actions
-    résolution des règles
-    RNG déterministe
-    événements du domaine
+    pure rules
+    authoritative state
+    action validation
+    rules resolution
+    deterministic RNG
+    domain events
 
 packages/protocol
-    commandes réseau
-    vues publiques
-    vues privées
-    types partagés client/serveur
+    network commands
+    public views
+    private views
+    shared client/server types
 
 packages/server
     Colyseus
     rooms
     lobby
-    reconnexion
+    reconnection
     timers
     sessions
-    sauvegardes
+    saves
 
 packages/client
     React
-    interface joueur
-    rendu plateau
-    commerce
-    journal
+    player interface
+    board rendering
+    trade
+    log
     timers
 
 packages/sim
     bots
     simulations
-    métriques d’équilibrage
+    balancing metrics
 
 packages/testkit
-    builders de scénarios
+    scenario builders
     fixtures
-    helpers de tests
-    replay de parties
+    test helpers
+    game replay
 
-Principe fondamental :
+Fundamental principle:
 
 text
 Client
    │
-   │ Commande
+   │ Command
    ▼
-Serveur
+Server
    │
    ▼
 validate(command, state)
@@ -101,57 +101,57 @@ validate(command, state)
    ▼
 resolve(command, state)
    │
-   ├──> événements
+   ├──> events
    │
-   └──> nouvel état
+   └──> new state
             │
-            ├──> vue publique
-            └──> vue privée du joueur
+            ├──> public view
+            └──> player's private view
 
-Colyseus ne doit pas contenir les règles du jeu.
+Colyseus must not contain the game rules.
 
-Le moteur doit pouvoir exécuter une partie complète sans navigateur, WebSocket ni serveur Colyseus.
+The engine must be able to run a full game without a browser, WebSocket or Colyseus server.
 
 ────────
 
-2. Modèle de concurrence
+2. Concurrency model
 
-Ne pas implémenter de véritables écritures concurrentes sur l’état du jeu.
+Do not implement genuine concurrent writes on the game state.
 
-Les joueurs peuvent envoyer des commandes simultanément du point de vue UX, mais le serveur doit les traiter dans une file ordonnée.
+Players may send commands simultaneously from the UX point of view, but the server must process them in an ordered queue.
 
-Exemple :
+Example:
 
 text
-Joueur A → DECLARE_BUILD
-Joueur B → DECLARE_BUILD
-Joueur C → ACCEPT_TRADE
+Player A → DECLARE_BUILD
+Player B → DECLARE_BUILD
+Player C → ACCEPT_TRADE
 
               ↓
 
-       file de commandes
+       command queue
 
               ↓
 
-résolution serveur séquentielle
-et déterministe
+sequential and deterministic
+server resolution
 
-Le moteur ne modifie donc jamais le même état depuis plusieurs threads ou callbacks concurrents.
+The engine therefore never modifies the same state from several concurrent threads or callbacks.
 
-Toutes les règles de priorité doivent être exprimées explicitement dans le moteur.
+All priority rules must be expressed explicitly in the engine.
 
 ────────
 
-3. Construction semi-simultanée
+3. Semi-simultaneous building
 
-Ne pas transformer immédiatement une annonce de construction en bâtiment.
+Do not immediately turn a build announcement into a building.
 
-Créer une notion de :
+Create a notion of:
 
 text
 BuildIntent
 
-Exemple de structure conceptuelle :
+Example of a conceptual structure:
 
 text
 BuildIntent
@@ -165,141 +165,141 @@ BuildIntent
 - createdAtOrder
 - status
 
-Lorsqu’un joueur annonce une construction :
+When a player announces a build:
 
 text
-ressources disponibles
+resources available
         ↓
-ressources réservées
+resources reserved
         ↓
-création du BuildIntent
+BuildIntent created
 
-Les ressources réservées ne peuvent plus être utilisées pour un échange ou une autre construction.
+Reserved resources can no longer be used for a trade or another build.
 
-Lors de la résolution d’un conflit :
+On conflict resolution:
 
 text
-1. priorité au joueur actif
-2. priorité selon Influence si applicable
-3. autre règle de priorité éventuelle
-4. égalité restante → emplacement gelé
+1. priority to the active player
+2. priority by Influence if applicable
+3. other possible priority rule
+4. remaining tie → spot frozen
 
-Les joueurs dont la construction échoue récupèrent leurs ressources réservées.
+Players whose build fails get their reserved resources back.
 
-Toutes les règles concernant les conflits doivent être déterministes et testables.
+All rules concerning conflicts must be deterministic and testable.
 
 ────────
 
-4. Phase 0A — Validation du game design
+4. Phase 0A — Game design validation
 
-Avant de construire le jeu complet, réaliser un prototype minimal permettant de tester les mécaniques les plus risquées.
+Before building the full game, make a minimal prototype that lets the riskiest mechanics be tested.
 
-Le prototype peut être papier, hybride ou extrêmement rudimentaire.
+The prototype may be paper, hybrid or extremely rudimentary.
 
-Tester en priorité :
+Test as a priority:
 
-• cycle A–E ;
-• joueur actif ;
-• joueur associé ;
-• commerce libre pendant 30 secondes ;
-• annonces de construction hors tour ;
-• conflits de construction ;
-• fréquence à laquelle chaque joueur peut agir ;
-• compréhension des priorités ;
-• durée ressentie entre deux actions.
+• cycle A–E;
+• active player;
+• associated player;
+• free trade for 30 seconds;
+• out-of-turn build announcements;
+• build conflicts;
+• the frequency at which each player can act;
+• understanding of priorities;
+• felt duration between two actions.
 
-Ne pas tester tous les systèmes secondaires à ce stade.
+Do not test all the secondary systems at this stage.
 
-Livrable
+Deliverable
 
-Créer un Rules Contract v1 répondant explicitement aux questions suivantes :
+Create a Rules Contract v1 explicitly answering the following questions:
 
 text
-Qui peut effectuer quelles actions ?
+Who can perform which actions?
 
-Pendant quelles phases ?
+During which phases?
 
-Une action commencée avant la fin du timer peut-elle se terminer après 0 ?
+Can an action begun before the end of the timer finish after 0?
 
-Que se passe-t-il exactement lorsque le timer atteint 0 ?
+What exactly happens when the timer reaches 0?
 
-Quand les ressources d’une construction sont-elles dépensées ?
+When are a build's resources spent?
 
-Quand sont-elles réservées ?
+When are they reserved?
 
-Comment deux annonces concurrentes sont-elles départagées ?
+How are two competing announcements decided between?
 
-Que signifie précisément « emplacement gelé » ?
+What exactly does "spot frozen" mean?
 
-Quand le gel prend-il fin ?
+When does the freeze end?
 
-Que se passe-t-il si un joueur actif se déconnecte ?
+What happens if an active player disconnects?
 
-Que se passe-t-il si un joueur associé se déconnecte ?
+What happens if an associated player disconnects?
 
-Que fait le serveur lorsqu’un joueur dépasse son timeout ?
+What does the server do when a player exceeds their timeout?
 
-Quand la victoire est-elle vérifiée ?
+When is victory checked?
 
-Une victoire peut-elle être déclenchée pendant une phase simultanée ?
+Can a victory be triggered during a simultaneous phase?
 
-Que se passe-t-il si plusieurs joueurs atteignent le seuil de victoire dans le même cycle ?
+What happens if several players reach the victory threshold in the same cycle?
 
-Aucune mécanique concurrente ne doit être codée tant que sa règle exacte n’est pas définie.
+No concurrent mechanic is to be coded until its exact rule is defined.
 
 ────────
 
-5. Phase 0B — Spike technique réseau
+5. Phase 0B — Network technical spike
 
-Créer une application Colyseus minimale et jetable.
+Create a minimal, throwaway Colyseus application.
 
-Elle doit tester uniquement l’infrastructure réseau.
+It must test only the network infrastructure.
 
-Fonctionnalités :
+Features:
 
-• connexion de 12 navigateurs ;
-• attribution de 12 sièges ;
-• pseudo et couleur ;
-• état public ;
-• données privées différentes selon le joueur ;
-• timer serveur ;
-• perte de connexion ;
-• reconnexion ;
-• rafraîchissement navigateur ;
-• spam de commandes simultanées ;
-• détection des commandes dupliquées.
+• connecting 12 browsers;
+• assigning 12 seats;
+• nickname and colour;
+• public state;
+• private data differing per player;
+• server timer;
+• connection loss;
+• reconnection;
+• browser refresh;
+• simultaneous command spam;
+• detection of duplicate commands.
 
-Critères de sortie
+Exit criteria
 
 text
-✓ 12 clients peuvent rester connectés
+✓ 12 clients can stay connected
 
-✓ un joueur peut rafraîchir son navigateur
-  sans perdre son siège
+✓ a player can refresh their browser
+  without losing their seat
 
-✓ un joueur reconnecté retrouve son état
+✓ a reconnected player recovers their state
 
-✓ une information privée n’est jamais
-  envoyée aux autres clients
+✓ private information is never
+  sent to the other clients
 
-✓ les timers sont autoritaires côté serveur
+✓ timers are authoritative on the server side
 
-✓ plusieurs commandes envoyées quasi
-  simultanément sont traitées proprement
+✓ several commands sent near-
+  simultaneously are processed cleanly
 
 ────────
 
-6. Phase 1 — Noyau du moteur
+6. Phase 1 — Engine core
 
-Remplacer la phase « Catan classique complet » par la création d’un noyau générique nécessaire à Grandes Colonies.
+Replace the "complete classic Catan" phase with the creation of a generic core needed for Grandes Colonies.
 
-Le but n’est pas de produire un clone complet de Catan à 4 joueurs.
+The goal is not to produce a complete 4-player clone of Catan.
 
-Le but est de produire un moteur robuste et réutilisable.
+The goal is to produce a robust, reusable engine.
 
-Géométrie
+Geometry
 
-Implémenter :
+Implement:
 
 text
 Hex
@@ -312,13 +312,13 @@ Port
 Island
 Board
 
-Le plateau doit être représenté comme un graphe explicite.
+The board must be represented as an explicit graph.
 
-Les règles de placement ne doivent pas dépendre du rendu graphique.
+Placement rules must not depend on the graphical rendering.
 
-Économie
+Economy
 
-Implémenter :
+Implement:
 
 text
 ResourceType
@@ -328,9 +328,9 @@ Production
 Trade
 ConstructionCost
 
-Infrastructure moteur
+Engine infrastructure
 
-Créer :
+Create:
 
 text
 GameState
@@ -341,64 +341,64 @@ CommandValidator
 CommandResolver
 SeededRandom
 
-Règles de base
+Base rules
 
-Implémenter uniquement les règles nécessaires au futur Grandes Colonies :
+Implement only the rules needed for the future Grandes Colonies:
 
-• lancer de dés ;
-• production ;
-• distribution des ressources ;
-• routes ;
-• colonies ;
-• villes ;
-• placement ;
-• distance entre colonies ;
-• ports ;
-• commerce banque ;
-• voleur ;
-• points de victoire ;
-• plus longue route.
+• dice roll;
+• production;
+• resource distribution;
+• roads;
+• settlements;
+• cities;
+• placement;
+• distance between settlements;
+• ports;
+• bank trade;
+• robber;
+• victory points;
+• longest road.
 
-Les règles classiques servent de référence et de tests, mais une application complète « Catan classique » n’est pas un livrable obligatoire.
+The classic rules serve as a reference and for tests, but a complete "classic Catan" application is not a mandatory deliverable.
 
 ────────
 
-7. Déterminisme obligatoire
+7. Determinism mandatory
 
-Le moteur doit être entièrement déterministe.
+The engine must be fully deterministic.
 
-Exigence :
+Requirement:
 
-Avec le même état initial, le même seed et la même séquence de commandes, le moteur doit toujours produire exactement le même résultat.
+With the same initial state, the same seed and the same command sequence, the engine must always produce exactly the same result.
 
 
-Ne jamais utiliser directement :
+Never use directly:
 
 Math.random()
 
-dans les règles.
+in the rules.
 
-Utiliser un générateur pseudo-aléatoire contrôlé :
+Use a controlled pseudo-random generator:
 
 game.random.next()
 
-Le seed doit être enregistré avec la partie.
+The seed must be recorded with the game.
 
-Cela permet :
+This allows:
 
-• reproduction des bugs ;
-• replay ;
-• simulation ;
-• tests déterministes ;
-• comparaison de versions du moteur.
+• bug reproduction;
+• replay;
+• simulation;
+• deterministic tests;
+• comparison of engine versions.
 
 ────────
 
-8. Journal d’actions et replay
+8. Action log and replay
 
-Toutes les commandes validées doivent pouvoir être journalisées.
+All validated commands must be loggable.
 
-Exemple :
+Example:
 
 text
 GameStarted
@@ -411,89 +411,89 @@ BuildResolved
 RobberMoved
 PhaseEnded
 
-Conserver au minimum :
+Keep at minimum:
 
 text
 gameId
 seed
 initialConfig
 orderedCommands
-timestamps serveur
+server timestamps
 
-Optionnellement, ajouter des snapshots périodiques :
-
-text
-snapshot après N commandes
-
-Le replay doit pouvoir reconstruire l’état d’une partie à partir :
+Optionally, add periodic snapshots:
 
 text
-configuration initiale
+snapshot after N commands
+
+Replay must be able to reconstruct a game's state from:
+
+text
+initial configuration
 +
 seed
 +
-liste ordonnée de commandes
+ordered list of commands
 
 ────────
 
-9. Phase 2 — Vertical slice Grandes Colonies
+9. Phase 2 — Grandes Colonies vertical slice
 
-Créer très tôt une première vraie version numérique de Grandes Colonies.
+Create very early a first real digital version of Grandes Colonies.
 
-Cette version doit être volontairement réduite.
+This version must be deliberately reduced.
 
-Inclus
+Included
 
-• 8 joueurs ;
-• architecture compatible 12 ;
-• carte fixe ;
-• ressources classiques ;
-• lancer de dés ;
-• production ;
-• routes ;
-• colonies ;
-• villes ;
-• cycles ;
-• joueur actif ;
-• joueur associé ;
-• commerce ;
-• fenêtre commerciale chronométrée ;
-• construction semi-simultanée ;
-• condition de victoire simplifiée.
+• 8 players;
+• architecture compatible with 12;
+• fixed map;
+• classic resources;
+• dice roll;
+• production;
+• roads;
+• settlements;
+• cities;
+• cycles;
+• active player;
+• associated player;
+• trade;
+• timed trade window;
+• semi-simultaneous building;
+• simplified victory condition.
 
-Exclus temporairement
+Temporarily excluded
 
 text
 exploration
-or
-ports spéciaux
-objectifs secrets
-double voleur
-marché dynamique
-contrats
-barbares
-chevaliers avancés
-Influence avancée
-villes spécialisées
-événements
-équipes
+gold
+special ports
+secret objectives
+double robber
+dynamic market
+contracts
+barbarians
+advanced knights
+advanced Influence
+specialized cities
+events
+teams
 
-Cette phase doit répondre à une seule question :
+This phase must answer one single question:
 
-Est-ce que Grandes Colonies est amusant et fluide avec plusieurs joueurs ?
+Is Grandes Colonies fun and fluid with several players?
 
 
-Si cette version ne fonctionne pas, ne pas ajouter de nouveaux systèmes avant d’avoir corrigé le rythme de jeu.
+If this version does not work, do not add new systems before having fixed the pacing.
 
 ────────
 
-10. Phase 3 — Serveur Grandes Colonies robuste
+10. Phase 3 — Robust Grandes Colonies server
 
-Une fois la vertical slice validée, consolider le serveur.
+Once the vertical slice is validated, consolidate the server.
 
-Chaque interaction joueur doit devenir une commande explicite.
+Every player interaction must become an explicit command.
 
-Exemples :
+Examples:
 
 text
 ROLL_DICE
@@ -509,7 +509,7 @@ MOVE_ROBBER
 END_ACTION
 END_PHASE
 
-Chaque commande doit avoir au minimum :
+Each command must have at minimum:
 
 text
 actionId
@@ -517,35 +517,35 @@ playerId
 type
 payload
 
-actionId doit permettre de détecter une commande reçue deux fois.
+actionId must allow a command received twice to be detected.
 
-Cas typique :
+Typical case:
 
 text
-joueur clique
+player clicks
 ↓
-réseau ralentit
+network slows down
 ↓
-joueur clique à nouveau
+player clicks again
 ↓
-serveur reçoit deux commandes
+server receives two commands
 
-Le serveur doit exécuter l’action une seule fois.
+The server must execute the action only once.
 
 ────────
 
-11. Système de capacités
+11. Capability system
 
-Éviter de disperser dans le serveur des dizaines de conditions de type :
+Avoid scattering dozens of conditions like the following across the server:
 
 if (phase === ...)
 
-Créer un système centralisé :
+Create a centralized system:
 
 text
 getCapabilities(state, playerId)
 
-Exemples de capacités :
+Examples of capabilities:
 
 text
 CAN_ROLL_DICE
@@ -558,30 +558,30 @@ CAN_MOVE_ROBBER
 CAN_END_ACTION
 CAN_END_PHASE
 
-Les rôles actif, associé ou joueur passif doivent être traduits en capacités.
+The active, associated or passive player roles must be translated into capabilities.
 
-Exemple :
+Example:
 
 text
-joueur actif
+active player
 → CAN_BUILD
 → CAN_TRADE_BANK
 → CAN_TRADE_PLAYER
 
-joueur associé
+associated player
 → CAN_BUILD
 → CAN_TRADE_BANK
 
-autres joueurs
-→ éventuellement CAN_DECLARE_BUILD
+other players
+→ possibly CAN_DECLARE_BUILD
 
-Le client peut utiliser ces capacités pour l’UX, mais le serveur reste toujours autoritaire.
+The client may use these capabilities for the UX, but the server stays always authoritative.
 
 ────────
 
-12. Information cachée
+12. Hidden information
 
-Séparer explicitement :
+Explicitly separate:
 
 text
 AuthoritativeGameState
@@ -590,40 +590,40 @@ PrivatePlayerView
 
 AuthoritativeGameState
 
-Contient tout :
+Contains everything:
 
-• mains de tous les joueurs ;
-• objectifs secrets ;
-• tuiles non explorées ;
-• informations privées ;
-• états internes.
+• all players' hands;
+• secret objectives;
+• unexplored tiles;
+• private information;
+• internal states.
 
 PublicGameView
 
-Contient uniquement ce que tous les joueurs peuvent connaître.
+Contains only what all players can know.
 
 PrivatePlayerView
 
-Contient les informations spécifiques à un joueur :
+Contains the information specific to one player:
 
-• sa main ;
-• ses objectifs ;
-• ses choix cachés ;
-• autres informations privées.
+• their hand;
+• their objectives;
+• their hidden choices;
+• other private information.
 
-Ne jamais envoyer une donnée secrète au navigateur adverse en comptant uniquement sur React pour ne pas l’afficher.
+Never send secret data to an opposing browser and count solely on React not to display it.
 
-Le secret doit être assuré côté serveur.
+Secrecy must be enforced on the server side.
 
 ────────
 
-13. Identité et reconnexion
+13. Identity and reconnection
 
-Le jeu n’a pas besoin de comptes utilisateurs.
+The game does not need user accounts.
 
-En revanche, chaque joueur doit avoir une identité de session persistante.
+However, each player must have a persistent session identity.
 
-Exemple :
+Example:
 
 text
 seatId
@@ -631,43 +631,43 @@ sessionToken
 playerName
 playerColor
 
-Le token peut être stocké localement dans le navigateur.
+The token can be stored locally in the browser.
 
-Lors d’un rafraîchissement ou d’une reconnexion :
+On a refresh or a reconnection:
 
 text
 sessionToken
       ↓
-serveur
+server
       ↓
-récupération du siège
+seat recovery
 
-Prévoir également une commande administrateur permettant à l’hôte de réattribuer manuellement un siège.
+Also plan an administrator command letting the host manually reassign a seat.
 
 ────────
 
 14. Phase 4 — Grandes Colonies Ruleset v1
 
-Une fois le rythme du jeu validé, ajouter progressivement le contenu du ruleset Grandes Colonies.
+Once the game's pacing is validated, progressively add the content of the Grandes Colonies ruleset.
 
-Ordre conseillé :
+Suggested order:
 
-1. passage de 8 à 12 joueurs ;
-2. plateau XXL ;
-3. multi-îles ;
-4. routes maritimes ;
-5. exploration ;
-6. or ;
-7. ports spéciaux ;
-8. règle 2/12 ;
-9. limite de main dynamique ;
-10. double voleur ;
-11. objectifs secrets ;
-12. victoire à 15 PV.
+1. going from 8 to 12 players;
+2. XXL board;
+3. multi-island;
+4. sea lanes;
+5. exploration;
+6. gold;
+7. special ports;
+8. 2/12 rule;
+9. dynamic hand limit;
+10. double robber;
+11. secret objectives;
+12. victory at 15 VP.
 
-Rendre le maximum de paramètres configurables.
+Make the maximum number of parameters configurable.
 
-Exemple :
+Example:
 
 text
 GameConfig
@@ -685,145 +685,145 @@ GameConfig
 ├─ secretObjectivesEnabled
 └─ mapPreset
 
-Cela permet de tester rapidement différentes variantes sans modifier le code.
+This lets different variants be tested quickly without modifying the code.
 
 ────────
 
-15. Phase 5 — Client web
+15. Phase 5 — Web client
 
-Commencer par un rendu SVG.
+Start with an SVG rendering.
 
-Ne passer à PixiJS que si un problème de performance réel est mesuré.
+Only move to PixiJS if a real performance problem is measured.
 
-50–60 hexagones, quelques centaines d’arêtes et de pièces restent raisonnables pour SVG.
+50–60 hexes, a few hundred edges and pieces stay reasonable for SVG.
 
-Avantages :
+Advantages:
 
-• DOM ;
-• clics ;
-• CSS ;
-• zoom ;
-• pan ;
-• accessibilité ;
-• inspection ;
-• développement simple.
+• DOM;
+• clicks;
+• CSS;
+• zoom;
+• pan;
+• accessibility;
+• inspection;
+• simple development.
 
-Structure générale de l’écran
+General structure of the screen
 
 text
 ┌───────────────────────────────────────────────┐
-│ Phase | Actif | Associé | Timer               │
+│ Phase | Active | Associated | Timer           │
 ├───────────┬───────────────────────┬───────────┤
-│ joueurs   │                       │ activité  │
-│           │       PLATEAU         │ / trades  │
+│ players   │                       │ activity  │
+│           │       BOARD           │ / trades  │
 │           │                       │           │
 ├───────────┴───────────────────────┴───────────┤
-│ main / constructions / actions rapides       │
+│ hand / builds / quick actions                │
 └───────────────────────────────────────────────┘
 
-L’interface doit afficher en permanence :
+The interface must display at all times:
 
-• phase actuelle ;
-• joueur actif ;
-• joueur associé ;
-• timer ;
-• action attendue ;
-• état de la fenêtre commerciale.
-
-────────
-
-16. Affichage des 12 joueurs
-
-Ne pas dépendre uniquement du survol.
-
-Le jeu peut être utilisé sur ordinateur portable, tablette ou téléphone.
-
-Chaque adversaire doit pouvoir être consulté par :
-
-• clic ;
-• tap ;
-• survol en bonus.
-
-Afficher en permanence uniquement les informations importantes :
-
-text
-pseudo
-couleur
-PV publics
-nombre de cartes
-Influence publique
-statut actif / associé
-connexion
-
-Utiliser :
-
-• couleur ;
-• forme ;
-• motif ;
-• icône ;
-
-afin que les 12 joueurs restent distinguables même en cas de daltonisme.
+• current phase;
+• active player;
+• associated player;
+• timer;
+• expected action;
+• state of the trade window.
 
 ────────
 
-17. Phase 6 — Commerce UX
+16. Display of the 12 players
 
-Traiter le commerce comme un sous-projet UX important.
+Do not depend solely on hover.
 
-Puisque les joueurs sont dans la même pièce, la négociation peut rester principalement orale.
+The game may be used on a laptop, a tablet or a phone.
 
-L’interface sert surtout à confirmer rapidement l’échange.
+Each opponent must be consultable by:
 
-Exemple :
+• click;
+• tap;
+• hover as a bonus.
+
+Display at all times only the important information:
 
 text
-Je donne :
+nickname
+colour
+public VP
+number of cards
+public Influence
+active / associated status
+connection
 
-[bois] [bois]
+Use:
 
-Je veux :
+• colour;
+• shape;
+• pattern;
+• icon;
 
-[minerai]
+so that the 12 players stay distinguishable even in case of colour-blindness.
 
-À :
+────────
+
+17. Phase 6 — Trade UX
+
+Treat trade as an important UX sub-project.
+
+Since players are in the same room, negotiation can stay mainly spoken.
+
+The interface mostly serves to confirm the trade quickly.
+
+Example:
+
+text
+I give:
+
+[wood] [wood]
+
+I want:
+
+[ore]
+
+To:
 
 [Julie]
 
-[PROPOSER]
+[PROPOSE]
 
-Le destinataire voit :
-
-text
-2 bois ↔ 1 minerai
-
-[ACCEPTER]
-
-[REFUSER]
-
-Une acceptation doit être atomique côté serveur :
+The recipient sees:
 
 text
-vérifier inventaire A
-+
-vérifier inventaire B
-+
-vérifier phase
-+
-vérifier validité offre
-+
-effectuer les deux transferts
+2 wood ↔ 1 ore
 
-Si l’inventaire de l’un des joueurs a changé entre-temps, l’offre devient invalide.
+[ACCEPT]
+
+[DECLINE]
+
+An acceptance must be atomic on the server side:
+
+text
+check inventory A
++
+check inventory B
++
+check phase
++
+check offer validity
++
+perform the two transfers
+
+If one player's inventory has changed in the meantime, the offer becomes invalid.
 
 ────────
 
-18. Phase 7 — Simulation continue
+18. Phase 7 — Continuous simulation
 
-La simulation ne doit pas être une phase isolée située tard dans le projet.
+Simulation must not be an isolated phase located late in the project.
 
-Elle doit devenir disponible dès que le moteur fonctionne.
+It must become available as soon as the engine works.
 
-Architecture :
+Architecture:
 
 text
               engine
@@ -839,9 +839,9 @@ text
                                 │
                            ExpansionBot
 
-Les bots n’ont pas besoin d’être très intelligents.
+The bots do not need to be very intelligent.
 
-Créer par exemple :
+Create for example:
 
 text
 RandomBot
@@ -849,312 +849,312 @@ GreedyBot
 ExpansionBot
 BalancedBot
 
-Objectifs de la simulation :
+Simulation goals:
 
-• détecter des règles cassées ;
-• détecter les blocages ;
-• mesurer la durée ;
-• comparer les configurations ;
-• détecter l’avantage du premier joueur ;
-• détecter le snowball ;
-• mesurer la valeur des ressources ;
-• comparer 8, 10 et 12 joueurs.
+• detect broken rules;
+• detect blockages;
+• measure duration;
+• compare configurations;
+• detect the first-player advantage;
+• detect the snowball;
+• measure the value of resources;
+• compare 8, 10 and 12 players.
 
-Ne pas créer initialement un fork de catanatron pour Grandes Colonies.
+Do not initially create a fork of catanatron for Grandes Colonies.
 
-Utiliser directement le moteur TypeScript afin d’éviter deux implémentations des mêmes règles.
+Use the TypeScript engine directly to avoid two implementations of the same rules.
 
-Catanatron peut rester une référence d’architecture et d’analyse.
-
-────────
-
-19. Métriques de simulation
-
-Enregistrer au minimum :
-
-text
-nombre de cycles
-nombre de tours
-PV finaux
-PV par cycle
-production par ressource
-ressources gagnées par joueur
-ressources dépensées
-nombre de trades
-taux d’acceptation des trades
-constructions par joueur
-routes par joueur
-nombre de conflits de construction
-fréquence des nombres
-durée théorique
-position du gagnant
-écart gagnant / dernier
-
-Comparer régulièrement :
-
-text
-8 joueurs
-10 joueurs
-12 joueurs
-
-sur plusieurs centaines ou milliers de parties.
+Catanatron can remain an architecture and analysis reference.
 
 ────────
 
-20. Phase 8 — Playtests instrumentés
+19. Simulation metrics
 
-Chaque vraie partie LAN doit produire automatiquement des métriques.
-
-Mesurer :
+Record at minimum:
 
 text
-temps total
-temps par cycle
-temps par phase
-temps passé en commerce
-temps d’inactivité par joueur
-nombre de trades proposés
-nombre de trades acceptés
-nombre de trades expirés
-nombre de constructions conflictuelles
-nombre d’actions invalides
-nombre de timeouts
-ressources par joueur et par cycle
-PV par joueur et par cycle
-temps passé en tête
-nombre de déconnexions
+number of cycles
+number of turns
+final VP
+VP per cycle
+production per resource
+resources gained per player
+resources spent
+number of trades
+trade acceptance rate
+builds per player
+roads per player
+number of build conflicts
+frequency of numbers
+theoretical duration
+winner's position
+winner / last gap
 
-Ajouter ensuite un questionnaire joueur.
-
-Exemples :
+Compare regularly:
 
 text
-Ai-je eu l’impression de jouer régulièrement ?
+8 players
+10 players
+12 players
 
-Ai-je attendu trop longtemps ?
-
-Le commerce était-il compréhensible ?
-
-Le timer était-il stressant ?
-
-Le rôle du joueur associé était-il clair ?
-
-Les conflits de construction étaient-ils compréhensibles ?
-
-Le plateau était-il lisible ?
-
-Avais-je suffisamment d’informations sur les autres joueurs ?
-
-Les métriques permettent de comparer les impressions subjectives aux données réelles.
+over several hundred or thousand games.
 
 ────────
 
-21. Phase 9 — Robustesse LAN
+20. Phase 8 — Instrumented playtests
 
-Ajouter une phase dédiée à l’usage réel dans une pièce.
+Every real LAN game must automatically produce metrics.
 
-L’écran de l’hôte doit afficher clairement :
+Measure:
+
+text
+total time
+time per cycle
+time per phase
+time spent trading
+idle time per player
+number of trades proposed
+number of trades accepted
+number of trades expired
+number of conflicting builds
+number of invalid actions
+number of timeouts
+resources per player and per cycle
+VP per player and per cycle
+time spent in the lead
+number of disconnections
+
+Then add a player questionnaire.
+
+Examples:
+
+text
+Did I feel I was playing regularly?
+
+Did I wait too long?
+
+Was the trade understandable?
+
+Was the timer stressful?
+
+Was the associated player's role clear?
+
+Were the build conflicts understandable?
+
+Was the board legible?
+
+Did I have enough information about the other players?
+
+The metrics allow subjective impressions to be compared to real data.
+
+────────
+
+21. Phase 9 — LAN robustness
+
+Add a phase dedicated to real use in a room.
+
+The host's screen must clearly display:
 
 text
 Grandes Colonies
 
-Adresse LAN :
+LAN address:
 192.168.1.42:3000
 
 [ QR CODE ]
 
-Code partie :
+Game code:
 ORANGE-7
 
-Fonctionnalités recommandées :
+Recommended features:
 
-• détection de l’adresse LAN ;
-• QR code ;
-• reconnexion ;
-• pause ;
-• reprise ;
-• sauvegarde ;
-• restauration ;
-• réattribution de siège ;
-• prolongation manuelle d’un timer ;
-• remplacement d’un joueur ;
-• possibilité de passer un joueur en bot.
-
-────────
-
-22. Mode maître de jeu / debug
-
-Créer très tôt un panneau accessible uniquement à l’hôte.
-
-Fonctions :
-
-text
-donner des ressources
-retirer des ressources
-forcer un lancer de dés
-changer de phase
-modifier le timer
-ajouter des PV
-déplacer un joueur
-révéler une tuile
-placer une construction
-supprimer une construction
-forcer un trade
-téléporter le voleur
-terminer la partie
-
-Ce panneau est destiné au développement et aux playtests.
-
-Il permet de reproduire rapidement des situations sans devoir jouer 45 minutes pour les atteindre.
+• LAN address detection;
+• QR code;
+• reconnection;
+• pause;
+• resume;
+• save;
+• restore;
+• seat reassignment;
+• manual extension of a timer;
+• replacing a player;
+• the ability to switch a player to a bot.
 
 ────────
 
-23. Critères de sortie par phase
+22. Game master / debug mode
 
-Chaque phase doit avoir des critères mesurables.
+Create very early a panel accessible only to the host.
 
-Noyau moteur
-
-text
-✓ aucune action illégale acceptée dans les scénarios testés
-
-✓ même seed + mêmes commandes
-  = même résultat
-
-✓ replay complet possible
-
-✓ plus longue route testée
-  sur cas pathologiques
-
-✓ invariants économiques vérifiés
-
-✓ aucune dépendance réseau dans engine
-
-Réseau
+Functions:
 
 text
-✓ 12 clients simultanés
+give resources
+take resources
+force a dice roll
+change phase
+modify the timer
+add VP
+move a player
+reveal a tile
+place a build
+remove a build
+force a trade
+teleport the robber
+end the game
 
-✓ reconnexion après F5
+This panel is meant for development and playtests.
 
-✓ reconnexion après coupure réseau
+It lets situations be reproduced quickly without having to play 45 minutes to reach them.
 
-✓ aucune perte de siège
+────────
 
-✓ commandes dupliquées ignorées
+23. Exit criteria per phase
 
-✓ informations privées non transmises
+Each phase must have measurable criteria.
 
-✓ timers autoritaires serveur
+Engine core
 
-✓ commandes concurrentes
-  résolues proprement
+text
+✓ no illegal action accepted in the tested scenarios
+
+✓ same seed + same commands
+  = same result
+
+✓ full replay possible
+
+✓ longest road tested
+  on pathological cases
+
+✓ economic invariants verified
+
+✓ no network dependency in engine
+
+Network
+
+text
+✓ 12 simultaneous clients
+
+✓ reconnection after F5
+
+✓ reconnection after network drop
+
+✓ no seat loss
+
+✓ duplicate commands ignored
+
+✓ private information not transmitted
+
+✓ server-authoritative timers
+
+✓ concurrent commands
+  resolved cleanly
 
 Vertical slice
 
 text
-✓ 8 humains peuvent terminer une partie
+✓ 8 humans can finish a game
 
-✓ règles comprises sans intervention
-  permanente du développeur
+✓ rules understood without the developer
+  intervening constantly
 
-✓ aucun joueur ne reste passif
-  trop longtemps
+✓ no player stays passive
+  too long
 
-✓ commerce réalisable dans
-  la fenêtre prévue
+✓ trade achievable within
+  the planned window
 
-✓ construction concurrente comprise
-  par les joueurs
+✓ concurrent building understood
+  by the players
 
 ────────
 
-24. Ordre recommandé des fonctionnalités
+24. Recommended order of features
 
-Nouvel ordre :
+New order:
 
 text
-Validation papier / hybride
+Paper / hybrid validation
         ↓
-Spike réseau 12 joueurs
+12-player network spike
         ↓
-Noyau moteur
+Engine core
         ↓
-Vertical slice Grandes Colonies
+Grandes Colonies vertical slice
         ↓
-Premier playtest numérique
+First digital playtest
         ↓
-Serveur robuste
+Robust server
         ↓
-8 → 12 joueurs
+8 → 12 players
         ↓
-Plateau XXL
+XXL board
         ↓
-Multi-îles / routes maritimes
+Multi-island / sea lanes
         ↓
 Exploration
         ↓
-Or
+Gold
         ↓
-Objectifs secrets
+Secret objectives
         ↓
-Double voleur
+Double robber
         ↓
-Chevaliers / barbares
+Knights / barbarians
         ↓
 Influence
         ↓
-Contrats / marché
+Contracts / market
         ↓
-Villes spécialisées
+Specialized cities
         ↓
-Direction artistique
+Art direction
 
 ────────
 
-25. Éléments explicitement hors priorité
+25. Elements explicitly out of priority
 
-Ne pas investir fortement dans les éléments suivants avant validation de la vertical slice :
+Do not invest heavily in the following elements before the vertical slice is validated:
 
 text
-illustrations finales
-animations complexes
-effets visuels
-IA avancée
-matchmaking internet
-comptes utilisateurs
+final illustrations
+complex animations
+visual effects
+advanced AI
+internet matchmaking
+user accounts
 cloud
-classements
-spectateurs
-mobile natif
-fork catanatron complet
-marché dynamique
-contrats
-villes spécialisées
-événements
-équipes
+rankings
+spectators
+native mobile
+full catanatron fork
+dynamic market
+contracts
+specialized cities
+events
+teams
 
 ────────
 
-26. Risques principaux révisés
+26. Revised main risks
 
-|Risque                                                    |Impact     |Mitigation                          |
+|Risk                                                      |Impact     |Mitigation                          |
 |----------------------------------------------------------|-----------|------------------------------------|
-|Les mécaniques simultanées ne fonctionnent pas humainement|Critique   |Prototype et vertical slice très tôt|
-|Trop de règles développées avant validation               |Critique   |MVP minimal Grandes Colonies          |
-|Bugs de concurrence                                       |Élevé      |Commandes sérialisées côté serveur  |
-|Divergence client / serveur                               |Élevé      |Serveur autoritaire                 |
-|Fuite d’informations secrètes                             |Élevé      |PublicGameView + PrivatePlayerView  |
-|Reconnexion fragile                                       |Élevé      |Token de siège persistant           |
-|Bugs impossibles à reproduire                             |Élevé      |RNG seedé + journal d’actions       |
-|Scope trop large                                          |Élevé      |Ajout progressif des modules        |
-|UX illisible à 12                                         |Élevé      |Prototype écran 12 joueurs tôt      |
-|Mauvais équilibrage                                       |Moyen/élevé|Simulation continue + métriques     |
-|Difficulté d’usage LAN                                    |Moyen      |QR code + écran hôte + reconnexion  |
+|The simultaneous mechanics do not work for humans         |Critical   |Prototype and vertical slice very early|
+|Too many rules developed before validation                |Critical   |Minimal Grandes Colonies MVP          |
+|Concurrency bugs                                          |High       |Commands serialized on the server side|
+|Client / server divergence                                |High       |Authoritative server                 |
+|Leak of secret information                                |High       |PublicGameView + PrivatePlayerView   |
+|Fragile reconnection                                      |High       |Persistent seat token                |
+|Bugs impossible to reproduce                              |High       |Seeded RNG + action log              |
+|Scope too broad                                           |High       |Progressive addition of modules      |
+|Illegible UX at 12                                        |High       |12-player screen prototype early     |
+|Poor balancing                                            |Medium/high|Continuous simulation + metrics      |
+|LAN usability difficulty                                  |Medium     |QR code + host screen + reconnection |
 
 ────────
 
-27. Architecture finale recommandée
+27. Recommended final architecture
 
 text
 ┌─────────────────────────────────────────────────┐
@@ -1185,7 +1185,7 @@ text
 ┌─────────────────────────┐
 │ packages/protocol       │
 │                         │
-│ Commands réseau         │
+│ Network commands        │
 │ PublicGameView          │
 │ PrivatePlayerView       │
 └────────────┬────────────┘
@@ -1196,28 +1196,28 @@ text
 │                         │
 │ React                   │
 │ SVG                     │
-│ UX commerce             │
+│ trade UX                │
 │ timers                  │
-│ journal                 │
+│ log                     │
 └─────────────────────────┘
 
 ────────
 
-28. Principe directeur du projet
+28. Guiding principle of the project
 
-Le principe à utiliser pour toutes les décisions de scope est :
+The principle to use for all scope decisions is:
 
-Construire d’abord la plus petite version possible capable de démontrer que 8 joueurs peuvent jouer à Grandes Colonies simultanément, comprendre ce qui se passe et rester engagés.
-
-
-Le premier succès du projet n’est donc pas :
-
-« Nous avons reproduit toutes les règles de Catan. »
+Build first the smallest possible version able to demonstrate that 8 players can play Grandes Colonies simultaneously, understand what is happening and stay engaged.
 
 
-Le premier succès doit être :
+The project's first success is therefore not:
 
-« Huit personnes ont terminé une partie numérique de Grandes Colonies et le système de cycles, joueur associé, commerce chronométré et construction semi-simultanée fonctionne. »
+"We reproduced every rule of Catan."
 
 
-Une fois cette hypothèse validée, le reste du contenu peut être ajouté progressivement.
+The first success must be:
+
+"Eight people finished a digital game of Grandes Colonies and the system of cycles, associated player, timed trade and semi-simultaneous building works."
+
+
+Once this hypothesis is validated, the rest of the content can be added progressively.

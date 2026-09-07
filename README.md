@@ -1,219 +1,218 @@
 # Grandes Colonies
 
-Version numérique d'une variante de Catan pour **8 à 12 joueurs**, jouable en
-réseau local : le serveur tourne sur un PC, chacun rejoint depuis son
-navigateur.
+A digital version of a Catan variant for **8 to 12 players**, playable over a
+local network: the server runs on one PC, and everyone joins from their own
+browser.
 
 ---
 
-## Lancer une soirée
+## Running a game night
 
 ```bash
 npm install
 npm run play
 ```
 
-Le terminal affiche alors :
+The terminal then prints:
 
 ```
-  Écran hôte   http://192.168.1.34:2567
-  Joueurs      http://192.168.1.34:5173
+  Host screen  http://192.168.1.34:2567
+  Players      http://192.168.1.34:5173
   Code         AMPHORE-46
-  Plateau      archipel, 44 terres
-  Sièges       8
-  Journal      /chemin/vers/grandes-colonies/parties
+  Board        archipelago, 44 land tiles
+  Seats        8
+  Log          /path/to/grandes-colonies/parties
 ```
 
-**Ouvre l'écran hôte sur le PC** (la première adresse). Il affiche un QR code
-et l'adresse à donner aux invités, et se remplit à mesure qu'ils arrivent.
+**Open the host screen on the PC** (the first address). It shows a QR code and
+the address to hand to your guests, and fills up as they arrive.
 
-**Les invités scannent le QR code**, tapent leur prénom, et attendent. Ils
-peuvent arriver dans n'importe quel ordre.
+**Guests scan the QR code**, type their first name, and wait. They can arrive
+in any order.
 
-**Quand tout le monde est là, clique « Démarrer la partie »** sur l'écran
-hôte. Tu peux lancer sans attendre les retardataires : leurs sièges seront
-joués au minimum, et ils reprendront leur place en arrivant.
+**When everyone is in, click "Start the game"** on the host screen. You can
+start without waiting for latecomers: their seats will be played at the
+minimum, and they take their place back when they arrive.
 
-`Ctrl+C` arrête tout.
+`Ctrl+C` stops everything.
 
-### Pendant la soirée, sur l'écran hôte
+### During the night, on the host screen
 
-**Pause** suspend tout : le chronomètre, les tours joués d'office, et les
-commandes des joueurs. Un voile s'affiche sur l'écran de table pour que la
-pièce entière comprenne d'un regard pourquoi plus rien ne bouge. Le temps
-restant est rendu intact à la reprise — la pause ne vole ni n'offre de temps.
+**Pause** suspends everything: the timer, the turns played automatically, and
+player commands. A veil is drawn over the table screen so the whole room
+understands at a glance why nothing is moving anymore. The remaining time is
+handed back untouched when play resumes — pausing neither steals nor grants
+time.
 
-**+30 s** rallonge la phase en cours, quand la table négocie encore.
+**+30 s** extends the current phase, when the table is still negotiating.
 
-**Confier à un bot** apparaît sur la fiche d'un joueur parti depuis deux
-tours de table. Sans ce geste, la partie l'attend indéfiniment : son tour est
-joué au minimum, cycle après cycle, et sa position ne bouge plus. Le jeton de
-reconnexion du partant est invalidé — céder sa place, c'est la céder.
+**Hand over to a bot** appears on the card of a player who has been gone for
+two rounds of the table. Without this action, the game waits for them
+indefinitely: their turn is played at the minimum, cycle after cycle, and
+their position stops moving. The leaver's reconnection token is invalidated —
+giving up your seat means giving it up for good.
 
-### Mode maître de jeu
+### Game master mode
 
-Le bouton **Maître de jeu** ouvre un panneau sur l'écran hôte : donner ou
-retirer des ressources, forcer le prochain lancer, pousser la piste barbare ou
-déclencher l'invasion, couronner un joueur.
+The **Game master** button opens a panel on the host screen: give or take
+resources, force the next roll, push the barbarian track or trigger the
+invasion, crown a player.
 
-Il est là pour les playtests. Reproduire un bug qui n'apparaît qu'à quinze
-points demandait sinon de jouer quarante-cinq minutes à chaque tentative.
+It is there for playtests. Reproducing a bug that only shows up at fifteen
+points otherwise meant playing forty-five minutes on every attempt.
 
-Ces gestes ignorent la phase, le tour et les ressources — c'est leur raison
-d'être. Le garde-fou est ailleurs : le panneau vit sur le port de l'hôte, que
-les invités ne connaissent pas, et le WebSocket des joueurs refuse toute
-commande `GM_` quel que soit le client. Elles sont journalisées comme les
-autres : une partie truquée se rejoue truquée.
+These actions ignore the phase, the turn and resources — that is their whole
+point. The safeguard is elsewhere: the panel lives on the host's port, which
+guests do not know, and the players' WebSocket refuses any `GM_` command
+whatever the client. They are logged like the others: a rigged game replays
+rigged.
 
-### Mesurer une partie
+### Measuring a game
 
 ```bash
-npx tsx scripts/mesures.ts            # la partie la plus récente
+npx tsx scripts/mesures.ts            # the most recent game
 npx tsx scripts/mesures.ts parties/partie-xxx.jsonl
 ```
 
-Durée, cycles, cycle médian, échanges proposés et acceptés, annonces de
-construction, tours joués d'office, et par joueur : ses gestes et surtout sa
-**plus longue attente**. C'est celle-là qui compte — à douze joueurs on attend
-forcément, et un total d'inactivité ne dirait rien, alors que la plus longue
-attente dit le moment précis où quelqu'un a décroché.
+Duration, cycles, median cycle, trades proposed and accepted, build
+announcements, turns played automatically, and per player: their actions and
+above all their **longest wait**. That is the one that matters — with twelve
+players you are bound to wait, and a total idle time would say nothing,
+whereas the longest wait pinpoints the exact moment someone checked out.
 
-L'écran hôte sert les mêmes chiffres sur `/api/metrics`.
+The host screen serves the same figures on `/api/metrics`.
 
-Tout est relu depuis le journal, pas depuis des compteurs vivants : une
-question qu'on ne s'était pas posée pendant la partie — « combien de temps
-entre une annonce et sa résolution ? » — se répond après coup, sur les parties
-déjà jouées.
+Everything is replayed from the log, not from live counters: a question you
+had not thought to ask during the game — "how long between an announcement and
+its resolution?" — can be answered afterwards, on games already played.
 
-### Si le serveur tombe
+### If the server goes down
 
-Chaque partie écrit son journal dans `parties/` : la graine, la
-configuration, et la suite ordonnée des commandes, horodatées. Le moteur
-étant déterministe, cela suffit à rejouer la partie à l'identique.
+Every game writes its log to `parties/`: the seed, the configuration, and the
+ordered sequence of commands, timestamped. Since the engine is deterministic,
+that is enough to replay the game identically.
 
 ```bash
 REPRENDRE=parties/partie-1787966450972-0.jsonl npm run play
 ```
 
-La partie revient **en pause**, exactement où elle s'était arrêtée, noms des
-joueurs compris. Chacun rouvre le lien et reprend un siège — les jetons de
-reconnexion sont morts avec le processus précédent — puis l'hôte reprend.
+The game comes back **paused**, exactly where it stopped, player names
+included. Everyone reopens the link and takes a seat again — the reconnection
+tokens died with the previous process — then the host resumes.
 
-Le fichier est du JSON par lignes, ajouté au fil de l'eau : une coupure de
-courant n'en abîme que la dernière ligne, et la relecture l'ignore.
+The file is line-delimited JSON, appended as it goes: a power cut only damages
+its last line, and the replay ignores it.
 
 ### Options
 
-| Commande | Effet |
+| Command | Effect |
 |---|---|
-| `PLAYERS=8 npm run play` | Huit joueurs au lieu de douze |
-| `BOARD=disque npm run play` | Plateau en disque : soirée plus courte (≈ 2 h 20 au lieu de 3 h 30 à douze) |
-| `BOTS=11 npm run play` | Onze adversaires automatiques, une place pour toi |
-| `BOT_NIVEAU=1 npm run play` | Adversaires débutants, de 1 à 4 (3 par défaut) |
-| `BOT_CARACTERE=corsaire npm run play` | Tous du même caractère, au lieu du panachage |
-| `TERRES=72 npm run play` | Soixante-douze hexagones de terre. Réglable aussi depuis l'écran hôte, de 19 à 130, indépendamment du nombre de joueurs |
-| `REPRENDRE=parties/xxx.jsonl npm run play` | Reprend une partie interrompue là où elle s'était arrêtée |
-| `PARTIES= npm run play` | N'écrit aucun journal de partie |
+| `PLAYERS=8 npm run play` | Eight players instead of twelve |
+| `BOARD=disque npm run play` | Disc board: a shorter night (≈ 2 h 20 instead of 3 h 30 at twelve) |
+| `BOTS=11 npm run play` | Eleven automatic opponents, one seat for you |
+| `BOT_NIVEAU=1 npm run play` | Beginner opponents, from 1 to 4 (3 by default) |
+| `BOT_CARACTERE=corsaire npm run play` | All of the same character, instead of a mix |
+| `TERRES=72 npm run play` | Seventy-two land hexes. Also adjustable from the host screen, from 19 to 130, independently of the player count |
+| `REPRENDRE=parties/xxx.jsonl npm run play` | Resumes an interrupted game where it stopped |
+| `PARTIES= npm run play` | Writes no game log |
 
 ---
 
-## Les adversaires automatiques
+## The automatic opponents
 
-Ils passent par le même WebSocket que les joueurs et ne voient que ce qu'un
-joueur voit : leur vue publique et leur vue privée. **Ils ne peuvent pas
-tricher** — la géométrie du plateau et les inventaires de chacun sont
-publics, et c'est tout ce dont ils se servent.
+They go through the same WebSocket as the players and only see what a player
+sees: their public view and their private view. **They cannot cheat** — the
+board geometry and everyone's inventories are public, and that is all they
+use.
 
-Deux réglages, indépendants, se règlent depuis l'écran de l'hôte pendant que
-la pièce se remplit.
+Two settings, independent of each other, are adjusted from the host screen
+while the room fills up.
 
-### Le niveau — ce qu'ils savent faire
+### Level — what they know how to do
 
 | | | |
 |---|---|---|
-| **1** | Apprenti | Joue des coups légaux sans les peser. Se laisse battre sans rancune. |
-| **2** | Colon | Regarde les jetons avant de poser, construit par ordre de valeur, propose des échanges simples. |
-| **3** | Aguerri | Exploite ses ports, annonce hors de son tour, joue ses cartes à propos, adresse ses offres à qui peut les honorer. |
-| **4** | Stratège | Freine celui qui mène dès qu'il touche au but, dispute les emplacements, garde sa main sous la limite. |
+| **1** | Apprentice | Plays legal moves without weighing them. Loses without a grudge. |
+| **2** | Settler | Looks at the number tokens before placing, builds in order of value, proposes simple trades. |
+| **3** | Seasoned | Works its ports, announces out of turn, plays its cards to the point, addresses its offers to those who can honour them. |
+| **4** | Strategist | Slows the leader down the moment they near the goal, contests spots, keeps its hand under the limit. |
 
-L'échelle est mesurée, et elle n'est pas régulière. Sur quarante-huit parties
-à six joueurs, sièges alternés : le **colon bat l'apprenti quarante-trois
-fois à zéro**, et les anciens bots quarante-huit fois sur quarante-huit. Mais
-l'aguerri ne bat le colon que vingt fois à seize, et le stratège l'aguerri
-d'un cheveu. **Ce que le niveau 2 ajoute — peser les emplacements, viser un
-coût précis — vaut plus que tout ce qui vient après.**
+The scale is measured, and it is not even. Over forty-eight six-player games
+with alternating seats: the **settler beats the apprentice forty-three to
+zero**, and the old bots forty-eight out of forty-eight. But the seasoned bot
+only beats the settler twenty to sixteen, and the strategist beats the
+seasoned bot by a hair. **What level 2 adds — weighing spots, aiming for a
+precise cost — is worth more than everything that comes after.**
 
-Une table forte joue un peu plus longtemps : tout le monde avance, le plateau
-se remplit, et c'est la place — pas le talent — qui décide alors de la durée.
-À niveau élevé, prévois plus de terres ou baisse le seuil de victoire.
+A strong table plays a little longer: everyone advances, the board fills up,
+and it is space — not skill — that then decides the length. At a high level,
+plan for more land tiles or lower the victory threshold.
 
-### Le caractère — ce qu'ils veulent
+### Character — what they want
 
-Six, distribués à tour de rôle pour qu'aucun ne manque et qu'aucun ne soit là
-cinq fois. Le nom du bot le porte : **Ariane (négoce)** marchandera.
+Six of them, dealt in rotation so that none is missing and none shows up five
+times. The bot's name carries it: **Ariane (trade)** will haggle.
 
 | | |
 |---|---|
-| **Bâtisseur** | Prend le terrain tôt et le garde : colonies, routes, puis villes. |
-| **Marchand** | Propose sans arrêt, occupe les ports, et vit du cours plutôt que des dés. |
-| **Corsaire** | Chevaliers, voleur sur le meneur, et les emplacements qu'un autre convoitait. |
-| **Navigateur** | Quitte l'île centrale tôt, quitte à y laisser un tour d'avance. |
-| **Érudit** | Achète des cartes, vise le monument et la métropole, et attend son heure. |
-| **Prudent** | Ne garde jamais dix cartes, préfère une ville sûre à une colonie exposée. |
+| **Builder** | Takes ground early and holds it: settlements, roads, then cities. |
+| **Merchant** | Proposes non-stop, occupies the ports, and lives off the market rate rather than the dice. |
+| **Corsair** | Knights, the robber on the leader, and the spots someone else was eyeing. |
+| **Navigator** | Leaves the central island early, even at the cost of a turn's lead. |
+| **Scholar** | Buys cards, aims for the monument and the metropolis, and bides its time. |
+| **Cautious** | Never holds ten cards, prefers a safe city to an exposed settlement. |
 
-Ce n'est pas un décor : à trois parties de mesure, le marchand dépose 1382
-offres d'échange et le corsaire 395 ; le bâtisseur annonce quatre-vingts
-constructions hors de son tour, l'érudit aucune.
+It is not window dressing: over three measured games the merchant places 1382
+trade offers and the corsair 395; the builder announces eighty builds out of
+turn, the scholar none.
 
-Leur cervelle vit dans [`packages/sim/src/pilote/`](packages/sim/src/pilote/),
-et c'est **exactement la même** en simulation et en soirée : ce qu'on éprouve
-en dix mille parties est ce qui s'assoit à la table.
+Their brain lives in [`packages/sim/src/pilote/`](packages/sim/src/pilote/),
+and it is **exactly the same** in simulation and on game night: what gets
+tested over ten thousand games is what sits down at the table.
 
 ```bash
-npx tsx scripts/adversaires.ts     # duels par niveau, tables entières
+npx tsx scripts/adversaires.ts     # duels by level, whole tables
 ```
 
 ---
 
-## Pendant la partie
+## During the game
 
-Un **cycle** est le tour d'un joueur. Le joueur actif lance les dés et
-construit ; le joueur **associé** — trois places plus loin — joue en même
-temps que lui. Tout le monde produit à chaque lancer, échange pendant la
-fenêtre de commerce, et peut **annoncer une construction hors de son tour**,
-qui se résout en fin de cycle.
+A **cycle** is one player's turn. The active player rolls the dice and builds;
+the **associated** player — three seats away — plays at the same time. Everyone
+produces on every roll, trades during the trade window, and can **announce a
+build out of turn**, which resolves at the end of the cycle.
 
-La banque n'a pas de prix fixe : chaque ressource a un **cours** qui monte
-quand la table la brade et descend quand elle se raréfie. La bande de
-chiffres au-dessus du commerce le donne, port compris, avec une flèche quand
-il est sur le point de bouger.
+The bank has no fixed price: each resource has a **rate** that rises when the
+table dumps it and falls when it grows scarce. The strip of numbers above the
+trade area gives it, port included, with an arrow when it is about to move.
 
-Un joueur qui rafraîchit sa page **retrouve son siège**. Un joueur absent voit
-son tour joué au minimum plutôt que de bloquer la table.
+A player who refreshes their page **gets their seat back**. An absent player
+has their turn played at the minimum rather than blocking the table.
 
-**La documentation :** [docs/index.html](docs/index.html) — quinze pages qui
-expliquent le monde, les règles et les mécanismes du jeu. À ouvrir dans un
-navigateur, sans rien lancer.
+**The documentation:** [docs/index.html](docs/index.html) — fifteen pages
+explaining the world, the rules and the mechanics of the game (in French).
+Open it in a browser, without running anything.
 
-**Les règles seules, pour les joueurs :** [docs/regles.html](docs/regles.html)
-— le manuel en une page, à envoyer à tes invités avant la soirée.
+**The rules alone, for players:** [docs/regles.html](docs/regles.html) — the
+manual on one page, to send to your guests before the night (in French).
 
-Les décisions prises là où le jeu d'origine était ambigu sont consignées dans
-[RULES_CONTRACT.md](RULES_CONTRACT.md), qui fait foi sur le code.
+The decisions made where the original game was ambiguous are recorded in
+[RULES_CONTRACT.md](RULES_CONTRACT.md), which is authoritative over the code.
 
 ---
 
-## Si ça coince
+## If something is stuck
 
-**« La partie est complète » alors que personne n'a rejoint.**
-Un onglet Grandes Colonies resté ouvert reprend son siège à chaque
-redémarrage. Ferme les onglets qui traînent, ou relance le serveur.
+**"The game is full" when nobody has joined.**
+A Grandes Colonies tab left open takes its seat back on every restart. Close
+the stray tabs, or restart the server.
 
-**Un invité n'arrive pas à se connecter.**
-Vérifie qu'il est sur le même réseau Wi-Fi. L'adresse doit être celle en
-`192.168.x.x`, pas `localhost`.
+**A guest cannot connect.**
+Check that they are on the same Wi-Fi network. The address must be the
+`192.168.x.x` one, not `localhost`.
 
-**Le port est déjà pris.**
+**The port is already taken.**
 
 ```bash
 lsof -ti:2567 -ti:5173 | xargs kill -9
@@ -221,108 +220,104 @@ lsof -ti:2567 -ti:5173 | xargs kill -9
 
 ---
 
-## Développement
+## Development
 
 ```bash
 npm test          # 512 tests
-npm run typecheck # les six paquets
-npm run assets    # met les images générées à la portée du client
+npm run typecheck # the six packages
+npm run assets    # brings the generated images within the client's reach
 
-node docs/tisser.mjs        # réassemble la documentation depuis docs/_pages/
+node docs/tisser.mjs        # reassembles the documentation from docs/_pages/
 
-npx tsx scripts/marche.ts       # mesure le marché contre un taux figé
-npx tsx scripts/ports.ts        # mesure les ports à contrat contre une côte sans eux
-npx tsx scripts/adversaires.ts  # départage les quatre niveaux d'adversaires
+npx tsx scripts/marche.ts       # measures the market against a frozen rate
+npx tsx scripts/ports.ts        # measures contract ports against a coastline without them
+npx tsx scripts/adversaires.ts  # ranks the four opponent levels
 ```
 
-Le plateau est rendu en Three.js, dans
-[`packages/client/src/ui/board3d/`](packages/client/src/ui/board3d/) : les
-tuiles sont des prismes hexagonaux dont la surface est sculptée — la montagne
-a un pic, la colline une croupe, le champ ondule à peine — la mer est une
-nappe animée, et les pièces sont des volumes. Le relief est décrit terrain
-par terrain dans
-[`board3d/relief.ts`](packages/client/src/ui/board3d/relief.ts), sous une
-contrainte qui gouverne tout le fichier : **le bord d'une tuile est plat et
-presque au même niveau que ses voisines**, parce que les routes courent sur
-les arêtes et les colonies sur les sommets. Tout le volume est au centre. Tout est instancié —
-une partie à douze tient en une trentaine d'appels de dessin, ce qui laisse
-un téléphone d'entrée de gamme à soixante images par seconde. Un doigt
-déplace la carte, deux doigts zooment et la font pivoter, un tap construit —
-et trois boutons au bord droit font la même chose sans geste, parce qu'un
-pincement raté laissait le joueur sans recours.
+The board is rendered in Three.js, in
+[`packages/client/src/ui/board3d/`](packages/client/src/ui/board3d/): the tiles
+are hexagonal prisms whose surface is sculpted — the mountain has a peak, the
+hill a ridge, the field barely ripples — the sea is an animated sheet, and the
+pieces are solids. The relief is described terrain by terrain in
+[`board3d/relief.ts`](packages/client/src/ui/board3d/relief.ts), under a
+constraint that governs the whole file: **a tile's edge is flat and almost at
+the same level as its neighbours**, because roads run along the edges and
+settlements sit on the corners. All the volume is at the centre. Everything is
+instanced — a twelve-player game fits in about thirty draw calls, which leaves
+a low-end phone at sixty frames per second. One finger moves the map, two
+fingers zoom and rotate it, a tap builds — and three buttons on the right edge
+do the same thing without a gesture, because a missed pinch left the player
+with no recourse.
 
-Le cadrage tient **les terres, pas la mer**, et couche le plateau dans le sens
-où l'écran est long : sur un téléphone tenu debout, tenir la bordure de mer de
-l'archipel reléguait les îles au tiers de la hauteur. Les deux orientations
-sont essayées et c'est **la surface couverte** qui tranche, pas la distance
-atteinte — couché en travers, un archipel laisse approcher davantage mais ne
-forme plus qu'un bandeau.
+The framing holds **the land, not the sea**, and lays the board along the
+screen's long axis: on a phone held upright, holding the archipelago's sea
+border pushed the islands down to a third of the height. Both orientations are
+tried and it is **the area covered** that decides, not the distance reached —
+laid crosswise, an archipelago lets you get closer but is now just a band.
 
-Ce qui bouge répond à une question que l'écran posait sans y répondre. Une
-pièce posée **tombe du ciel** et soulève un peu de poussière : à douze
-joueurs, où l'on bâtit hors de son tour, une route apparue sans bruit n'était
-pas remarquée. Un hexagone qui produit fait **sauter son jeton**, et les
-cartes gagnées **volent jusqu'à leur pile** dans la barre du bas : le montant
-vient du serveur, le trajet dit d'où il vient. Les courbes sont réunies dans
-[`board3d/chute.ts`](packages/client/src/ui/board3d/chute.ts), et toutes se
-taisent sous `prefers-reduced-motion`.
+What moves answers a question the screen was asking without answering. A piece
+that is placed **falls from the sky** and kicks up a little dust: with twelve
+players, where you build out of turn, a road that appeared silently went
+unnoticed. A hex that produces makes **its token jump**, and the cards won
+**fly to their pile** in the bottom bar: the amount comes from the server, the
+path says where it comes from. The curves are gathered in
+[`board3d/chute.ts`](packages/client/src/ui/board3d/chute.ts), and all of them
+fall silent under `prefers-reduced-motion`.
 
-Le **lancer se joue sur le plateau**. Le bouton reste où il était — c'est
-lui qui envoie l'ordre au serveur — mais les deux dés tombent du ciel au
-centre de la carte, roulent, se heurtent, s'arrêtent, et le nombre sorti
-monte au-dessus d'eux en grand, le temps qu'on le lise depuis l'autre bout de
-la pièce.
+The **roll is played on the board**. The button stays where it was — it is the
+one that sends the order to the server — but the two dice fall from the sky at
+the centre of the map, roll, collide, stop, and the number rolled rises above
+them large, long enough to read from across the room.
 
-Ils tombent pour de bon : `board3d/physique.ts` est un petit solveur de corps
-rigide — pesanteur, contacts par les huit coins, rebond, frottement de
-Coulomb — et non une courbe déguisée. **Comment un dé qui tombe librement
-arrive-t-il sur le nombre que le serveur a tiré ?** Par les vingt-quatre
-symétries du cube. On simule une chute honnête sans savoir ce qu'elle
-donnera, on regarde quelle face s'est arrêtée en haut, puis on fait tourner
-la *peinture* du dé — pas sa trajectoire — pour que le nombre voulu soit
-celui qui regarde le ciel. Mêmes chocs, mêmes rebonds, même arrêt : le dé n'a
-pas été dévié d'un millimètre, il a été repeint. Le client ne tire jamais
-rien ; le moteur reste seul juge, et l'image ne peut pas mentir sur l'état du
-jeu.
+They fall for real: `board3d/physique.ts` is a small rigid-body solver —
+gravity, contacts through the eight corners, bounce, Coulomb friction — and
+not a disguised curve. **How does a freely falling die land on the number the
+server drew?** Through the cube's twenty-four symmetries. We simulate an
+honest fall without knowing what it will give, look at which face stopped
+facing up, then rotate the die's *paint* — not its trajectory — so that the
+wanted number is the one looking at the sky. Same impacts, same bounces, same
+stop: the die was not deflected by a millimetre, it was repainted. The client
+never draws anything; the engine remains the sole judge, and the image cannot
+lie about the state of the game.
 
-Le lancer entier est calculé au lâcher, en une fraction de milliseconde, puis
-rejoué image par image — ce qui permet de connaître la face avant de
-l'afficher, de savoir où poser le total, et de ne rien dérégler quand une
-image se perd. Le calcul n'emploie que les quatre opérations et une racine
-carrée, exactes au bit près : à graine égale — cycle, joueur actif, deux
-nombres — les douze écrans calculent **le même** lancer, ce qui est la moitié
-de l'intérêt de le montrer sur la table. Le reste de l'interface se règle sur
-lui : le bandeau ne dit le total qu'une fois les dés posés, les jetons ne
-sautent qu'après, et la défausse d'un sept attend son tour.
+The whole roll is computed at release, in a fraction of a millisecond, then
+replayed frame by frame — which lets us know the face before showing it, know
+where to place the total, and throw nothing off when a frame is dropped. The
+computation uses only the four operations and a square root, exact to the bit:
+at equal seed — cycle, active player, two numbers — the twelve screens compute
+**the same** roll, which is half the point of showing it on the table. The
+rest of the interface takes its cue from it: the banner only gives the total
+once the dice have settled, the tokens only jump after that, and a seven's
+discard waits its turn.
 
-Les images vivent dans `assets/generated` et le client les sert depuis son
-dossier `public`, qui n'est pas versionné : `npm run play` fait la copie, et
-`npm run assets` la refait à la demande. Sans elle, le plateau s'affiche sans
-ses terrains.
+The images live in `assets/generated` and the client serves them from its
+`public` folder, which is not versioned: `npm run play` makes the copy, and
+`npm run assets` remakes it on demand. Without it, the board displays without
+its terrains.
 
-| Paquet | Rôle |
+| Package | Role |
 |---|---|
-| `packages/engine` | Les règles. Ne dépend ni du réseau, ni du navigateur. |
-| `packages/protocol` | Les vues publique et privée, et la sérialisation des événements. |
-| `packages/server` | Sièges, chronomètres, reconnexion, transport WebSocket. |
-| `packages/client` | L'écran des joueurs (React), et le plateau en 3D. |
-| `packages/sim` | Les adversaires automatiques, et la simulation qui les mesure. |
-| `apps/host` | L'écran de l'hôte : QR code et démarrage. |
+| `packages/engine` | The rules. Depends on neither the network nor the browser. |
+| `packages/protocol` | The public and private views, and event serialization. |
+| `packages/server` | Seats, timers, reconnection, WebSocket transport. |
+| `packages/client` | The players' screen (React), and the 3D board. |
+| `packages/sim` | The automatic opponents, and the simulation that measures them. |
+| `apps/host` | The host's screen: QR code and start. |
 
-Le **marché dynamique** du §10 est branché : le taux bancaire n'est plus la
-constante 4:1 mais un cours par ressource, qui bouge d'une carte toutes les
-quatre transactions et que les ports remisent au lieu de le remplacer.
+The **dynamic market** of §10 is wired in: the bank rate is no longer the
+constant 4:1 but a per-resource rate, which moves by one step every four
+transactions and which ports discount instead of replacing.
 
-Deux **ports à contrat** du §11 s'y ajoutent, semés une fois par plateau : le
-port minier fond 2 minerai en 1 or, le port commercial convertit 2 ressources
-de natures différentes en 1 au choix. Leurs prix sont fixes — le marché ne
-les touche pas, ce qui les rend précieux exactement quand il s'emballe.
+Two **contract ports** from §11 are added, sown once per board: the mining
+port smelts 2 ore into 1 gold, the trading port converts 2 resources of
+different kinds into 1 of your choice. Their prices are fixed — the market
+does not touch them, which makes them valuable exactly when it runs hot.
 
-Les décisions sont aux §10 et §11 de
-[RULES_CONTRACT.md](RULES_CONTRACT.md), les mesures aux sixième et septième
-tours de [SIMULATION_FINDINGS.md](SIMULATION_FINDINGS.md).
+The decisions are in §10 and §11 of
+[RULES_CONTRACT.md](RULES_CONTRACT.md), the measurements in the sixth and
+seventh rounds of [SIMULATION_FINDINGS.md](SIMULATION_FINDINGS.md).
 
-Ce qui reste à faire est recensé dans
-[SIMULATION_FINDINGS.md](SIMULATION_FINDINGS.md) — notamment les barbares,
-l'Influence — dont dépend le port royal du §11 —, les contrats et les
-hexagones d'exploration face cachée, qui ne sont pas implémentés.
+What is left to do is listed in
+[SIMULATION_FINDINGS.md](SIMULATION_FINDINGS.md) — notably the barbarians,
+Influence — on which the royal port of §11 depends — the contracts and the
+face-down exploration hexes, which are not implemented.

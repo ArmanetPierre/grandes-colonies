@@ -1,322 +1,322 @@
-# Spécification des écrans — Grandes Colonies
+# Screen specification — Grandes Colonies
 
-> Brief destiné au **designer UI/UX**.
+> Brief for the **UI/UX designer**.
 >
-> Décrit le contexte, les contraintes, l'inventaire des écrans et le détail de chacun.
+> Describes the context, the constraints, the inventory of screens and the detail of each one.
 >
-> Projet : [PLAN_DE_DEVELOPPEMENT.md](PLAN_DE_DEVELOPPEMENT.md) · Assets : [SPEC_ASSETS_IMAGES.md](SPEC_ASSETS_IMAGES.md) · Règles : [Catan_Grandes_Colonies_8-12_joueurs.md](Catan_Grandes_Colonies_8-12_joueurs.md)
+> Project: [PLAN_DE_DEVELOPPEMENT.md](PLAN_DE_DEVELOPPEMENT.md) · Assets: [SPEC_ASSETS_IMAGES.md](SPEC_ASSETS_IMAGES.md) · Rules: [Catan_Grandes_Colonies_8-12_joueurs.md](Catan_Grandes_Colonies_8-12_joueurs.md)
 
 ---
 
-## 1. Le projet en une page
+## 1. The project on one page
 
-**Grandes Colonies** est un jeu de plateau numérique inspiré de Catan, conçu pour **8 à 12 joueurs**. Il se joue en **réseau local** : le serveur tourne sur le PC de l'hôte, chaque joueur se connecte depuis le navigateur de son propre appareil. **Tous les joueurs sont physiquement dans la même pièce.**
+**Grandes Colonies** is a digital board game inspired by Catan, designed for **8 to 12 players**. It is played over a **local network**: the server runs on the host's PC, each player connects from the browser on their own device. **All players are physically in the same room.**
 
-### Ce qui rend ce jeu différent de tout Catan numérique existant
+### What makes this game different from any existing digital Catan
 
-Un Catan classique est strictement tour par tour : un joueur agit, onze attendent. À 12 joueurs, cela produirait 90 % de temps mort. Le design a donc été conçu pour que **presque tout le monde ait quelque chose à faire en permanence** :
+A classic Catan is strictly turn-based: one player acts, eleven wait. At 12 players, that would produce 90 % dead time. The design was therefore built so that **almost everyone has something to do at all times**:
 
-- La partie est découpée en **cycles**. À chaque cycle, un joueur est **actif** (il fait tout : commercer, construire, acheter) et un autre est **associé** (il peut construire et commercer avec la banque, mais pas négocier avec les autres joueurs).
-- Chaque cycle contient une **fenêtre de commerce libre de 30 secondes** pendant laquelle *tous* les joueurs peuvent négocier entre eux.
-- Les joueurs peuvent **annoncer une construction hors de leur tour**. Si deux joueurs visent le même emplacement, une règle de priorité tranche — et en cas d'égalité, l'emplacement est **gelé** pour le cycle.
-- Des **timers serveur** rythment le tout : environ 90 s pour le tour actif, 30 s pour le commerce.
+- The game is split into **cycles**. On each cycle, one player is **active** (they do everything: trade, build, buy) and another is **associated** (they can build and trade with the bank, but not negotiate with the other players).
+- Each cycle contains a **free 30-second trade window** during which *all* players can negotiate with each other.
+- Players can **announce a build out of turn**. If two players aim for the same spot, a priority rule decides — and in a tie, the spot is **frozen** for the cycle.
+- **Server timers** pace the whole thing: about 90 s for the active turn, 30 s for trade.
 
-### La conséquence pour le design
+### The consequence for design
 
-> Un joueur n'est jamais simplement « en attente ». Il est en permanence dans l'un de quatre états : **actif**, **associé**, **en fenêtre de commerce**, ou **passif mais autorisé à annoncer une construction**.
+> A player is never simply "waiting". They are at all times in one of four states: **active**, **associated**, **in the trade window**, or **passive but allowed to announce a build**.
 
-L'enjeu central de l'interface est donc de répondre en un coup d'œil, à tout moment, à la question : **« qu'est-ce que je peux faire, là, maintenant, et combien de temps me reste-t-il ? »**
+The central challenge of the interface is therefore to answer at a glance, at any moment, the question: **"what can I do, right here, right now, and how much time do I have left?"**
 
-C'est le critère selon lequel toute proposition de design doit être jugée.
+That is the criterion against which every design proposal must be judged.
 
 ---
 
-## 2. Contraintes transversales
+## 2. Cross-cutting constraints
 
-### 2.1 Appareils
+### 2.1 Devices
 
-Chacun joue sur ce qu'il a sous la main. Aucun appareil n'est majoritaire.
+Everyone plays on whatever they have to hand. No device is in the majority.
 
-| Cible | Résolution de référence | Importance |
+| Target | Reference resolution | Importance |
 |---|---|---|
-| Ordinateur portable | 1440 × 900 | **Principale** |
-| Ordinateur de bureau | 1920 × 1080 | Élevée |
-| Tablette paysage | 1024 × 768 | Élevée |
-| Téléphone portrait | 390 × 844 | **À traiter sérieusement** |
+| Laptop | 1440 × 900 | **Primary** |
+| Desktop | 1920 × 1080 | High |
+| Landscape tablet | 1024 × 768 | High |
+| Portrait phone | 390 × 844 | **To be taken seriously** |
 
-Le téléphone est le vrai défi : il faut y afficher un plateau de 50 hexagones, 11 adversaires et un panneau de commerce. Une réorganisation complète de la mise en page y est attendue, pas un simple redimensionnement.
+The phone is the real challenge: it must show a 50-hex board, 11 opponents and a trade panel. A full re-layout is expected there, not a simple resize.
 
-### 2.2 Identité visuelle des 12 joueurs
+### 2.2 Visual identity of the 12 players
 
-Contrainte forte et structurante. Douze couleurs réellement distinguables n'existent pas — surtout appliquées à une route de quelques pixels de large sur un plateau dézoomé, et surtout pour un joueur daltonien.
+A strong, structuring constraint. Twelve genuinely distinguishable colours do not exist — especially applied to a road a few pixels wide on a zoomed-out board, and especially for a colour-blind player.
 
-**La solution attendue est redondante** : chaque joueur reçoit une **couleur**, **plus** une **forme** d'avatar, **plus** un **motif** de remplissage (rayures, points, damier, chevrons…). Un joueur doit rester identifiable si l'on retire mentalement la couleur.
+**The expected solution is redundant**: each player gets a **colour**, **plus** an avatar **shape**, **plus** a fill **pattern** (stripes, dots, checkerboard, chevrons…). A player must stay identifiable if you mentally remove the colour.
 
-Livrable attendu : la palette des 12 identités, validée en simulation de daltonisme (deutéranopie, protanopie, tritanopie).
+Expected deliverable: the palette of the 12 identities, validated in colour-blindness simulation (deuteranopia, protanopia, tritanopia).
 
-### 2.3 Lisibilité à distance
+### 2.3 Readability at a distance
 
-Les joueurs sont dans la même pièce et regarderont l'écran du voisin, et éventuellement un écran partagé. **Le timer et la phase en cours doivent être lisibles à deux mètres.**
+Players are in the same room and will look at their neighbour's screen, and possibly a shared screen. **The timer and the current phase must be readable from two metres.**
 
-### 2.4 États à prévoir pour chaque écran
+### 2.4 States to plan for each screen
 
-Un écran n'est pas un état unique. Pour chaque maquette, prévoir :
+A screen is not a single state. For each mockup, plan for:
 
 ```text
-☐ état nominal
-☐ joueur déconnecté / en reconnexion
-☐ partie en pause
-☐ timer sous 10 secondes (alerte)
-☐ action impossible (et pourquoi)
-☐ limite de main atteinte
-☐ chargement / attente serveur
+☐ nominal state
+☐ player disconnected / reconnecting
+☐ game paused
+☐ timer under 10 seconds (alert)
+☐ action impossible (and why)
+☐ hand limit reached
+☐ loading / waiting on the server
 ```
 
-### 2.5 Langue
+### 2.5 Language
 
-Interface en **français**. Prévoir des libellés qui supportent une traduction ultérieure (pas de mise en page dépendant de la longueur exacte des mots).
+Interface in **French**. Plan for labels that support later translation (no layout that depends on the exact length of words).
 
 ---
 
-## 3. Inventaire des écrans
+## 3. Inventory of screens
 
-| # | Écran | Utilisateur | Complexité | Priorité |
+| # | Screen | User | Complexity | Priority |
 |---|---|---|---|---|
-| 1 | Rejoindre | Joueur | Faible | P0 |
-| 2 | Lobby | Joueur | Faible | P0 |
-| 3 | Console hôte | Hôte | Moyenne | P0 |
-| 4 | **Jeu** | Joueur | **Très élevée** | **P0** |
-| 5 | Fin de partie | Joueur | Faible | P0 |
-| 6 | Panneau maître de jeu | Hôte | Moyenne (esthétique non prioritaire) | P0 |
-| 7 | Tableau de bord métriques | Hôte | Moyenne | P2 |
+| 1 | Join | Player | Low | P0 |
+| 2 | Lobby | Player | Low | P0 |
+| 3 | Host console | Host | Medium | P0 |
+| 4 | **Game** | Player | **Very high** | **P0** |
+| 5 | End of game | Player | Low | P0 |
+| 6 | Game master panel | Host | Medium (aesthetics not a priority) | P0 |
+| 7 | Metrics dashboard | Host | Medium | P2 |
 
-**L'écran 4 représente environ 90 % de la charge de design.** Les écrans 1, 2 et 5 sont volontairement simples et peuvent réutiliser un même gabarit.
-
----
-
-## 4. Écrans 1, 2, 3 et 5 — les écrans simples
-
-### Écran 1 — Rejoindre
-
-**Objectif** : entrer dans la partie en moins de 15 secondes, souvent depuis un téléphone scanné au QR code.
-
-**Contenu** : champ pseudo, sélection de couleur/identité parmi celles encore libres, code de partie (pré-rempli si arrivée par QR code), bouton Rejoindre.
-
-**Points d'attention** : la sélection d'identité doit déjà montrer la redondance couleur + forme + motif (§2.2). Les identités déjà prises apparaissent désactivées, avec le nom de celui qui l'a choisie.
-
-### Écran 2 — Lobby
-
-**Objectif** : attendre le démarrage en sachant qui est là.
-
-**Contenu** : liste des joueurs connectés avec leur identité et leur statut (connecté / prêt), nombre de joueurs actuel sur le minimum requis, résumé de la configuration de la partie (nombre de PV pour gagner, durée des tours, modules activés), bouton Prêt, indication que seul l'hôte peut lancer.
-
-**Points d'attention** : à 12 joueurs, la liste doit rester lisible sur téléphone. C'est aussi le premier endroit où le joueur découvre les 12 identités côte à côte — bon terrain de validation de la palette.
-
-### Écran 3 — Console hôte
-
-**Objectif** : permettre à l'hôte d'ouvrir la partie et d'y faire entrer 11 personnes sans assistance technique.
-
-**Contenu** :
-- **Adresse LAN en très gros** (ex. `192.168.1.42:3000`) et **QR code** — c'est le contenu principal de l'écran, il sera montré à la ronde ou projeté ;
-- code de partie mémorisable (ex. `ORANGE-7`) ;
-- liste des sièges avec leur occupant et son état de connexion ;
-- réglages de partie : nombre de PV, durée du tour actif, durée du commerce, limite de main, modules activés (exploration, or, objectifs secrets…) ;
-- boutons Démarrer, Mettre en pause, Sauvegarder.
-
-**Points d'attention** : cet écran est utilisé debout, en montrant l'écran aux autres. Hiérarchie très marquée : le QR code et l'adresse écrasent tout le reste. Les réglages sont secondaires et peuvent être repliés.
-
-### Écran 5 — Fin de partie
-
-**Objectif** : comprendre qui a gagné et pourquoi, et donner envie de rejouer.
-
-**Contenu** : classement final, détail des points par source (colonies, villes, objectifs secrets révélés, plus long réseau, puissance militaire…), quelques statistiques marquantes de la partie (le plus gros commerçant, le plus grand bâtisseur, le plus malchanceux aux dés), boutons Rejouer et Quitter.
-
-**Points d'attention** : les objectifs secrets se révèlent ici — c'est un moment de jeu, il mérite une mise en scène. Les statistiques proviennent des métriques déjà collectées (§13 du plan).
+**Screen 4 represents about 90 % of the design load.** Screens 1, 2 and 5 are deliberately simple and can reuse a single template.
 
 ---
 
-## 5. Écran 4 — L'écran de jeu
+## 4. Screens 1, 2, 3 and 5 — the simple screens
 
-### 5.1 Mise en page proposée (à challenger)
+### Screen 1 — Join
+
+**Goal**: get into the game in under 15 seconds, often from a phone that scanned the QR code.
+
+**Content**: nickname field, colour/identity selection among those still free, game code (pre-filled if arriving via QR code), Join button.
+
+**Points of attention**: the identity selection must already show the colour + shape + pattern redundancy (§2.2). Identities already taken appear disabled, with the name of whoever chose them.
+
+### Screen 2 — Lobby
+
+**Goal**: wait for the start while knowing who is there.
+
+**Content**: list of connected players with their identity and status (connected / ready), current player count against the minimum required, summary of the game configuration (VP to win, turn duration, enabled modules), Ready button, note that only the host can launch.
+
+**Points of attention**: at 12 players, the list must stay readable on a phone. It is also the first place a player sees the 12 identities side by side — good ground for validating the palette.
+
+### Screen 3 — Host console
+
+**Goal**: let the host open the game and bring 11 people into it without technical assistance.
+
+**Content**:
+- **LAN address, very large** (e.g. `192.168.1.42:3000`) and **QR code** — this is the main content of the screen, it will be shown around or projected;
+- a memorable game code (e.g. `ORANGE-7`);
+- list of seats with their occupant and connection state;
+- game settings: VP count, active turn duration, trade duration, hand limit, enabled modules (exploration, gold, secret objectives…);
+- Start, Pause, Save buttons.
+
+**Points of attention**: this screen is used standing up, showing it to others. Very marked hierarchy: the QR code and the address crush everything else. The settings are secondary and can be collapsed.
+
+### Screen 5 — End of game
+
+**Goal**: understand who won and why, and make people want to play again.
+
+**Content**: final ranking, breakdown of points by source (settlements, cities, revealed secret objectives, longest network, military strength…), a few striking game statistics (the biggest trader, the biggest builder, the unluckiest with the dice), Play again and Quit buttons.
+
+**Points of attention**: secret objectives are revealed here — it is a moment of play, it deserves a staging. The statistics come from the metrics already collected (§13 of the plan).
+
+---
+
+## 5. Screen 4 — The game screen
+
+### 5.1 Proposed layout (to be challenged)
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│ ① Cycle 12 · Phase Commerce · Actif: Léa · Associé: Marc    │
+│ ① Cycle 12 · Phase Trade · Active: Léa · Associated: Marc   │
 │                                          ⏱ 00:23            │
 ├──────────┬──────────────────────────────────┬───────────────┤
 │          │                                  │               │
 │    ③     │                                  │      ⑥        │
-│ Joueurs  │              ②                   │   Commerce    │
-│   (12)   │           PLATEAU                │               │
+│ Players  │              ②                   │     Trade     │
+│   (12)   │            BOARD                 │               │
 │          │                                  ├───────────────┤
 │          │                                  │      ⑦        │
-│          │                                  │   Journal     │
+│          │                                  │      Log      │
 ├──────────┴──────────────────────────────────┴───────────────┤
-│ ④ Ma main : 🌲3 🧱2 🌾1 🐑4 ⛏️0   (9/13)                     │
-│ ⑤ [Construire ▾] [Carte dev] [Banque] [Fin d'action]        │
+│ ④ My hand: 🌲3 🧱2 🌾1 🐑4 ⛏️0   (9/13)                      │
+│ ⑤ [Build ▾] [Dev card] [Bank] [End action]                  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-Cette disposition est un **point de départ**, pas une contrainte. Elle est là pour donner une base de discussion et rendre les zones concrètes.
+This layout is a **starting point**, not a constraint. It is there to give a basis for discussion and make the zones concrete.
 
-### 5.2 Zone ① — Barre de statut
+### 5.2 Zone ① — Status bar
 
-La zone la plus importante de l'écran après le plateau.
+The most important zone of the screen after the board.
 
-**Contenu** : numéro du cycle, phase en cours (Production / Tour actif / Tour associé / Commerce libre), joueur actif, joueur associé, **timer**, et surtout **l'action attendue de moi**.
+**Content**: cycle number, current phase (Production / Active turn / Associated turn / Free trade), active player, associated player, **timer**, and above all **the action expected of me**.
 
-**Le point critique** : ce dernier élément — « c'est à toi de jouer », « tu peux construire », « défausse tes cartes », « tu peux seulement regarder » — est ce qui évite qu'un joueur rate son tour. Il doit être impossible à manquer, et se distinguer nettement de l'information sur les autres.
+**The critical point**: that last element — "it's your turn", "you can build", "discard your cards", "you can only watch" — is what stops a player missing their turn. It must be impossible to miss, and stand out clearly from information about the others.
 
-Le timer doit changer d'apparence sous 10 secondes, sans devenir agressif au point de stresser inutilement (le retour de playtest sur ce point est explicitement prévu).
+The timer must change appearance under 10 seconds, without becoming so aggressive that it needlessly stresses people (playtest feedback on this point is explicitly planned).
 
-### 5.3 Zone ② — Plateau
+### 5.3 Zone ② — Board
 
-**Contenu** : 44 à 52 hexagones de terrain, jetons numérotés, ports, routes / colonies / villes / comptoirs de 12 joueurs, un ou deux voleurs, tuiles inexplorées, emplacements gelés, et **les intentions de construction en attente**.
+**Content**: 44 to 52 terrain hexes, numbered tokens, ports, roads / settlements / cities / trading posts of 12 players, one or two robbers, unexplored tiles, frozen spots, and **pending build intents**.
 
-**Interactions** : zoom, pan, sélection d'un emplacement constructible, survol/tap d'une tuile pour voir qui produit dessus.
+**Interactions**: zoom, pan, selecting a buildable spot, hovering/tapping a tile to see who produces on it.
 
-**Trois difficultés spécifiques** :
+**Three specific difficulties**:
 
-1. **Densité.** Cinquante hexagones et les constructions de douze joueurs sur un écran de portable. Quelle taille minimale de tuile reste lisible ? Faut-il un mode « vue d'ensemble » distinct d'un mode « vue rapprochée » ?
+1. **Density.** Fifty hexes and the builds of twelve players on a phone screen. What minimum tile size stays readable? Do we need an "overview" mode distinct from a "close-up" mode?
 
-2. **Les intentions de construction.** C'est un besoin d'affichage qui n'existe dans aucun jeu de plateau numérique connu : il faut montrer qu'un joueur a *annoncé* une construction, qu'elle n'est pas encore résolue, et qu'un autre joueur la conteste. Puis montrer le résultat : construction validée, ou **emplacement gelé** jusqu'à la fin du cycle. Comment rendre cela compréhensible sans surcharger le plateau ?
+2. **The build intents.** This is a display need that exists in no known digital board game: we must show that a player has *announced* a build, that it is not yet resolved, and that another player is contesting it. Then show the result: build validated, or **spot frozen** until the end of the cycle. How to make this understandable without overloading the board?
 
-3. **Le cadrage.** Quand l'action se déroule à l'autre bout de la carte, faut-il recadrer automatiquement, ou signaler la direction sans bouger la vue ? Un recadrage automatique pendant qu'un joueur compose un échange serait pénible.
+3. **Framing.** When the action takes place at the other end of the map, should we re-frame automatically, or signal the direction without moving the view? An automatic re-frame while a player is composing a trade would be painful.
 
-> **Tranché le 30/08/2026 — le cadrage d'ouverture.** Il tient **les terres et les ports, pas la mer** : l'archipel pose une large bordure d'eau, et la tenir reléguait les îles au tiers de la hauteur sur un téléphone. Il **couche le plateau dans le sens où l'écran est long**, en essayant les deux orientations et en gardant celle qui **couvre le plus de surface** — et non celle qui laisse approcher le plus, qui est le pire des deux : en travers, un archipel laisse s'approcher davantage mais ne forme plus qu'un bandeau. Mesuré sur le plateau à douze : 27,6 % de l'écran contre 19,8 %.
+> **Settled on 2026-08-30 — the opening frame.** It holds **the land and the ports, not the sea**: the archipelago sets a wide border of water, and holding it pushed the islands down to a third of the height on a phone. It **lays the board along the screen's long axis**, trying both orientations and keeping the one that **covers the most area** — and not the one that lets you get closest, which is the worse of the two: laid crosswise, an archipelago lets you get closer but is now just a band. Measured on the twelve-player board: 27.6 % of the screen versus 19.8 %.
 >
-> Le recadrage automatique en cours de partie reste écarté. Le joueur dispose de **trois commandes explicites** — plus, moins, « Tout voir » — au bord droit, à portée du pouce ; « Tout voir » n'apparaît que lorsqu'il y a quelque chose à défaire.
+> Automatic re-framing during the game stays ruled out. The player has **three explicit controls** — plus, minus, "Show all" — on the right edge, within thumb reach; "Show all" only appears when there is something to undo.
 >
-> **Reste ouvert** : cadrer d'emblée sur l'île centrale, où la mise en place a lieu (contrat §9), remplirait bien mieux l'écran mais cacherait les îles secondaires au démarrage. C'est un arbitrage de jeu, pas de cadrage.
+> **Still open**: framing straight onto the central island, where setup happens (contract §9), would fill the screen far better but would hide the secondary islands at start. That is a gameplay trade-off, not a framing one.
 
-### 5.4 Zone ③ — Les 12 joueurs
+### 5.4 Zone ③ — The 12 players
 
-**Contenu affiché en permanence, par joueur** : identité (couleur + forme + motif), pseudo, PV publics, nombre de cartes en main, Influence publique, statut (actif / associé / passif), état de connexion.
+**Content shown at all times, per player**: identity (colour + shape + pattern), nickname, public VP, number of cards in hand, public Influence, status (active / associated / passive), connection state.
 
-**Contenu au clic** : détail — bâtiments, ports contrôlés, cartes développement jouées, contrats en cours.
+**Content on click**: detail — buildings, controlled ports, development cards played, contracts in progress.
 
-**Points d'attention** :
-- **Ne pas reposer sur le survol** : la moitié des joueurs sont sur tablette ou téléphone, où le survol n'existe pas. Clic/tap obligatoire, survol en bonus.
-- Le joueur actif et le joueur associé doivent ressortir immédiatement dans la liste.
-- Sur téléphone, comment donner accès à 11 adversaires sans occuper l'écran ? Barre horizontale scrollable, tiroir, vue dédiée ?
+**Points of attention**:
+- **Do not rely on hover**: half the players are on tablet or phone, where hover does not exist. Click/tap mandatory, hover as a bonus.
+- The active player and the associated player must stand out immediately in the list.
+- On a phone, how do we give access to 11 opponents without taking over the screen? Scrollable horizontal bar, drawer, dedicated view?
 
-> **Tranché le 30/08/2026 — ni l'un ni l'autre : les douze tiennent sur une ligne.** La barre défilante avait été essayée et elle échoue : soixante-dix pixels par joueur sur un écran qui en offre trois cent soixante-quinze donnent trois joueurs visibles sur douze, et à douze, savoir qui est où *est* le jeu. Sur écran étroit le **nom cède la place à la couleur** — c'est déjà l'identité que le §2.2 donne aux douze joueurs — et il ne reste que la pastille et les points. Un toucher ouvre la fiche complète, avec les noms.
+> **Settled on 2026-08-30 — neither: the twelve fit on one line.** The scrolling bar was tried and it fails: seventy pixels per player on a screen that offers three hundred and seventy-five gives three players visible out of twelve, and at twelve, knowing who is where *is* the game. On a narrow screen the **name gives way to the colour** — that is already the identity §2.2 gives the twelve players — and only the badge and the points remain. A tap opens the full card, with names.
 >
-> Actif et associé se marquent d'un **trait plein en pied**, et non d'une teinte de fond : à trente pixels de large, un fond teinté derrière une pastille de couleur ne se distingue plus — et c'est justement la case où l'on cherche qui joue.
+> Active and associated are marked with a **solid rule at the foot**, not a background tint: at thirty pixels wide, a tinted background behind a coloured badge is no longer distinguishable — and this is precisely the cell where you are looking for who is playing.
 
-### 5.5 Zone ④ — Ma main
+### 5.5 Zone ④ — My hand
 
-**Contenu** : ressources par type avec quantité, cartes développement, jetons spéciaux.
+**Content**: resources by type with quantity, development cards, special tokens.
 
-**Point critique** : l'**indicateur de limite de main**. Dans ce jeu, les joueurs produisent beaucoup mais ont peu d'occasions de dépenser (voir §16 du plan de développement). La limite de main sera atteinte souvent, et chaque 7 provoquera une défausse. Le joueur doit voir venir le danger **avant** le lancer de dés, pas le subir.
+**Critical point**: the **hand-limit indicator**. In this game, players produce a lot but have few chances to spend (see §16 of the development plan). The hand limit will be reached often, and every 7 will trigger a discard. The player must see the danger coming **before** the dice roll, not suffer it.
 
-### 5.6 Zone ⑤ — Barre d'actions
+### 5.6 Zone ⑤ — Action bar
 
-**Contenu** : Construire (route / colonie / ville / comptoir), Acheter une carte développement, Commercer avec la banque, Fin d'action.
+**Content**: Build (road / settlement / city / trading post), Buy a development card, Trade with the bank, End action.
 
-**Principe** : les actions disponibles sont calculées par le serveur (système de capacités, §5.5 du plan). L'interface ne devine rien.
+**Principle**: the available actions are computed by the server (capability system, §5.5 of the plan). The interface guesses nothing.
 
-**Point d'attention** : une action indisponible ne doit pas seulement être grisée, elle doit **dire pourquoi** — « pas assez de brique », « ce n'est pas ton tour », « emplacement gelé ». C'est ce qui permet d'apprendre les règles sans que le développeur explique en permanence, ce qui est un critère de sortie explicite du projet.
+**Point of attention**: an unavailable action must not merely be greyed out, it must **say why** — "not enough brick", "it's not your turn", "spot frozen". That is what lets people learn the rules without the developer explaining all the time, which is an explicit exit criterion of the project.
 
-> **Tranché le 30/08/2026 — l'annonce n'est pas un mode.** Un interrupteur « Annoncer » se posait à côté du choix de construction ; une fois armé, plus rien à l'écran ne le rappelait, et l'on cliquait « Colonie » en croyant bâtir. Le bouton dit désormais lui-même ce qu'il fait : hors de son tour, « **Annoncer une colonie** », avec « fin de cycle » en dessous ; à son tour, « Colonie ». Un état invisible ne doit pas décider du sens d'un clic — c'est la même exigence que celle du paragraphe ci-dessus, appliquée à l'action plutôt qu'à son indisponibilité.
+> **Settled on 2026-08-30 — announcing is not a mode.** An "Announce" toggle sat next to the build choice; once armed, nothing on screen recalled it, and you clicked "Settlement" thinking you were building. The button now says itself what it does: out of turn, "**Announce a settlement**", with "end of cycle" underneath; in turn, "Settlement". An invisible state must not decide the meaning of a click — that is the same requirement as the paragraph above, applied to the action rather than to its unavailability.
 
-### 5.7 Zone ⑥ — Commerce
+### 5.7 Zone ⑥ — Trade
 
-**Le sous-projet UX le plus important de l'écran.**
+**The most important UX sub-project of the screen.**
 
-Contexte déterminant : **les joueurs sont dans la même pièce, la négociation est orale.** Personne ne va taper « je te donne 2 bois contre 1 minerai » — ils se le disent à voix haute. L'interface ne sert donc **pas** à négocier, mais à **exécuter très vite** un accord déjà conclu oralement, pendant une fenêtre de 30 secondes.
+The decisive context: **players are in the same room, negotiation is spoken.** Nobody is going to type "I give you 2 wood for 1 ore" — they say it out loud. The interface therefore does **not** serve to negotiate, but to **execute very quickly** a deal already agreed out loud, during a 30-second window.
 
 ```text
-Je donne : [🌲] [🌲]        Marc te propose :
-Je veux  : [⛏️]                 2 🌲  ↔  1 ⛏️
-À        : [Marc ▾]
-                                [ACCEPTER]  [REFUSER]
-        [PROPOSER]
+I give: [🌲] [🌲]           Marc offers you:
+I want: [⛏️]                    2 🌲  ↔  1 ⛏️
+To    : [Marc ▾]
+                               [ACCEPT]  [DECLINE]
+       [PROPOSE]
 ```
 
-**Questions de design** :
-- Combien de gestes pour envoyer une offre ? L'objectif devrait être deux ou trois, pas huit.
-- Le panneau doit-il rester visible en permanence, ou n'apparaître que pendant la fenêtre de commerce ?
-- Comment afficher plusieurs offres reçues simultanément sans noyer le joueur ? À 12 joueurs, en 30 secondes, plusieurs offres peuvent arriver en même temps.
-- Comment signaler qu'une offre est devenue **caduque** parce que l'inventaire de l'un des deux joueurs a changé entre-temps ?
+**Design questions**:
+- How many actions to send an offer? The target should be two or three, not eight.
+- Should the panel stay visible at all times, or only appear during the trade window?
+- How to show several offers received simultaneously without drowning the player? At 12 players, in 30 seconds, several offers may arrive at once.
+- How to signal that an offer has **lapsed** because one of the two players' inventories changed in the meantime?
 
-> **Ajouté le 30/08/2026 — le panneau s'ouvre sur ce qui manque.** Avant le formulaire, une ligne par construction posable : ce qui manque, et le premier échange qui rapprocherait — la ressource la moins chère à céder, au cours du moment, ports compris. Rien qui ne soit déjà à l'écran, mais la soustraction est faite, ce que personne ne fait de tête en trente secondes.
+> **Added on 2026-08-30 — the panel opens on what is missing.** Before the form, one line per buildable build: what is missing, and the first trade that would bring it closer — the cheapest resource to give up, at the current rate, ports included. Nothing that is not already on screen, but the subtraction is done, which nobody does in their head in thirty seconds.
 >
-> Le taux de la banque y est affiché comme un **prix plancher** : c'est ce que le voisin doit battre. Le panneau ne sert pas à acheter, il sert à faire parler — le levier que la simulation chiffre à quarante pour cent de cycles en moins.
+> The bank rate is shown there as a **floor price**: that is what the neighbour has to beat. The panel is not for buying, it is for getting people talking — the lever the simulation puts at forty per cent fewer cycles.
 
-### 5.8 Zone ⑦ — Journal
+### 5.8 Zone ⑦ — Log
 
-**Contenu** : fil des événements récents — production, constructions, échanges conclus, voleur, conflits résolus.
+**Content**: feed of recent events — production, builds, concluded trades, robber, resolved conflicts.
 
-**Utilité réelle** : un joueur qui regardait ailleurs pendant 20 secondes doit pouvoir rattraper ce qui s'est passé. À 12 joueurs, il se passe beaucoup de choses par minute — le journal doit être filtrable ou hiérarchisé, sinon il devient un mur de texte illisible.
+**Real use**: a player who was looking elsewhere for 20 seconds must be able to catch up on what happened. At 12 players, a lot happens per minute — the log must be filterable or ranked, otherwise it becomes an unreadable wall of text.
 
-### 5.9 Modales
+### 5.9 Modals
 
-Quatre pour la première version :
+Four for the first version:
 
-| Modale | Déclenchement | Contrainte |
+| Modal | Trigger | Constraint |
 |---|---|---|
-| **Défausse sur 7** | Un 7 est lancé, ma main dépasse la limite | **La plus critique** — voir ci-dessous |
-| Déplacement du voleur | J'ai lancé un 7 ou joué un Chevalier | Sélection sur le plateau, choix de la victime |
-| Offre d'échange reçue | Un joueur me propose un échange | Doit peut-être être un élément en ligne plutôt qu'une modale |
-| Résolution de conflit | Ma construction annoncée a été départagée | Feedback : gagné, perdu, ou emplacement gelé — et pourquoi |
+| **Discard on 7** | A 7 is rolled, my hand exceeds the limit | **The most critical** — see below |
+| Moving the robber | I rolled a 7 or played a Knight | Selection on the board, choice of victim |
+| Trade offer received | A player offers me a trade | May need to be an inline element rather than a modal |
+| Conflict resolution | My announced build was decided | Feedback: won, lost, or spot frozen — and why |
 
-Plus tard : choix de carte développement (Invention, Monopole), révélation d'exploration, objectifs secrets, attaque des barbares.
+Later: development card choice (Year of plenty, Monopoly), exploration reveal, secret objectives, barbarian attack.
 
-**La modale de défausse mérite une attention particulière.** Elle se déclenche pour **tous les joueurs concernés en même temps**, une dizaine de fois par partie, et bloque la progression du jeu jusqu'à ce que le dernier ait terminé. C'est le principal pic de temps mort identifié dans le projet — exactement ce que tout le design cherche à éliminer. Objectif : défausse réalisable en moins de 10 secondes, avec sélection en un geste, suggestion automatique, et validation automatique à l'expiration du timer.
+**The discard modal deserves particular attention.** It triggers for **all affected players at the same time**, about ten times per game, and blocks the game's progress until the last one has finished. It is the main dead-time spike identified in the project — exactly what the whole design seeks to eliminate. Goal: discard achievable in under 10 seconds, with one-gesture selection, automatic suggestion, and automatic validation on timer expiry.
 
-### 5.10 Les quatre états du joueur
+### 5.10 The four player states
 
-Chaque état doit être visuellement distinct et immédiatement reconnaissable :
+Each state must be visually distinct and immediately recognizable:
 
-| État | Ce que je peux faire |
+| State | What I can do |
 |---|---|
-| **Actif** | Tout : commercer avec tous, construire, acheter, déplacer le voleur |
-| **Associé** | Construire, commercer avec la banque, acheter — mais pas négocier avec les autres joueurs |
-| **Fenêtre de commerce** | Négocier avec tout le monde pendant 30 s |
-| **Passif** | Éventuellement annoncer une construction, préparer mes actions, observer |
+| **Active** | Everything: trade with all, build, buy, move the robber |
+| **Associated** | Build, trade with the bank, buy — but not negotiate with the other players |
+| **Trade window** | Negotiate with everyone for 30 s |
+| **Passive** | Possibly announce a build, prepare my actions, observe |
 
-Un joueur ne doit jamais avoir à se demander dans lequel il se trouve.
-
----
-
-## 6. Écran 6 — Panneau maître de jeu
-
-**Réservé à l'hôte. Esthétique non prioritaire, efficacité maximale.**
-
-Outil de développement et de playtest : donner ou retirer des ressources, forcer un lancer de dés, changer de phase, modifier le timer, ajouter des PV, révéler une tuile, placer ou supprimer une construction, forcer un échange, déplacer le voleur, terminer la partie.
-
-**Raison d'être** : atteindre en 10 secondes une situation de jeu qui demanderait 45 minutes de partie réelle à reproduire. Il sera très utilisé pendant les playtests. Un simple panneau latéral dense, en liste, suffit.
+A player must never have to wonder which one they are in.
 
 ---
 
-## 7. Questions ouvertes pour le designer
+## 6. Screen 6 — Game master panel
 
-Ce sont les points où l'avis d'un designer changera réellement le produit :
+**Reserved for the host. Aesthetics not a priority, maximum efficiency.**
 
-1. **Comment rendre évident, en permanence et sans lecture, ce que le joueur peut faire à cet instant ?** C'est la question n° 1 du projet.
-2. **Comment afficher 11 adversaires sur un écran de téléphone** tout en gardant le plateau utilisable ?
-3. **Comment visualiser les intentions de construction concurrentes et le gel d'emplacement** ? Aucune référence connue n'existe.
-4. **Le panneau de commerce doit-il être permanent ou contextuel ?**
-5. **Comment rendre la défausse sur 7 exécutable en moins de 10 secondes ?**
-6. **Quelle différenciation visuelle entre les rôles actif et associé ?** Assez forte pour ne pas être confondue, assez discrète pour ne pas dominer l'écran.
-7. **La palette des 12 identités** — couleur + forme + motif, validée en daltonisme.
-8. **Le timer** : comment créer l'urgence sans stresser ? Le retour de playtest sur ce point est explicitement prévu.
+Development and playtest tool: give or take resources, force a dice roll, change phase, modify the timer, add VP, reveal a tile, place or remove a build, force a trade, move the robber, end the game.
+
+**Reason for being**: reach in 10 seconds a game situation that would take 45 minutes of real play to reproduce. It will be heavily used during playtests. A simple dense side panel, as a list, is enough.
 
 ---
 
-## 8. Livrables attendus et ordre
+## 7. Open questions for the designer
 
-L'ordre compte : l'écran de jeu conditionne tout le reste, y compris la faisabilité technique.
+These are the points where a designer's input will genuinely change the product:
 
-1. **Wireframes basse fidélité de l'écran de jeu**, en trois formats (portable, tablette, téléphone), avec les quatre états du joueur. C'est le livrable qui débloque le projet.
-2. **Palette des 12 identités** (couleur + forme + motif) avec validation daltonisme.
-3. **Design system minimal** : typographie, couleurs, espacements, boutons, modales, badges d'état.
-4. **Maquettes haute fidélité de l'écran de jeu**, avec les modales.
-5. **Écrans simples** (Rejoindre, Lobby, Console hôte, Fin de partie) — rapides une fois le design system posé.
-
-**Ce qui n'est pas demandé à ce stade** : animations complexes, illustrations (traitées séparément dans [SPEC_ASSETS_IMAGES.md](SPEC_ASSETS_IMAGES.md)), direction artistique poussée. Le jeu n'a jamais été joué, même sur table — le design doit rester peu coûteux à modifier tant que les règles bougent.
+1. **How to make obvious, at all times and without reading, what the player can do at this instant?** This is the project's question no. 1.
+2. **How to show 11 opponents on a phone screen** while keeping the board usable?
+3. **How to visualize the competing build intents and the spot freeze?** No known reference exists.
+4. **Should the trade panel be permanent or contextual?**
+5. **How to make the discard on 7 executable in under 10 seconds?**
+6. **What visual differentiation between the active and associated roles?** Strong enough not to be confused, discreet enough not to dominate the screen.
+7. **The palette of the 12 identities** — colour + shape + pattern, validated for colour-blindness.
+8. **The timer**: how to create urgency without stress? Playtest feedback on this point is explicitly planned.
 
 ---
 
-*Document créé le 2026-08-26.*
+## 8. Expected deliverables and order
+
+The order matters: the game screen conditions everything else, including technical feasibility.
+
+1. **Low-fidelity wireframes of the game screen**, in three formats (laptop, tablet, phone), with the four player states. This is the deliverable that unblocks the project.
+2. **Palette of the 12 identities** (colour + shape + pattern) with colour-blindness validation.
+3. **Minimal design system**: typography, colours, spacing, buttons, modals, state badges.
+4. **High-fidelity mockups of the game screen**, with the modals.
+5. **Simple screens** (Join, Lobby, Host console, End of game) — quick once the design system is in place.
+
+**What is not asked at this stage**: complex animations, illustrations (handled separately in [SPEC_ASSETS_IMAGES.md](SPEC_ASSETS_IMAGES.md)), a developed art direction. The game has never been played, even on a table — the design must stay cheap to change while the rules are moving.
+
+---
+
+*Document created on 2026-08-26.*

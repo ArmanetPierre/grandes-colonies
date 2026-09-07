@@ -1,54 +1,54 @@
-# Spécification des images — Grandes Colonies
+# Image specification — Grandes Colonies
 
-> Direction artistique, contraintes de production et méthode de contrôle des images du jeu.
+> Art direction, production constraints and control method for the game's images.
 >
-> **Les prompts eux-mêmes ne sont pas dans ce document** : ils vivent dans [assets/prompts.json](assets/prompts.json), qui en est la seule source de vérité. Les dupliquer ici les rendrait faux à la première itération — c'est exactement ce qui s'est produit avec la première version de cette spec.
+> **The prompts themselves are not in this document**: they live in [assets/prompts.json](assets/prompts.json), which is their only source of truth. Duplicating them here would make them wrong at the first iteration — that is exactly what happened with the first version of this spec.
 >
-> Pipeline et utilisation : [assets/README.md](assets/README.md) · Projet : [PLAN_DE_DEVELOPPEMENT.md](PLAN_DE_DEVELOPPEMENT.md)
+> Pipeline and usage: [assets/README.md](assets/README.md) · Project: [PLAN_DE_DEVELOPPEMENT.md](PLAN_DE_DEVELOPPEMENT.md)
 
 ---
 
-## 1. Direction artistique
+## 1. Art direction
 
-**Grèce antique, rendu 3D stylisé.** Volumes doux et matière mate, lumière ambiante, léger relief vu de dessus — le rendu des jeux de plateau numériques modernes, transposé en décor égéen : pins parasols et cyprès, terrasses agricoles en pierre sèche, carrières de marbre, tambours de colonnes, oliviers.
+**Ancient Greece, stylized 3D rendering.** Soft volumes and matte material, ambient light, slight top-down relief — the look of modern digital board games, transposed into an Aegean setting: umbrella pines and cypresses, dry-stone agricultural terraces, marble quarries, column drums, olive trees.
 
-Retenue le 26/08/2026 après un essai comparatif de cinq directions ([assets/style-tests.json](assets/style-tests.json)) :
+Adopted on 2026-08-26 after a comparative trial of five directions ([assets/style-tests.json](assets/style-tests.json)):
 
 | Direction | Verdict |
 |---|---|
-| Aquarelle méditerranéenne | Écartée — rendu jugé trop « lâché » |
-| Fresque minoenne | Écartée — palette commune à toutes les tuiles : le terrain cesse d'être codé par la couleur, et le bleu y désigne la mer partout ailleurs |
-| Aplats vectoriels | Écartée |
-| Mosaïque antique | Écartée |
-| **Rendu 3D stylisé** | **Retenue** |
+| Mediterranean watercolour | Rejected — the rendering felt too "loose" |
+| Minoan fresco | Rejected — a palette common to all tiles: terrain stops being colour-coded, and blue means the sea everywhere else |
+| Vector flats | Rejected |
+| Ancient mosaic | Rejected |
+| **Stylized 3D rendering** | **Adopted** |
 
 ---
 
-## 2. Les quatre règles qui conditionnent le résultat
+## 2. The four rules that condition the result
 
-**① Ne jamais demander une forme hexagonale.**
-Les tuiles doivent se juxtaposer au pixel près. Aucun modèle ne produit une géométrie assez précise pour tessellier. On génère des **images carrées** de terrain, découpées en hexagone par un masque CSS côté client.
+**① Never ask for a hexagonal shape.**
+The tiles must butt together to the pixel. No model produces geometry precise enough to tessellate. We generate **square images** of terrain, cut into a hexagon by a CSS mask on the client side.
 
-**② Ne jamais demander de texte, de chiffre ou de symbole.**
-Les modèles restent peu fiables sur le texte. Jetons 2–12, ratios de ports, noms de cartes : tout est composé en typographie dans le code.
+**② Never ask for text, a number or a symbol.**
+Models remain unreliable on text. Tokens 2–12, port ratios, card names: everything is set in typography in the code.
 
-**③ Une couleur dominante franche par tuile.**
-C'est la couleur, et elle seule, qui permet de reconnaître un terrain sur un plateau de 50 hexagones dézoomé. Chaque sujet doit imposer sa dominante — c'est la formulation `clearly dominant` dans les prompts. La direction « fresque minoenne » a été écartée précisément pour avoir échoué sur ce point.
+**③ One clear dominant colour per tile.**
+It is colour, and colour alone, that lets you recognize a terrain on a zoomed-out board of 50 hexes. Each subject must impose its dominant — that is the `clearly dominant` phrasing in the prompts. The "Minoan fresco" direction was rejected precisely for failing on this point.
 
-**④ Ne jamais générer une tuile seule.**
-L'harmonie est une propriété *relationnelle* : elle n'existe qu'entre les images, pas dans chacune. Dix tuiles décrites séparément, si soigneusement que ce soit, sont dix images qui ne se sont jamais vues — et elles dérivent. La première série l'a payé (§7). Depuis, une **planche de série** est générée en une seule fois, validée à l'œil, puis **jointe en référence à chaque génération de tuile** : voir §3.
+**④ Never generate a tile on its own.**
+Harmony is a *relational* property: it exists only between the images, not in each one. Ten tiles described separately, however carefully, are ten images that have never seen each other — and they drift. The first series paid for it (§7). Since then, a **series sheet** is generated in one go, validated by eye, then **attached as a reference to every tile generation**: see §3.
 
 ---
 
-## 3. La planche de série
+## 3. The series sheet
 
-`sheet_terrains` est une image unique montrant les **dix terrains côte à côte**, en grille de cinq colonnes sur deux rangs. Elle n'illustre rien et ne sort jamais dans le jeu : elle sert de contrainte.
+`sheet_terrains` is a single image showing the **ten terrains side by side**, in a grid of five columns by two rows. It illustrates nothing and never appears in the game: it serves as a constraint.
 
-**Pourquoi une seule image.** Demander dix tuiles séparément revient à demander dix fois « fais une belle image », jamais « fais-les aller ensemble ». En les plaçant dans un même cadre, le modèle est forcé de les arbitrer les unes contre les autres — c'est là, et seulement là, que la gamme se décide.
+**Why a single image.** Asking for ten tiles separately amounts to asking ten times "make a nice image", never "make them go together". By placing them in one frame, the model is forced to arbitrate them against one another — that is where, and only where, the range is decided.
 
-**Comment elle contraint la suite.** Chaque tuile déclare `"ref": ["sheet_terrains"]` dans `prompts.json`. Le script joint alors la planche à la demande, **avant** le texte, et ajoute la consigne de s'y aligner. La tuile n'est plus décrite : elle est située. Une référence absente fait échouer la génération, jamais un repli silencieux — une tuile hors gamme ne se repère qu'à la planche de contrôle, dix images plus tard.
+**How it constrains the rest.** Each tile declares `"ref": ["sheet_terrains"]` in `prompts.json`. The script then attaches the sheet to the request, **before** the text, and adds the instruction to align with it. The tile is no longer described: it is situated. A missing reference fails the generation, never a silent fallback — an off-range tile shows up only on the control sheet, ten images later.
 
-**Ordre de travail.** La planche d'abord, validée à l'œil ; les tuiles ensuite.
+**Order of work.** The sheet first, validated by eye; the tiles next.
 
 ```bash
 node scripts/generate-assets.mjs --id sheet_terrains --best
@@ -58,165 +58,165 @@ node scripts/generate-assets.mjs --id sheet_terrains --best
 node scripts/generate-assets.mjs --priority P0 --force
 ```
 
-Régénérer la planche invalide la série : les tuiles doivent suivre.
+Regenerating the sheet invalidates the series: the tiles must follow.
 
 ---
 
-## 4. Contraintes de lisibilité
+## 4. Readability constraints
 
-Contraintes fonctionnelles, pas esthétiques : des pièces de jeu seront dessinées **par-dessus** ces images.
+Functional constraints, not aesthetic ones: game pieces will be drawn **on top of** these images.
 
-- **Centre calme** : il accueille un jeton numéroté opaque.
-- **Bords calmes** : les routes se dessinent sur les arêtes, les colonies sur les sommets.
-- **Composition plein cadre** : le motif se prolonge au-delà des quatre bords, sans marge ni cadre ni vignettage.
-- **La mer est la tuile la plus répétée du plateau** : elle doit être la plus discrète de toutes. Elle a dû être régénérée une fois pour cette raison.
-- **Faible bruit visuel** : la tuile doit rester identifiable à 120 px.
+- **Calm centre**: it holds an opaque numbered token.
+- **Calm edges**: roads are drawn on the edges, settlements on the corners.
+- **Full-frame composition**: the pattern extends beyond the four edges, with no margin, frame or vignette.
+- **The sea is the most repeated tile on the board**: it must be the most discreet of all. It had to be regenerated once for this reason.
+- **Low visual noise**: the tile must stay identifiable at 120 px.
 
 ---
 
-## 5. Pièges rencontrés en production
+## 5. Traps encountered in production
 
-Chacun a coûté une régénération. Ils sont tous couverts par le prompt négatif de `prompts.json` — ne pas l'alléger.
+Each one cost a regeneration. They are all covered by the negative prompt in `prompts.json` — do not lighten it.
 
-| Piège | Symptôme | Déclencheur |
+| Trap | Symptom | Trigger |
 |---|---|---|
-| **Marge de papier** | Le modèle peint une œuvre *sur une feuille*, bords blancs compris | Styles picturaux (« aquarelle sur papier ») |
-| **Dalle sur fond blanc** | La tuile est rendue comme un objet posé, avec son socle | Styles 3D (« rendu de produit ») |
-| **Perspective** | Les motifs s'inclinent vers l'extérieur ; la tessellation casse | Styles 3D, si l'orthographie n'est pas imposée |
-| **Motifs directionnels** | Rayures ou bandes qui « accrochent » d'une tuile à sa voisine | Sillons, terrasses, vagues décrits comme réguliers |
-| **Crête dominante** | Une ligne forte traverse le centre, là où va le jeton | Reliefs décrits au singulier (« une crête », « un sillon ») |
-| **Bandes parallèles** | Les terrasses des collines deviennent des rayures régulières d'un bord à l'autre | « Terrasses », « sillons », s'ils ne sont pas dits courts et désorientés |
-| **Dallage** | Le champ d'orge se rend en pavage de pierre, pas en végétation | Parcelles « bordées de pierre » — le modèle retient la pierre |
-| **Volutes répétées** | La brume devient un motif de spirales identiques | « Volutes », « tourbillons » |
-| **Surface morte** | La mer sort en aplat sans aucune matière (contraste interne 9) | Consignes de discrétion poussées trop loin, sans exiger de texture |
-| **Saturation criarde** | Une tuile juste en teinte mais deux fois plus saturée que ses voisines | Le silence : sans gamme commune imposée, chaque image est saturée pour elle-même |
-| **Série éteinte** | Une série parfaitement cohérente, et sans vie — la direction « aplats vectoriels » écartée au §1, retrouvée par accident | Confondre bande de saturation *étroite* et bande *basse*, et empiler « low contrast », « calm », « low visual noise » |
-| **Motif répété** | Le même groupe d'objets reproduit en 2×2 dans la tuile ; très visible sur la carrière | « Motifs répartis uniformément », si la variété n'est pas demandée — le modèle produit une texture carrelable |
+| **Paper margin** | The model paints a work *on a sheet*, white edges included | Pictorial styles ("watercolour on paper") |
+| **Slab on white** | The tile is rendered as a placed object, with its base | 3D styles ("product render") |
+| **Perspective** | The patterns tilt outward; the tessellation breaks | 3D styles, if orthography is not imposed |
+| **Directional patterns** | Stripes or bands that "catch" from one tile to its neighbour | Furrows, terraces, waves described as regular |
+| **Dominant ridge** | A strong line crosses the centre, where the token goes | Reliefs described in the singular ("a ridge", "a furrow") |
+| **Parallel bands** | The hills' terraces become regular stripes from edge to edge | "Terraces", "furrows", if not said to be short and disoriented |
+| **Paving** | The barley field renders as stone paving, not vegetation | Plots "bordered with stone" — the model keeps the stone |
+| **Repeated scrolls** | The mist becomes a pattern of identical spirals | "Scrolls", "swirls" |
+| **Dead surface** | The sea comes out as a flat with no material (internal contrast 9) | Discretion instructions pushed too far, without demanding texture |
+| **Garish saturation** | A tile right in hue but twice as saturated as its neighbours | Silence: with no common range imposed, each image is saturated for itself |
+| **Lifeless series** | A perfectly coherent series, with no life — the "vector flats" direction rejected in §1, rediscovered by accident | Confusing a *narrow* saturation band with a *low* one, and stacking "low contrast", "calm", "low visual noise" |
+| **Repeated motif** | The same group of objects reproduced 2×2 within the tile; very visible on the quarry | "Evenly distributed motifs", if variety is not asked for — the model produces a tileable texture |
 
 ---
 
-## 6. Ce qui n'est pas généré par IA
+## 6. What is not AI-generated
 
-| Élément | Raison | Solution |
+| Element | Reason | Solution |
 |---|---|---|
-| Routes, colonies, villes, comptoirs, chevaliers | Recolorés dans 12 couleurs à l'exécution | Formes SVG paramétrées |
-| Jetons numérotés 2–12, ports | Du texte | Typographie SVG |
-| Icônes de ressources | Doivent rester nettes à 24 px | [game-icons.net](https://game-icons.net), CC BY 4.0 |
-| Icônes d'interface | — | lucide-react |
-| Logo / titre | Du texte | Typographie |
+| Roads, settlements, cities, trading posts, knights | Recoloured into 12 colours at runtime | Parametrized SVG shapes |
+| Numbered tokens 2–12, ports | Text | SVG typography |
+| Resource icons | Must stay sharp at 24 px | [game-icons.net](https://game-icons.net), CC BY 4.0 |
+| Interface icons | — | lucide-react |
+| Logo / title | Text | Typography |
 
 ---
 
 ## 7. Formats
 
-| Catégorie | Dimensions | Ratio | Fond |
+| Category | Dimensions | Ratio | Background |
 |---|---|---|---|
-| Tuile de terrain | 1024 × 1024 | 1:1 | opaque, plein cadre |
-| Illustration de carte | 1024 × 1536 | 2:3 | opaque |
-| Dos de carte | 1024 × 1536 | 2:3 | opaque |
-| Fond d'écran | 2560 × 1440 | 16:9 | opaque |
-| Planche de série | — | 21:9 | grille de 10 panneaux, jamais affichée en jeu |
+| Terrain tile | 1024 × 1024 | 1:1 | opaque, full-frame |
+| Card illustration | 1024 × 1536 | 2:3 | opaque |
+| Card back | 1024 × 1536 | 2:3 | opaque |
+| Wallpaper | 2560 × 1440 | 16:9 | opaque |
+| Series sheet | — | 21:9 | grid of 10 panels, never shown in game |
 
-Une tuile s'affiche à ~120 px en vue d'ensemble ; le facteur 8× de la source couvre les écrans haute densité et le zoom rapproché.
+A tile displays at ~120 px in the overview; the 8× factor of the source covers high-density screens and close-up zoom.
 
-**L'extension n'est pas fixe** : le modèle renvoie du JPEG ou du PNG selon les cas. Le script nomme le fichier d'après son contenu réel et tient à jour `assets/generated/index.json`. Tout consommateur passe par cet index — jamais par une extension devinée.
+**The extension is not fixed**: the model returns JPEG or PNG depending on the case. The script names the file after its actual content and keeps `assets/generated/index.json` up to date. Every consumer goes through that index — never through a guessed extension.
 
 ---
 
-## 8. Palette et échelle de valeurs
+## 8. Palette and value scale
 
-Deux propriétés distinctes, et c'est leur confusion qui a raté la première série :
+Two distinct properties, and it is their confusion that failed the first series:
 
-- **L'harmonie vient de la saturation**, qui doit être *commune* — une bande unique, partagée par les dix tuiles. Étroite, pas basse : la première correction l'a descendue à 14–46 % et a produit une série juste, harmonieuse et éteinte. La bande retenue est **22–58 %**, riche et resserrée.
-- **La distinction vient de la luminosité**, qui doit être *échelonnée* — dix barreaux du plus clair au plus sombre, jamais deux tuiles sur le même.
+- **Harmony comes from saturation**, which must be *common* — a single band, shared by the ten tiles. Narrow, not low: the first correction dropped it to 14–46 % and produced a series that was right, harmonious and lifeless. The band adopted is **22–58 %**, rich and tight.
+- **Distinction comes from lightness**, which must be *stepped* — ten rungs from the lightest to the darkest, never two tiles on the same one.
 
-La série d'origine faisait exactement l'inverse. Mesurée : saturations de **8 % à 57 %** — facteur sept, la mer et les collines criaient pendant que la carrière et l'inexploré étaient délavés ; et **cinq tuiles entassées entre 140 et 153** de luminosité, indiscernables en niveaux de gris, donc indiscernables en vue d'ensemble.
+The original series did exactly the opposite. Measured: saturations from **8 % to 57 %** — a factor of seven, the sea and the hills shouting while the quarry and the unexplored tile were washed out; and **five tiles crammed between 140 and 153** lightness, indistinguishable in greyscale, therefore indistinguishable in the overview.
 
-L'échelle descend par marches d'environ 16 points. Son ordre est aussi l'ordre des panneaux de la planche (§3), auxquels les prompts renvoient un par un.
+The scale descends in steps of about 16 points. Its order is also the order of the panels on the sheet (§3), to which the prompts refer one by one.
 
-| # | Tuile | Ressource | Dominante | Luminosité | Saturation |
+| # | Tile | Resource | Dominant | Lightness | Saturation |
 |---:|---|---|---|---:|---:|
-| 1 | Garrigue sèche | — | `#E0C182` sable chaud | 195 | 42 % |
-| 2 | Carrière de marbre | Minerai | `#9EB8CA` gris froid | 178 | 22 % |
-| 3 | Champ d'orge | Blé | `#C0A355` or | 163 | 56 % |
-| 4 | Pâturage | Laine | `#86A54F` vert olive | 146 | 52 % |
-| 5 | Hauts-fonds | Poisson | `#479B99` turquoise | 130 | 54 % |
-| 6 | Collines d'argile | Brique | `#A16344` terre cuite | 114 | 58 % |
-| 7 | Inexploré | — | `#665C7F` gris-violet | 99 | 28 % |
-| 8 | Mer Égée | — | `#345975` bleu profond | 81 | 56 % |
-| 9 | Forêt de pins | Bois | `#25532C` vert pin | 65 | 55 % |
-| 10 | Mine d'or | Or | `#3C3325` roche sombre + accents dorés | 52 | 38 % |
+| 1 | Dry scrubland | — | `#E0C182` warm sand | 195 | 42 % |
+| 2 | Marble quarry | Ore | `#9EB8CA` cold grey | 178 | 22 % |
+| 3 | Barley field | Wheat | `#C0A355` gold | 163 | 56 % |
+| 4 | Pasture | Wool | `#86A54F` olive green | 146 | 52 % |
+| 5 | Shallows | Fish | `#479B99` turquoise | 130 | 54 % |
+| 6 | Clay hills | Brick | `#A16344` terracotta | 114 | 58 % |
+| 7 | Unexplored | — | `#665C7F` grey-violet | 99 | 28 % |
+| 8 | Aegean Sea | — | `#345975` deep blue | 81 | 56 % |
+| 9 | Pine forest | Wood | `#25532C` pine green | 65 | 55 % |
+| 10 | Gold mine | Gold | `#3C3325` dark rock + golden accents | 52 | 38 % |
 
-**Les deux valeurs basses sont assumées** : la carrière (22 %) et l'inexploré (28 %) sont de la pierre et de la brume. Les huit autres tiennent entre 38 et 58 %.
+**The two low values are deliberate**: the quarry (22 %) and the unexplored tile (28 %) are stone and mist. The other eight sit between 38 and 58 %.
 
-**Les deux paires à surveiller.** Garrigue et carrière sont les plus claires : 17 points, plus l'opposition chaud / froid, plus une géométrie taillée contre un sol organique. Forêt et mine sont les plus sombres : la mine est plus désaturée, et ses veines d'or sont ses seuls accents clairs.
+**The two pairs to watch.** Scrubland and quarry are the lightest: 17 points, plus the warm / cold opposition, plus a cut geometry against an organic ground. Forest and mine are the darkest: the mine is more desaturated, and its gold veins are its only light accents.
 
-**Ces valeurs ne sont pas une intention, elles sont une contrainte.** Le modèle ne les tient pas — voir §9. Elles sont imposées après coup, et vérifiées : `scripts/mesure-gamme.py` les lit ici même et refuse une série qui s'en écarte (§10).
+**These values are not an intention, they are a constraint.** The model does not hold them — see §9. They are imposed afterwards, and checked: `scripts/mesure-gamme.py` reads them right here and rejects a series that departs from them (§10).
 
 ---
 
-## 9. Étalonnage
+## 9. Calibration
 
-**Le modèle ne tient pas les nombres.** Trois itérations du prompt de la planche l'ont établi. L'échelle a d'abord été donnée en relatif (« un cran plus sombre que le précédent ») : marbre et garrigue sont sortis inversés, argile et brume ont dérivé de +33 et +39. Elle a ensuite été donnée en valeurs absolues (`brightness 76` … `brightness 20`) : la dérive a changé de tuiles, pas d'ampleur — hauts-fonds et pâturage inversés de **soixante points**. Le modèle respecte le sens et lâche la mesure, et il lâche toujours là où son a priori est fort : de l'eau peu profonde vue de dessus *est* claire.
+**The model does not hold numbers.** Three iterations of the sheet prompt established it. The scale was first given in relative terms ("one notch darker than the previous one"): marble and scrubland came out inverted, clay and mist drifted by +33 and +39. It was then given in absolute values (`brightness 76` … `brightness 20`): the drift changed tiles, not magnitude — shallows and pasture inverted by **sixty points**. The model respects the direction and drops the measurement, and it always drops it where its prior is strong: shallow water seen from above *is* light.
 
-Continuer à reformuler serait payer une image à chaque essai pour un résultat qu'un calcul donne exactement. Le partage est donc :
+Continuing to rephrase would mean paying for an image on every try for a result a calculation gives exactly. The split is therefore:
 
-| Au modèle | Au code |
+| To the model | To the code |
 |---|---|
-| La matière, les volumes, la lumière, le sujet | La luminosité, la saturation, le contraste |
-| Ce qu'un calcul ne sait pas inventer | Ce qu'un modèle ne sait pas tenir |
+| The material, the volumes, the light, the subject | Lightness, saturation, contrast |
+| What a calculation cannot invent | What a model cannot hold |
 
 ```bash
 python3 scripts/etalonner.py
 ```
 
-Lit `generated/tiles/`, écrit `processed/tiles/` sous le **même nom de fichier** — la tuile étalonnée est un remplacement pur, `index.json` reste valide, et `scripts/assets.mjs` la fait primer à la copie vers le client. `generated/` n'est jamais modifié : tout reste régénérable depuis `prompts.json`.
+Reads `generated/tiles/`, writes `processed/tiles/` under the **same filename** — the calibrated tile is a pure replacement, `index.json` stays valid, and `scripts/assets.mjs` makes it take precedence when copying to the client. `generated/` is never modified: everything stays regenerable from `prompts.json`.
 
-Trois corrections, dans cet ordre, qui n'est pas indifférent :
+Three corrections, in this order, which is not indifferent:
 
-1. **contraste** comprimé s'il dépasse 34 — des routes et des colonies se dessinent par-dessus ;
-2. **saturation** amenée dans la bande commune ;
-3. **luminosité** amenée sur son barreau par une courbe gamma, en dernier — un gain par pixel préserve exactement la saturation, l'inverse est faux ; un décalage linéaire écrêterait les hautes lumières.
+1. **contrast** compressed if it exceeds 34 — roads and settlements are drawn on top;
+2. **saturation** brought into the common band;
+3. **lightness** brought onto its rung by a gamma curve, last — a per-pixel gain preserves saturation exactly, the reverse is false; a linear offset would clip the highlights.
 
-**Ce que l'étalonnage ne rattrape pas** : la géométrie. Une tuile en aplat le reste — on ne calcule pas de la matière absente ; une bande continue d'un bord à l'autre reste une bande. Ces défauts-là se corrigent au prompt, et c'est pourquoi `mesure-gamme.py --brut` existe : c'est la sortie brute qu'on regarde pour décider s'il faut régénérer.
+**What calibration does not recover**: geometry. A flat tile stays flat — you do not compute absent material; a band continuous from edge to edge stays a band. Those defects are fixed at the prompt, and that is why `mesure-gamme.py --brut` exists: it is the raw output you look at to decide whether to regenerate.
 
 ---
 
-## 10. Contrôle qualité
+## 10. Quality control
 
 ```text
-☐ Dimensions exactes
-☐ Aucun texte, chiffre ou symbole
-☐ Aucune forme hexagonale, aucune dalle, aucun socle
-☐ Motif jusqu'aux quatre bords, sans cadre ni vignettage
-☐ Centre exempt de détail important
-☐ Bords calmes, sans contraste fort
-☐ Style cohérent avec le reste de la série
-☐ Identifiable réduite à 120 px
-☐ Luminosité, saturation et contraste conformes au §8   ← mesuré, bloquant
-☐ Les 10 tuiles se distinguent en niveaux de gris        ← mesuré, bloquant
+☐ Exact dimensions
+☐ No text, number or symbol
+☐ No hexagonal shape, no slab, no base
+☐ Pattern to all four edges, with no frame or vignette
+☐ Centre free of important detail
+☐ Calm edges, no strong contrast
+☐ Style consistent with the rest of the series
+☐ Identifiable when reduced to 120 px
+☐ Lightness, saturation and contrast conform to §8   ← measured, blocking
+☐ The 10 tiles are distinguishable in greyscale       ← measured, blocking
 ```
 
-**Le contrôle chiffré passe avant le coup d'œil**, parce que la première série avait passé le coup d'œil :
+**The numeric check comes before the glance**, because the first series had passed the glance:
 
 ```bash
 python3 scripts/mesure-gamme.py
 ```
 
-Il mesure chaque tuile **telle qu'elle partira chez le client** — étalonnée si elle l'est —, la compare à son barreau du §8 et sort en code 1 si une seule s'en écarte — luminosité, saturation, contraste interne, et distance à ses voisines dans l'échelle. Il nomme les tuiles en cause. `--brut` mesure la sortie du modèle avant étalonnage : c'est celle qui dit s'il faut régénérer.
+It measures each tile **as it will ship to the client** — calibrated if it is — compares it to its rung from §8 and exits with code 1 if a single one departs from it — lightness, saturation, internal contrast, and distance to its neighbours on the scale. It names the offending tiles. `--brut` measures the model's output before calibration: that is the one that says whether to regenerate.
 
 ```bash
 python3 scripts/mesure-gamme.py --planche
 ```
 
-Mesure les dix panneaux de la planche **avant** d'en tirer les tuiles. Un barreau inversé s'y corrige pour le prix d'une image, et pour celui de dix si on ne le voit qu'après.
+Measures the ten panels of the sheet **before** cutting the tiles from it. An inverted rung is fixed there for the price of one image, and for the price of ten if you only see it afterwards.
 
-**Test décisif à l'œil** : les 10 tuiles côte à côte à 120 px, puis les mêmes en niveaux de gris. Si deux se confondent, ou si l'une attire l'œil beaucoup plus que les autres, régénérer — quelle que soit sa beauté en grand.
+**Decisive test by eye**: the 10 tiles side by side at 120 px, then the same in greyscale. If two blend together, or if one draws the eye much more than the others, regenerate — whatever its beauty at full size.
 
 ```bash
 python3 scripts/contact-sheet.py /tmp/planches
 ```
 
-produit `planche_120px.png` (le test décisif), `planche_gris.png` (le même sans la teinte : c'est le test le plus sévère, il ne laisse que la valeur) et `planche_plateau.png` (la tessellation). À préférer à la planche HTML quand on itère : **les panneaux d'aperçu mettent les images en cache de façon agressive**, et une régénération réécrit le même nom de fichier — on croit alors regarder la nouvelle tuile alors qu'on voit l'ancienne.
+produces `planche_120px.png` (the decisive test), `planche_gris.png` (the same without the hue: it is the harshest test, it leaves only the value) and `planche_plateau.png` (the tessellation). Prefer it to the HTML sheet when iterating: **the preview panels cache the images aggressively**, and a regeneration rewrites the same filename — so you think you are looking at the new tile when you see the old one.
 
-`assets/preview/index.html` reste la planche complète, cartes et fonds compris, à ouvrir dans un vrai navigateur.
+`assets/preview/index.html` remains the full sheet, cards and backgrounds included, to open in a real browser.

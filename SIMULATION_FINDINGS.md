@@ -1,92 +1,92 @@
-# Simulation — premières mesures
+# Simulation — first measurements
 
-> Résultats de la simulation par bots, 2026-08-27.
+> Results of the bot simulation, 2026-08-27.
 >
-> Reproductible : `npx vitest run packages/sim`. Toutes les parties sont seedées, donc rejouables à l'identique.
+> Reproducible: `npx vitest run packages/sim`. All games are seeded, so replayable identically.
 >
-> Contrat de règles : [RULES_CONTRACT.md](RULES_CONTRACT.md) · Plan : [PLAN_DE_DEVELOPPEMENT.md](PLAN_DE_DEVELOPPEMENT.md)
+> Rules contract: [RULES_CONTRACT.md](RULES_CONTRACT.md) · Plan: [PLAN_DE_DEVELOPPEMENT.md](PLAN_DE_DEVELOPPEMENT.md)
 
 ---
 
-## Résultat principal
+## Main result
 
-**Le seuil de 15 points de victoire est aujourd'hui inatteignable.** Aucune partie simulée ne l'a franchi, à aucun effectif, même après 200 cycles.
+**The threshold of 15 victory points is currently unreachable.** No simulated game crossed it, at any player count, even after 200 cycles.
 
-Ce n'est ni un bug du moteur ni un défaut des bots : c'est une propriété du barème tel qu'implémenté.
+This is neither an engine bug nor a bot flaw: it is a property of the scale as implemented.
 
-### Le plafond, calculé
+### The ceiling, calculated
 
-Le §22 du game design liste neuf sources de points. **Quatre seulement existent** aujourd'hui :
+§22 of the game design lists nine sources of points. **Only four exist** today:
 
-| Source | Points | Implémentée |
+| Source | Points | Implemented |
 |---|---:|:--:|
-| Colonie | 1 | oui |
-| Ville | 2 | oui |
-| Plus long réseau | 2 | oui |
-| Plus grande puissance militaire | 2 | oui |
-| Objectif secret | 2 | **non** |
-| Métropole | 3 | **non** |
-| Monument | 2 | **non** |
-| Défenseur de Catan | 1 | **non** |
-| Exploration majeure | 1 | **non** |
+| Settlement | 1 | yes |
+| City | 2 | yes |
+| Longest network | 2 | yes |
+| Largest army | 2 | yes |
+| Secret objective | 2 | **no** |
+| Metropolis | 3 | **no** |
+| Monument | 2 | **no** |
+| Defender of Catan | 1 | **no** |
+| Major exploration | 1 | **no** |
 
-Avec les quatre premières, le maximum théorique d'un joueur est de **13 points** : 4 villes (8) + 1 colonie (1), plus les deux titres (4). En pratique la simulation plafonne autour de **12**.
+With the first four, a player's theoretical maximum is **13 points**: 4 cities (8) + 1 settlement (1), plus the two titles (4). In practice the simulation tops out around **12**.
 
 ---
 
-## Le vrai verrou : la dotation de routes
+## The real lock: the road allowance
 
-La cause n'est pas celle qu'on attendrait. Ce ne sont ni les ressources ni les emplacements qui manquent, mais les **routes**.
+The cause is not the one you would expect. It is neither resources nor spots that are lacking, but **roads**.
 
-État typique d'un joueur à la fin d'une partie de 200 cycles, à 8 joueurs :
+Typical state of a player at the end of a 200-cycle game, at 8 players:
 
 ```text
-p4 : 9 PV  (1 colonie, 4 villes)
-     réserve : 4 colonies, 0 ville, 0 ROUTE
-     emplacements de colonie disponibles : 0
+p4 : 9 VP  (1 settlement, 4 cities)
+     reserve: 4 settlements, 0 city, 0 ROAD
+     available settlement spots: 0
 ```
 
-Le joueur possède encore quatre colonies en réserve et ne peut pas les poser : il n'a plus une seule route pour atteindre un emplacement légal. La règle de distance impose deux arêtes entre deux constructions, et **quinze routes ne suffisent pas** à desservir neuf bâtiments sur un plateau de cette taille.
+The player still has four settlements in reserve and cannot place them: they have not a single road left to reach a legal spot. The distance rule requires two edges between two builds, and **fifteen roads are not enough** to serve nine buildings on a board of this size.
 
-Les ressources, elles, abondent : la simulation observe des mains moyennes de 9 à 11 cartes et une centaine de défausses par partie.
-
----
-
-## Ce que la simulation a corrigé en chemin
-
-**Les bots ne commerçaient pas avec la banque.** Une main de dix cartes réparties sur cinq types ne contient presque jamais les trois minerais d'une ville : les bots accumulaient sans jamais réunir un coût précis. Ajouter l'échange 4:1 de dépannage a fait passer les parties conclues de 1/5 à 4/5 au seuil de 10.
-
-C'est une leçon qui vaut au-delà des bots : **à douze joueurs, l'accès au commerce conditionne l'expansion bien plus qu'à quatre**. Les ports, non encore implémentés, seront donc plus déterminants ici que dans un Catan classique.
+Resources, on the other hand, are plentiful: the simulation observes average hands of 9 to 11 cards and around a hundred discards per game.
 
 ---
 
-## Mesures par effectif
+## What the simulation fixed along the way
 
-Parties de 200 cycles, bots cupides, seuil ramené à 10 points pour que les parties se concluent.
+**The bots did not trade with the bank.** A hand of ten cards spread over five types almost never contains the three ore of a city: the bots piled up without ever assembling a precise cost. Adding the 4:1 stopgap trade took concluded games from 1/5 to 4/5 at the threshold of 10.
 
-| Joueurs | Tours actifs par joueur | Main moyenne | Pic de main | Défausses |
+This is a lesson that holds beyond the bots: **at twelve players, access to trade conditions expansion far more than at four**. The ports, not yet implemented, will therefore be more decisive here than in a classic Catan.
+
+---
+
+## Measurements by player count
+
+200-cycle games, greedy bots, threshold lowered to 10 points so that games conclude.
+
+| Players | Active turns per player | Average hand | Hand peak | Discards |
 |---:|---:|---:|---:|---:|
-| 4 | 49 | 9,3 | 72 | 56 |
-| 8 | 24 | 9,5 | 28 | 104 |
-| 12 | 16 | 11,3 | 39 | 102 |
+| 4 | 49 | 9.3 | 72 | 56 |
+| 8 | 24 | 9.5 | 28 | 104 |
+| 12 | 16 | 11.3 | 39 | 102 |
 
-Le pic de 72 cartes à 4 joueurs illustre un point du §16 du plan : **la limite de main ne s'applique que sur un 7**. Entre deux 7, une main peut enfler sans borne. À quatre joueurs sur un plateau dimensionné pour douze, la production dépasse largement les occasions de dépenser.
+The peak of 72 cards at 4 players illustrates a point of §16 of the plan: **the hand limit only applies on a 7**. Between two 7s, a hand can swell without bound. At four players on a board sized for twelve, production far exceeds the chances to spend.
 
 ---
 
-## Correctifs appliqués et second tour de mesure
+## Fixes applied and second round of measurement
 
-Deux des trois leviers ont été actionnés le 2026-08-27.
+Two of the three levers were pulled on 2026-08-27.
 
-**Objectifs secrets implémentés.** Cinq d'entre eux sont mesurables aujourd'hui — architecte, bâtisseur de cités, colonisateur, grand bâtisseur, seigneur militaire. Les trois autres du §21 sont déclarés mais indisponibles : un joueur ne doit jamais tirer un objectif que le moteur ne sait pas évaluer. Chaque joueur en reçoit deux et n'en garde qu'un ; à défaut de choix, le premier fait foi — même principe que la validation automatique du §2 du contrat.
+**Secret objectives implemented.** Five of them are measurable today — architect, city builder, colonizer, master builder, warlord. The other three of §21 are declared but unavailable: a player must never draw an objective the engine cannot evaluate. Each player receives two and keeps only one; in the absence of a choice, the first is authoritative — same principle as the automatic validation of §2 of the contract.
 
-**Dotation de routes portée de 15 à 20.** C'était le verrou mesuré.
+**Road allowance raised from 15 to 20.** That was the measured lock.
 
-### Résultat
+### Result
 
-**Le seuil de 15 est redevenu atteignable.** Avant correctifs : aucune partie, à aucun effectif. Après :
+**The threshold of 15 has become reachable again.** Before fixes: no game, at any player count. After:
 
-| Joueurs | Parties conclues | Cycles moyens |
+| Players | Games concluded | Average cycles |
 |---:|---:|---:|
 | 4 | 3 / 6 | 242 |
 | 6 | 2 / 6 | 226 |
@@ -94,497 +94,357 @@ Deux des trois leviers ont été actionnés le 2026-08-27.
 | 10 | 2 / 6 | 206 |
 | 12 | 3 / 6 | 240 |
 
-### Un bug de mesure, corrigé au passage
+### A measurement bug, fixed along the way
 
-Le simulateur recomposait le score à la main et **oubliait l'objectif secret**, sous-estimant chaque total de deux points. Le décompte passe désormais par une fonction unique, `playerPoints`, qui inclut titres et objectif. C'est aussi celle que le client devra utiliser : recomposer un score ailleurs, c'est se condamner à en oublier une part.
+The simulator recomposed the score by hand and **forgot the secret objective**, underestimating every total by two points. The count now goes through a single function, `playerPoints`, which includes titles and objective. It is also the one the client will have to use: recomposing a score elsewhere condemns you to forget part of it.
 
-### Un second bug, plus grave
+### A second bug, more serious
 
-`xxlOptionsFor(4)` renvoyait **44 hexagones — le plateau de douze joueurs pour une partie à quatre**. Chaque joueur ne touchait que six tuiles sur quarante-quatre et ne produisait presque jamais. En dessous de huit joueurs, le simulateur utilise désormais le plateau classique, conformément au §2 du game design qui réserve Grandes Colonies aux effectifs de 8 à 12.
-
----
-
-## Le problème suivant : la durée
-
-C'est maintenant l'écart le plus criant, et il est important.
-
-La cible du §2 est de **120 à 160 minutes**. À deux minutes par cycle, cela autorise environ **60 cycles**. Les mesures en réclament **150 à 240**, soit **cinq à huit heures** de partie.
-
-Autrement dit : le jeu est gagnable, mais **quatre fois trop lentement**. Et une partie sur deux ne se conclut toujours pas dans la limite de 300 cycles.
-
-### Ce qui pourrait combler l'écart
-
-Plusieurs systèmes manquants sont précisément des accélérateurs, ce qui rend la mesure actuelle pessimiste :
-
-- **les ports** — la simulation a déjà montré que l'accès au commerce conditionne l'expansion ; le 4:1 est un taux punitif ;
-- **le commerce entre joueurs**, cœur du jeu selon le §37, entièrement absent ;
-- **les métropoles** (3 points), **monuments** (2), **exploration** et **défense** — quatre sources de points encore absentes du barème ;
-- **la construction semi-simultanée**, implémentée mais que les bots n'utilisent jamais.
-
-Il serait prématuré de retoucher les coûts ou le seuil de victoire avant d'avoir mesuré avec ces systèmes : on corrigerait un déséquilibre qui n'existera plus.
+`xxlOptionsFor(4)` returned **44 hexes — the twelve-player board for a four-player game**. Each player touched only six tiles out of forty-four and almost never produced. Below eight players, the simulator now uses the classic board, in line with §2 of the game design which reserves Grandes Colonies for player counts of 8 to 12.
 
 ---
 
-## Ce qu'il faut trancher
+## The next problem: duration
 
-Trois leviers, non exclusifs.
+This is now the most glaring gap, and it is important.
 
-**Implémenter les objectifs secrets.** Ils valent 2 points et le §39 les prévoit déjà dans la première version jouable — ils ne sont donc pas un ajout mais un oubli. Ils portent le plafond réaliste de 12 à 14, ce qui reste juste sous le seuil.
+The target of §2 is **120 to 160 minutes**. At two minutes per cycle, that allows about **60 cycles**. The measurements demand **150 to 240**, i.e. **five to eight hours** of play.
 
-**Augmenter la dotation de routes.** C'est le verrou mesuré. Passer de 15 à 20 routes par joueur desserre directement l'expansion, sans toucher au barème.
+In other words: the game is winnable, but **four times too slowly**. And one game in two still does not conclude within the 300-cycle limit.
 
-**Abaisser le seuil de victoire.** À 12 points, les parties se concluent avec le barème actuel. C'est le levier le plus simple, mais il contredit l'intention du §22, qui justifiait 15 par la taille de la carte.
+### What could close the gap
 
-> Ma recommandation : **les trois premiers d'abord, le seuil en dernier recours.** Le seuil de 15 n'est pas arbitraire — il vient de la taille du plateau. Le baisser reviendrait à traiter le symptôme plutôt que la cause, qui est un barème incomplet et une dotation de routes calquée sur un jeu à quatre joueurs.
+Several missing systems are precisely accelerators, which makes the current measurement pessimistic:
+
+- **the ports** — the simulation has already shown that access to trade conditions expansion; 4:1 is a punitive rate;
+- **trade between players**, the heart of the game according to §37, entirely absent;
+- **the metropolises** (3 points), **monuments** (2), **exploration** and **defense** — four sources of points still absent from the scale;
+- **semi-simultaneous building**, implemented but which the bots never use.
+
+It would be premature to retouch the costs or the victory threshold before having measured with these systems: we would be correcting an imbalance that will no longer exist.
+
+---
+
+## What needs to be settled
+
+Three levers, not mutually exclusive.
+
+**Implement the secret objectives.** They are worth 2 points and §39 already plans them in the first playable version — they are therefore not an addition but an oversight. They lift the realistic ceiling from 12 to 14, which is still just under the threshold.
+
+**Increase the road allowance.** It is the measured lock. Going from 15 to 20 roads per player directly loosens expansion, without touching the scale.
+
+**Lower the victory threshold.** At 12 points, games conclude with the current scale. It is the simplest lever, but it contradicts the intention of §22, which justified 15 by the size of the map.
+
+> My recommendation: **the first three first, the threshold as a last resort.** The threshold of 15 is not arbitrary — it comes from the size of the board. Lowering it would treat the symptom rather than the cause, which is an incomplete scale and a road allowance modelled on a four-player game.
 >
-> **Mise à jour du 2026-08-27 :** les deux premiers leviers ont été actionnés et ont suffi à rendre la victoire atteignable. Le seuil reste à 15. La prochaine mesure n'aura de sens qu'après l'implémentation des ports et du commerce entre joueurs.
+> **Update of 2026-08-27:** the first two levers were pulled and were enough to make victory reachable. The threshold stays at 15. The next measurement will only make sense after the implementation of ports and trade between players.
 
 ---
 
-## Troisième tour : ports et commerce entre joueurs
+## Third round: ports and trade between players
 
-Implémentés le 2026-08-27, avec 22 tests dédiés.
+Implemented on 2026-08-27, with 22 dedicated tests.
 
-**Ports** — génériques à 3:1, spécialisés à 2:1, plus le port marchand du §11 qui donne 2:1 sur toute ressource. Ils sont posés sur des sommets côtiers **espacés** : deux ports adjacents seraient captés par une seule colonie, ce qui donnerait un avantage décisif au premier joueur qui la pose.
+**Ports** — generic at 3:1, specialized at 2:1, plus the trading port of §11 that gives 2:1 on any resource. They are placed on **spaced** coastal corners: two adjacent ports would be captured by a single settlement, which would give a decisive advantage to the first player to place it.
 
-**Commerce entre joueurs** — offres nominatives ou ouvertes, acceptation atomique, expiration en fin de cycle.
+**Trade between players** — named or open offers, atomic acceptance, expiry at end of cycle.
 
-### Ce que la mesure a montré
+### What the measurement showed
 
-Avec des bots acceptant largement, les parties conclues ont raccourci de **40 %** — de 159-240 cycles à 101-126. Le commerce est donc bien le levier attendu par le §37.
+With bots accepting freely, concluded games shortened by **40 %** — from 159-240 cycles to 101-126. Trade is therefore indeed the lever expected by §37.
 
-Mais le résultat s'est révélé **très sensible à la politique de négociation des bots**. Trois réglages successifs ont donné des taux d'acceptation de 73 %, 8 % puis 14 %, et des taux de conclusion allant de 1/6 à 4/6 sans corrélation nette.
+But the result proved **very sensitive to the bots' negotiation policy**. Three successive settings gave acceptance rates of 73 %, 8 % then 14 %, and conclusion rates ranging from 1/6 to 4/6 with no clear correlation.
 
-> **Conclusion méthodologique : les bots sont devenus le facteur limitant, pas le jeu.** Continuer à les régler mesurerait mes heuristiques plutôt que ton design. Les prochaines conclusions d'équilibrage demandent soit des bots nettement meilleurs, soit — et c'est plus rapide — un playtest humain.
+> **Methodological conclusion: the bots have become the limiting factor, not the game.** Continuing to tune them would measure my heuristics rather than your design. The next balancing conclusions require either markedly better bots, or — and it is faster — a human playtest.
 
-### Une lacune du contrat, révélée par les tests
+### A gap in the contract, revealed by the tests
 
-Le contrat accordait au joueur actif le droit de négocier pendant son tour, mais ne disait pas **qui pouvait lui répondre**. Restreindre la réponse au seul joueur actif rendait la règle vide : une offre sans contrepartie possible ne sert à rien. Tranché et consigné : pendant le tour, un échange est recevable dès lors que le joueur actif en est l'une des deux parties.
+The contract granted the active player the right to negotiate during their turn, but did not say **who could respond to them**. Restricting the response to the active player alone made the rule empty: an offer with no possible counterparty is useless. Settled and recorded: during the turn, a trade is admissible as long as the active player is one of the two parties.
 
 ---
 
-## Quatrième tour : cartes jouées, métropoles, monuments
+## Fourth round: cards played, metropolises, monuments
 
-Mesuré le 2026-08-27, après avoir rendu jouables les quatre cartes développement inertes et implémenté métropoles et monuments.
+Measured on 2026-08-27, after making the four inert development cards playable and implementing metropolises and monuments.
 
-### Une erreur de mesure, d'abord
+### A measurement error, first
 
-Les bots **achetaient** des cartes développement sans jamais en **jouer** une seule. La conséquence dépassait les cartes : la plus grande puissance militaire n'était **jamais** attribuée, et deux points de victoire n'existaient dans aucune mesure d'équilibrage. Tous les tours précédents portaient donc sur un jeu amputé.
+The bots **bought** development cards without ever **playing** a single one. The consequence went beyond the cards: the largest army was **never** awarded, and two victory points existed in no balancing measurement. Every previous round was therefore about an amputated game.
 
-Les bots jouent maintenant leurs cartes et bâtissent métropoles et monuments. Le simulateur renvoie en outre la **ventilation** des points et plus seulement le total : un total seul ne dit pas qu'une source est morte, et c'est exactement ce qui avait échappé.
+The bots now play their cards and build metropolises and monuments. The simulator also returns the **breakdown** of points and no longer just the total: a total alone does not say that a source is dead, and that is exactly what had slipped through.
 
-### Les sources de points sont-elles vivantes ?
+### Are the sources of points alive?
 
-Sur 12 parties par effectif :
+Over 12 games per player count:
 
-| Source | 8 joueurs | 12 joueurs |
+| Source | 8 players | 12 players |
 |---|---:|---:|
-| Plus grande puissance militaire attribuée | 10 / 12 parties | 12 / 12 |
-| Plus long réseau attribué | 12 / 12 | 12 / 12 |
-| Objectifs secrets remplis | 22 joueurs | 35 |
-| Monuments élevés | 22 | 53 |
-| Métropoles bâties | 3 | 9 |
+| Largest army awarded | 10 / 12 games | 12 / 12 |
+| Longest network awarded | 12 / 12 | 12 / 12 |
+| Secret objectives fulfilled | 22 players | 35 |
+| Monuments raised | 22 | 53 |
+| Metropolises built | 3 | 9 |
 
-**Le monument fonctionne comme prévu** : c'est la sortie du joueur bloqué, et il est massivement utilisé. **La métropole, non** — trois sont disponibles par partie, moins d'une est prise. Son rapport est le plus mauvais du jeu : un point net pour sept ressources dont deux d'or. À décider : la porter à 4 points, ou alléger son coût.
+**The monument works as expected**: it is the way out for the blocked player, and it is heavily used. **The metropolis, no** — three are available per game, fewer than one is taken. Its ratio is the worst in the game: one net point for seven resources, two of them gold. To decide: raise it to 4 points, or lighten its cost.
 
-### La victoire est maintenant atteignable
+### Victory is now reachable
 
-| Effectif | Parties conclues | Cycles médians |
+| Player count | Games concluded | Median cycles |
 |---|---:|---:|
-| 8 joueurs | 16 / 16 | 175 |
-| 10 joueurs | 15 / 16 | 189 |
-| 12 joueurs | 15 / 16 | 198 |
+| 8 players | 16 / 16 | 175 |
+| 10 players | 15 / 16 | 189 |
+| 12 players | 15 / 16 | 198 |
 
-Contre environ une partie sur trois auparavant.
+Against roughly one game in three before.
 
 ---
 
-## La durée : l'erreur était dans la cible
+## Duration: the error was in the target
 
-Le tour précédent concluait à « quatre fois trop lent ». Ce calcul reposait sur une confusion qu'il faut corriger.
+The previous round concluded "four times too slow". That calculation rested on a confusion that must be corrected.
 
-**Deux minutes par cycle est un plafond, pas une durée.** Ce sont les 90 secondes du tour actif plus les 30 de la fenêtre de commerce — des délais d'expiration. Un joueur qui lance, construit et passe la main termine son cycle en bien moins que cela. Diviser 120 minutes par ce plafond pour obtenir « 60 cycles » revient à supposer que chaque joueur épuise systématiquement son chronomètre.
+**Two minutes per cycle is a ceiling, not a duration.** It is the 90 seconds of the active turn plus the 30 of the trade window — expiry delays. A player who rolls, builds and passes the hand finishes their cycle in far less than that. Dividing 120 minutes by this ceiling to get "60 cycles" amounts to assuming every player systematically uses up their timer.
 
-Ce que donnent les mesures selon la durée moyenne réellement observée à table :
+What the measurements give according to the average duration actually observed at the table:
 
-| Cycles | à 40 s | à 60 s | à 90 s | à 120 s (plafond) |
+| Cycles | at 40 s | at 60 s | at 90 s | at 120 s (ceiling) |
 |---:|---|---|---|---|
 | 120 | 1 h 20 | 2 h 00 | 3 h 00 | 4 h 00 |
 | 160 | 1 h 47 | 2 h 40 | 4 h 00 | 5 h 20 |
 | 190 | 2 h 07 | 3 h 10 | 4 h 45 | 6 h 20 |
 
-### Le seuil de victoire, chiffré
+### The victory threshold, quantified
 
-Même partie, même graine, seul le seuil change :
+Same game, same seed, only the threshold changes:
 
-| Seuil | 8 joueurs | 12 joueurs |
+| Threshold | 8 players | 12 players |
 |---:|---:|---:|
 | 10 points | 128 cycles | 126 |
 | 12 points | 147 | 167 |
 | 13 points | 150 | 167 |
 | 15 points | 175 | 198 |
 
-Le rapport n'est pas linéaire : passer de 15 à 10 points ne retire que 35 % des cycles. Le début de partie est lent quel que soit le seuil, parce que la production ne démarre qu'avec les premières colonies.
+The relationship is not linear: going from 15 to 10 points only removes 35 % of the cycles. The start of the game is slow whatever the threshold, because production only starts with the first settlements.
 
-> **Recommandation.** Le seuil de 15 reste tenable si un cycle dure réellement une minute en moyenne : environ 3 h 20 à douze joueurs, au-dessus de la cible mais dans le domaine d'une soirée. Descendre à 12 points ramènerait à 2 h 47 sans dénaturer la course.
+> **Recommendation.** The threshold of 15 stays tenable if a cycle really lasts one minute on average: about 3 h 20 at twelve players, above the target but within the domain of an evening. Dropping to 12 points would bring it to 2 h 47 without distorting the race.
 >
-> **Mais ces chiffres restent ceux de bots.** Ils ne planifient pas, ne marchandent pas, et n'annoncent jamais de construction hors de leur tour — la mécanique la plus différenciante du jeu. Un humain construit plus vite. C'est un **plancher de vitesse**, donc un **plafond de durée** : la vraie partie sera plus courte. Je ne touche pas au seuil avant le playtest.
+> **But these figures are still bot figures.** They do not plan, do not haggle, and never announce a build out of turn — the most differentiating mechanic in the game. A human builds faster. It is a **speed floor**, therefore a **duration ceiling**: the real game will be shorter. I am not touching the threshold before the playtest.
 
 ---
 
-## Cinquième tour : l'archipel
+## Fifth round: the archipelago
 
-Mesuré le 2026-08-27, après avoir rendu les voies maritimes constructibles et
-introduit le plateau en archipel du §4.
+Measured on 2026-08-27, after making the sea lanes buildable and introducing the archipelago board of §4.
 
-### Encore un jeu amputé
+### Another amputated game
 
-Même erreur que pour les cartes développement, et repérée de la même façon.
-Les premiers essais sur archipel donnaient **zéro exploration** et un taux de
-conclusion effondré : les bots ne construisaient aucune voie maritime et
-restaient prisonniers de l'île centrale, plus petite que l'ancien disque.
+Same error as for the development cards, and spotted the same way. The first trials on the archipelago gave **zero exploration** and a collapsed conclusion rate: the bots built no sea lane and stayed prisoners of the central island, smaller than the old disc.
 
-Ils savent maintenant naviguer, et préfèrent la voie maritime à la route dès
-que leur île n'offre plus d'emplacement. Sans cette bascule, une route
-terrestre était presque toujours payable, donc toujours préférée, et aucune
-partie ne quittait jamais l'île de départ.
+They now know how to navigate, and prefer the sea lane to the road as soon as their island offers no more spots. Without this switch, a land road was almost always affordable, therefore always preferred, and no game ever left the starting island.
 
-### La part de l'île centrale, mesurée
+### The central island's share, measured
 
-Vingt-quatre parties par ligne, mêmes bots, mêmes graines.
+Twenty-four games per line, same bots, same seeds.
 
-| Plateau | 8 joueurs | 12 joueurs | Explorations |
+| Board | 8 players | 12 players | Explorations |
 |---|---|---|---|
-| Disque | 23/24 conclues, 170 cycles | 23/24, 138 cycles | 0 |
-| Archipel, île centrale à 55 % | 19/24, 221 cycles | **6/24**, 262 cycles | 14 et 19 |
-| Archipel, île centrale à 75 % | 22/24, 192 cycles | 21/24, 216 cycles | 11 et 15 |
+| Disc | 23/24 concluded, 170 cycles | 23/24, 138 cycles | 0 |
+| Archipelago, central island at 55 % | 19/24, 221 cycles | **6/24**, 262 cycles | 14 and 19 |
+| Archipelago, central island at 75 % | 22/24, 192 cycles | 21/24, 216 cycles | 11 and 15 |
 
-À 55 %, les îles secondaires enferment trop de terrain derrière la mer : à
-douze joueurs, six parties sur vingt-quatre parviennent à se conclure. La
-part est donc fixée à **75 %**, mesurée plutôt que choisie.
+At 55 %, the secondary islands lock too much terrain behind the sea: at twelve players, six games out of twenty-four manage to conclude. The share is therefore fixed at **75 %**, measured rather than chosen.
 
-### Le coût de l'archipel
+### The cost of the archipelago
 
-Même à 75 %, l'archipel allonge la partie : **216 cycles contre 138** à douze
-joueurs, soit environ 3 h 36 contre 2 h 18 à une minute par cycle. C'est le
-prix des traversées, et il est réel.
+Even at 75 %, the archipelago lengthens the game: **216 cycles versus 138** at twelve players, i.e. about 3 h 36 versus 2 h 18 at one minute per cycle. It is the price of the crossings, and it is real.
 
-Les deux plateaux restent donc disponibles. L'archipel est le défaut — c'est
-la structure du §4, et la seule où l'exploration ait un sens — mais
-`BOARD=disque` lance une soirée plus courte.
+The two boards therefore stay available. The archipelago is the default — it is the structure of §4, and the only one where exploration means something — but `BOARD=disque` launches a shorter evening.
 
-> **La même réserve qu'aux tours précédents s'applique, et plus fortement.**
-> Les bots traversent mal : ils n'embarquent qu'une fois bloqués, et suivent
-> la première arête venue plutôt que de viser une île. Un joueur humain
-> prépare sa traversée. L'écart mesuré entre disque et archipel est donc un
-> majorant, pas une prévision.
+> **The same caveat as in the previous rounds applies, and more strongly.** The bots cross badly: they only embark once blocked, and follow the first edge that comes rather than aiming for an island. A human player prepares their crossing. The measured gap between disc and archipelago is therefore an upper bound, not a prediction.
 
 ---
 
-## Limites de ces mesures
+## Limits of these measurements
 
-- Les bots sont volontairement simples : ils construisent par ordre de valeur en points et ne planifient rien. Un humain expanderait mieux et atteindrait probablement quelques points de plus.
-- Le commerce entre joueurs est désormais simulé, mais avec une politique de bot très fruste : deux cartes en surplus contre une carte manquante, sans marchandage. Un joueur humain négocierait bien mieux.
-- Les barbares ne sont pas dans le moteur : les jetons de défenseur restent inertes au barème. L'exploration majeure, elle, est désormais attribuée — un point au premier joueur qui pose une colonie sur une île secondaire.
-- Les hexagones face cachée du §13 — ressources rares, villages neutres, événements, zones dangereuses — ne sont pas implémentés : huit natures de tuiles restant à concevoir.
-- La construction semi-simultanée existe dans le moteur mais les bots ne l'utilisent pas : ils n'annoncent jamais hors de leur tour. C'est aujourd'hui la plus grosse mécanique absente des mesures.
-- Les bots ne choisissent pas leur objectif secret : ils gardent celui que le moteur leur attribue par défaut, sans regarder s'il colle à leur position.
+- The bots are deliberately simple: they build in order of point value and plan nothing. A human would expand better and would probably reach a few more points.
+- Trade between players is now simulated, but with a very crude bot policy: two surplus cards for one missing card, without haggling. A human player would negotiate far better.
+- The barbarians are not in the engine: the defender tokens stay inert in the scale. Major exploration, meanwhile, is now awarded — one point to the first player to place a settlement on a secondary island.
+- The face-down hexes of §13 — rare resources, neutral villages, events, dangerous zones — are not implemented: eight kinds of tiles remaining to be designed.
+- Semi-simultaneous building exists in the engine but the bots do not use it: they never announce out of turn. It is today the biggest mechanic absent from the measurements.
+- The bots do not choose their secret objective: they keep the one the engine assigns them by default, without checking whether it fits their position.
 
-Ces mesures disent donc où se situe le **plancher**, pas le plafond réel du jeu fini.
+These measurements therefore say where the **floor** is, not the real ceiling of the finished game.
 
-## Échelles de plateau — la place raccourcit la partie
+## Board scales — space shortens the game
 
-`scripts/echelles.ts`, 16 parties par ligne, bots gourmands, archipel, 600 cycles
-de garde-fou.
+`scripts/echelles.ts`, 16 games per line, greedy bots, archipelago, 600-cycle safeguard.
 
-| Effectif | Échelle | Terres | Hexagones | Îles | Conclues | Cycles (médiane) | Points du gagnant |
+| Count | Scale | Land | Hexes | Islands | Concluded | Cycles (median) | Winner's points |
 |---|---|---|---|---|---|---|---|
-| 12 | normale | 48 | 168 | 3 | 13/16 | 185 | 14,9 |
-| 12 | grande | 77 | 254 | 5 | **16/16** | **130** | 15,3 |
-| 12 | immense | 115 | 335 | 6 | **16/16** | **124** | 15,1 |
-| 8 | normale | 44 | 143 | 2 | 15/16 | 211 | 15,3 |
-| 8 | grande | 70 | 207 | 3 | 16/16 | 146 | 15,2 |
-| 8 | immense | 106 | 310 | 5 | 16/16 | 121 | 15,7 |
+| 12 | normal | 48 | 168 | 3 | 13/16 | 185 | 14.9 |
+| 12 | large | 77 | 254 | 5 | **16/16** | **130** | 15.3 |
+| 12 | huge | 115 | 335 | 6 | **16/16** | **124** | 15.1 |
+| 8 | normal | 44 | 143 | 2 | 15/16 | 211 | 15.3 |
+| 8 | large | 70 | 207 | 3 | 16/16 | 146 | 15.2 |
+| 8 | huge | 106 | 310 | 5 | 16/16 | 121 | 15.7 |
 
-On attendait l'inverse : plus de terres, plus de trajet, donc des parties plus
-longues. C'est le contraire, et nettement. À douze joueurs sur quarante-huit
-terres, la table est **engorgée** — les emplacements légaux se raréfient, les
-colonies se bloquent mutuellement, et trois parties sur seize n'aboutissent
-pas dans les six cents cycles. Donnez de la place et chacun construit : les
-constructions par joueur passent de 12,1 à 16,6, et la partie se conclut.
+We expected the opposite: more land, more travel, therefore longer games. It is the reverse, and markedly so. At twelve players on forty-eight land tiles, the table is **clogged** — legal spots grow scarce, settlements block each other, and three games out of sixteen do not conclude within six hundred cycles. Give some space and everyone builds: builds per player go from 12.1 to 16.6, and the game concludes.
 
-Le point de victoire reste gagné, pas concédé : le gagnant finit autour de 15
-points à toutes les échelles, jamais sur épuisement du garde-fou.
+The victory point stays won, not conceded: the winner finishes around 15 points at every scale, never on exhaustion of the safeguard.
 
-Le disque suit la même pente, en plus sage — il n'a pas d'îles à relier, donc
-moins de trajet à gagner : 143 cycles en normale, 119 en grande, 135 en
-immense, seize parties sur seize partout.
+The disc follows the same slope, more tamely — it has no islands to link, so less travel to save: 143 cycles at normal, 119 at large, 135 at huge, sixteen games out of sixteen everywhere.
 
-### La dotation de routes ne suit pas la taille du plateau
+### The road allowance does not follow the board size
 
-On l'avait mise à l'échelle par anticipation, sur l'idée qu'un plateau plus
-vaste demanderait plus de routes. La mesure a dit non :
+We had scaled it up in anticipation, on the idea that a larger board would demand more roads. The measurement said no:
 
-| Échelle | 20 routes | 30 routes |
+| Scale | 20 roads | 30 roads |
 |---|---|---|
-| normale | 13/16, 185 cycles | 16/16, 155 cycles |
-| grande | 16/16, 130 cycles | 16/16, 136 cycles |
-| immense | 16/16, 124 cycles | 16/16, 148 cycles |
+| normal | 13/16, 185 cycles | 16/16, 155 cycles |
+| large | 16/16, 130 cycles | 16/16, 136 cycles |
+| huge | 16/16, 124 cycles | 16/16, 148 cycles |
 
-Sur un grand plateau, plus de routes ne rapproche de rien : elle disperse, et
-la partie s'allonge. La mise à l'échelle a donc été retirée.
+On a large board, more roads brings nothing closer: it disperses, and the game lengthens. The scaling was therefore removed.
 
-En revanche la première colonne se lit dans l'autre sens : **sur le plateau
-normal, vingt routes bride encore** — trente feraient passer douze joueurs de
-13/16 à 16/16 et gagneraient trente cycles. C'est un réglage de l'équilibre de
-base, laissé en l'état faute d'avoir été demandé, mais il mérite d'être repris.
+On the other hand the first column reads the other way: **on the normal board, twenty roads still constrains** — thirty would take twelve players from 13/16 to 16/16 and save thirty cycles. It is a tuning of the base balance, left as is for lack of having been asked, but it deserves to be revisited.
 
 ---
 
-## Sixième tour : le marché dynamique
+## Sixth round: the dynamic market
 
-`scripts/marche.ts`, archipel à l'échelle normale, bots gourmands, 600 cycles
-de garde-fou. Le témoin est l'ancien jeu — cours plat à 4:1, palier hors
-d'atteinte — ce qui rend les deux lignes strictement comparables.
+`scripts/marche.ts`, archipelago at normal scale, greedy bots, 600-cycle safeguard. The control is the old game — flat rate at 4:1, step out of reach — which makes the two lines strictly comparable.
 
-Trois questions, dans l'ordre où elles pouvaient tuer la mécanique : le cours
-**vit-il** ? S'emballe-t-il ? Coûte-t-il la partie ?
+Three questions, in the order in which they could kill the mechanic: does the rate **live**? Does it run away? Does it cost the game?
 
-### Une première mesure trompeuse
+### A first misleading measurement
 
-Sur seize parties, le marché paraissait coûter cher : 236 cycles contre 191,
-soit **+24 % de durée** à douze joueurs, sur le jeu dont la durée est déjà le
-problème connu. De quoi remettre la mécanique en cause.
+Over sixteen games, the market seemed costly: 236 cycles versus 191, i.e. **+24 % duration** at twelve players, on the game whose duration is already the known problem. Enough to call the mechanic into question.
 
-Sur quarante parties, l'écart disparaît :
+Over forty games, the gap disappears:
 
-| Effectif | Marché | Conclues | Cycles (médiane) | Points du gagnant | Constr./j |
+| Count | Market | Concluded | Cycles (median) | Winner's points | Builds/p |
 |---|---|---|---|---|---|
-| 12 | figé 4:1 | 34/40 | 189 | 15,0 | 12,3 |
-| 12 | **§10** | **36/40** | **191** | 15,2 | 12,2 |
-| 8 | figé 4:1 | 39/40 | 178 | 15,3 | 14,0 |
-| 8 | **§10** | **40/40** | **183** | 15,2 | 14,0 |
+| 12 | frozen 4:1 | 34/40 | 189 | 15.0 | 12.3 |
+| 12 | **§10** | **36/40** | **191** | 15.2 | 12.2 |
+| 8 | frozen 4:1 | 39/40 | 178 | 15.3 | 14.0 |
+| 8 | **§10** | **40/40** | **183** | 15.2 | 14.0 |
 
-Deux cycles à douze, cinq à huit : sous le bruit. Les parties conclues gagnent
-même deux points sur quarante. Le +24 % était un artefact d'échantillon — une
-mesure de plus que ce document doit corriger avant d'en tirer une
-conclusion, et la même leçon que les précédentes : **seize parties ne
-suffisent pas à départager deux réglages proches.**
+Two cycles at twelve, five at eight: below the noise. Concluded games even gain two points out of forty. The +24 % was a sampling artefact — one more measurement that this document must correct before drawing a conclusion, and the same lesson as the previous ones: **sixteen games are not enough to tell two close settings apart.**
 
-### Le cours vit, et il sature
+### The rate lives, and it saturates
 
-L'amplitude moyenne — de combien de crans a bougé le cours le plus mobile —
-s'établit à **2,8** sur une plage de 2 à 6. Le marché n'est donc pas un
-barème déguisé : il traverse presque toute son étendue en une partie.
+The average amplitude — by how many notches the most mobile rate has moved — comes out at **2.8** on a range of 2 to 6. The market is therefore not a disguised scale: it traverses almost its entire span in one game.
 
-Mais **3,4 cours sur 6 finissent collés à une borne**. Le premier jet était
-pire, à 4,8, parce que le solde qui porte le cours courait sans limite : le
-bois vendu quatre cents fois demandait quatre cents achats pour décoller de
-son plafond, ce qui n'arrive jamais. Borner le solde un cran au-delà du cours
-a ramené la saturation à 3,4 et rendu la remontée possible en un palier.
+But **3.4 rates out of 6 end up stuck against a bound**. The first attempt was worse, at 4.8, because the balance carrying the rate ran without limit: wood sold four hundred times demanded four hundred purchases to lift off its ceiling, which never happens. Bounding the balance one notch beyond the rate brought saturation back to 3.4 and made the recovery possible in one step.
 
-Les 3,4 restants tiennent aux bots, et il faut le dire clairement : ils
-vendent toujours le même surplus structurel — bois et laine — et achètent
-toujours la même pénurie structurelle — minerai et blé. Rien dans leur
-politique ne réagit au prix. Un joueur humain qui voit le bois à 6 cesse de
-le vendre et va négocier à la table, ce qui est précisément l'effet
-recherché.
+The remaining 3.4 come down to the bots, and it must be said clearly: they always sell the same structural surplus — wood and wool — and always buy the same structural shortage — ore and wheat. Nothing in their policy reacts to price. A human player who sees wood at 6 stops selling it and goes to negotiate at the table, which is precisely the intended effect.
 
-### La limite de cette lecture
+### The limit of this reading
 
-Le cours ne facture que la ressource **donnée**. Le voir descendre à 2 sur le
-minerai ne rend donc pas le minerai plus facile à obtenir : cela ne profite
-qu'à celui qui en a du surplus, c'est-à-dire à personne. La moitié « une
-ressource qui manque voit son prix monter » du §10 pèse ainsi nettement moins
-que l'autre.
+The rate only charges the resource **given**. Seeing it drop to 2 on ore therefore does not make ore easier to obtain: it only benefits whoever has a surplus of it, i.e. no one. The "a resource that is scarce sees its price rise" half of §10 thus weighs markedly less than the other.
 
-C'était le prix à payer pour que les ports gardent leur sens : dans la boîte,
-un port bois donne 2 bois contre n'importe quoi. Facturer la ressource reçue
-aurait inversé la signification de tous les ports du plateau.
+That was the price to pay so that the ports keep their meaning: in the box, a wood port gives 2 wood for anything. Charging the resource received would have inverted the meaning of every port on the board.
 
-### Ce qu'il reste à mesurer
+### What remains to be measured
 
-- Le marché n'a jamais été mesuré **avec des joueurs humains**, qui sont les
-  seuls à pouvoir réagir à un prix. Toutes les valeurs ci-dessus décrivent
-  une table qui ne regarde pas le tableau.
-- Les échanges bancaires par partie ne bougent presque pas (273 contre 279 à
-  douze) : les bots paient plus cher sans commercer moins. Un humain
-  devrait, lui, se détourner de la banque — c'est l'hypothèse centrale du
-  dispositif, et elle reste à vérifier.
-- Le palier de 4 et la plage 2–6 n'ont été comparés qu'à deux variantes, sur
-  seize parties chacune — donc sur du bruit. À reprendre à quarante si le
-  réglage est remis en cause.
+- The market has never been measured **with human players**, who are the only ones able to react to a price. All the values above describe a table that does not look at the board.
+- The bank trades per game barely move (273 versus 279 at twelve): the bots pay more without trading less. A human should turn away from the bank — it is the central hypothesis of the device, and it remains to be verified.
+- The step of 4 and the range 2–6 have only been compared to two variants, over sixteen games each — so over noise. To revisit at forty if the setting is called into question.
 
 ---
 
-## Septième tour : les ports à contrat
+## Seventh round: the contract ports
 
-`scripts/ports.ts`, 40 parties par ligne. Le témoin retire les deux ports du
-plateau **après génération** : mêmes terres, mêmes jetons, mêmes autres
-ports, seule la côte change.
+`scripts/ports.ts`, 40 games per line. The control removes the two ports from the board **after generation**: same land, same tokens, same other ports, only the coastline changes.
 
-| Effectif | Plateau | Conclues | Cycles (méd.) | Points du gagnant | Constr./j | Via port | Via banque |
+| Count | Board | Concluded | Cycles (med.) | Winner's points | Builds/p | Via port | Via bank |
 |---|---|---|---|---|---|---|---|
-| 12 | sans contrats | 35/40 | 212 | 14,9 | 12,1 | 0 | 317 |
-| 12 | **§11** | 35/40 | 209 | 15,0 | 12,2 | 5 | 316 |
-| 8 | sans contrats | 40/40 | 181 | 15,2 | 13,8 | 0 | 114 |
-| 8 | **§11** | 40/40 | 189 | 15,2 | 13,9 | 7 | 116 |
+| 12 | without contracts | 35/40 | 212 | 14.9 | 12.1 | 0 | 317 |
+| 12 | **§11** | 35/40 | 209 | 15.0 | 12.2 | 5 | 316 |
+| 8 | without contracts | 40/40 | 181 | 15.2 | 13.8 | 0 | 114 |
+| 8 | **§11** | 40/40 | 189 | 15.2 | 13.9 | 7 | 116 |
 
-**Le port commercial sert, et ne déséquilibre rien.** Cinq à sept conversions
-par partie, aucun effet mesurable sur la durée, le nombre de constructions ou
-le score du gagnant. La crainte était qu'un 2:1 sans condition de nature
-devienne le meilleur taux du jeu offert à qui pose une colonie au bon
-endroit ; la contrainte des deux natures différentes le ramène à sa place.
+**The commercial port is used, and unbalances nothing.** Five to seven conversions per game, no measurable effect on duration, the number of builds or the winner's score. The fear was that an unconditioned 2:1 would become the best rate in the game handed to whoever places a settlement in the right spot; the constraint of the two different kinds brings it back into place.
 
-### Ce que ces chiffres ne disent pas
+### What these figures do not say
 
-- **Le port minier n'est pas mesuré du tout.** Zéro usage : les bots ne le
-  touchent jamais. L'or ne sert qu'à la métropole, et un bot qui en
-  thésauriserait sans pouvoir bâtir bloquerait sa main. C'est une lacune
-  connue, pas un oubli — mais elle veut dire que l'exemption de marché du
-  §11, la décision la plus discutable du lot, n'a été validée que par le
-  raisonnement.
-- **Cinq usages par partie, c'est peu**, et c'est le plancher : le port
-  n'appartient qu'à un joueur, et ce joueur est un bot qui n'y touche que
-  lorsqu'il ne peut plus rien bâtir. Un humain qui tient ce port irait le
-  chercher.
-- Le port royal n'existe pas : il attend l'Influence.
+- **The mining port is not measured at all.** Zero use: the bots never touch it. Gold only serves the metropolis, and a bot that hoarded it without being able to build would block its hand. It is a known gap, not an oversight — but it means that the market exemption of §11, the most debatable decision of the lot, has only been validated by reasoning.
+- **Five uses per game is little**, and it is the floor: the port belongs to only one player, and that player is a bot that only touches it when it can no longer build anything. A human who held that port would go and use it.
+- The royal port does not exist: it awaits Influence.
 
 ---
 
-## Huitième tour : des adversaires qui jouent
+## Eighth round: opponents that play
 
-Les sept tours précédents ont mesuré le jeu avec des bots qui construisaient
-par ordre de valeur en points sans jamais regarder un jeton, sans plan, sans
-proposer un seul échange. C'était assumé — ils étaient là pour faire tourner
-des milliers de parties, pas pour bien jouer. Mais cela laissait une question
-ouverte : **ce qu'on mesurait était-il le jeu, ou la maladresse des bots ?**
+The seven previous rounds measured the game with bots that built in order of point value without ever looking at a token, without a plan, without proposing a single trade. It was deliberate — they were there to run thousands of games, not to play well. But it left a question open: **was what we were measuring the game, or the bots' clumsiness?**
 
-Le paquet `sim` porte désormais un pilote complet
-(`packages/sim/src/pilote/`), à quatre niveaux et six caractères. Il ne
-reçoit que la vue publique et la vue privée d'un joueur — pas le `GameState`
-— et c'est **exactement le même code** qui joue en réseau le soir venu et qui
-tourne ici en simulation.
+The `sim` package now carries a full pilot (`packages/sim/src/pilote/`), with four levels and six characters. It receives only a player's public view and private view — not the `GameState` — and it is **exactly the same code** that plays over the network on game night and that runs here in simulation.
 
-### L'échelle des niveaux
+### The level scale
 
-`scripts/adversaires.ts`, 48 parties à 6 joueurs, sièges alternés d'une
-partie à l'autre pour que l'ordre du tour ne fausse rien.
+`scripts/adversaires.ts`, 48 six-player games, seats alternated from one game to the next so that turn order skews nothing.
 
-| Duel | Victoires | Points moyens | Cycles |
+| Duel | Wins | Average points | Cycles |
 |---|---|---|---|
-| niveau 2 contre l'ancien bot | **48 — 0** | 10,5 contre 2,7 | 108 |
-| niveau 2 contre niveau 1 | **43 — 0** | 10,7 contre 3,7 | 150 |
-| niveau 4 contre niveau 1 | **43 — 0** | 11,1 contre 3,7 | 152 |
-| niveau 3 contre niveau 2 | **20 — 16** | 9,9 contre 9,1 | 193 |
-| niveau 4 contre niveau 3 | **32 — 27** ¹ | 10,0 contre 9,8 | 183 |
+| level 2 vs the old bot | **48 — 0** | 10.5 vs 2.7 | 108 |
+| level 2 vs level 1 | **43 — 0** | 10.7 vs 3.7 | 150 |
+| level 4 vs level 1 | **43 — 0** | 11.1 vs 3.7 | 152 |
+| level 3 vs level 2 | **20 — 16** | 9.9 vs 9.1 | 193 |
+| level 4 vs level 3 | **32 — 27** ¹ | 10.0 vs 9.8 | 183 |
 
-¹ cumul de deux familles de graines, 80 parties : 15 — 17 sur l'une, 17 — 10
-sur l'autre. L'écart entre les deux dit ce que vaut la mesure — à une
-trentaine de parties décidées par famille, un duel serré ne se tranche pas.
+¹ combined over two seed families, 80 games: 15 — 17 on one, 17 — 10 on the other. The gap between the two says what the measurement is worth — at around thirty games decided per family, a close duel is not settled.
 
-**L'échelle n'est pas régulière, et c'est le fait le plus utile du tour.**
-Entre le premier et le deuxième niveau il y a un gouffre : quarante-trois à
-zéro. Entre le troisième et le quatrième, à peine un avantage. Ce que le
-deuxième niveau ajoute — peser les emplacements, viser un coût précis — vaut
-plus que tout ce qui vient après.
+**The scale is not even, and that is the most useful fact of the round.** Between the first and the second level there is a chasm: forty-three to zero. Between the third and the fourth, barely an edge. What the second level adds — weighing spots, aiming for a precise cost — is worth more than everything that comes after.
 
-C'est d'abord la mesure de ce que **la mise en place** coûte. Une colonie
-posée sur le premier sommet de la liste, triée par identifiant, tombe en
-moyenne sur des jetons médiocres, et la partie est perdue avant le premier
-lancer. Rien de ce qu'un joueur fait ensuite ne rattrape cela.
+It is first the measurement of what **setup** costs. A settlement placed on the first corner in the list, sorted by identifier, falls on average on mediocre tokens, and the game is lost before the first roll. Nothing a player does afterwards recovers it.
 
-### Le problème du faiseur de rois, chiffré
+### The kingmaker problem, quantified
 
-Le quatrième niveau devait se distinguer en visant le meneur : voleur posé
-sur lui, et plus un échange qui l'arrange. Mesuré, il **perdait** contre le
-troisième — huit victoires à quinze sur trente-deux parties — là où le même
-niveau visant simplement la main la plus grosse gagnait quatorze à neuf.
+The fourth level was meant to stand out by targeting the leader: robber placed on them, and no more trades that suit them. Measured, it **lost** against the third — eight wins to fifteen over thirty-two games — where the same level simply targeting the biggest hand won fourteen to nine.
 
-Le geste est table-optimal et individuellement coûteux : le voleur posé sur
-le meneur ne rapporte rien à celui qui le pose, il rend service aux dix
-autres. C'est le problème du faiseur de rois, et il ne se règle pas en
-cessant de freiner celui qui gagne — un jeu où personne ne le freine se
-décide au cinquième cycle. Il se règle en ne le freinant **que lorsque c'est
-urgent** : quand il est à quatre points du but, ou qu'il a pris trois points
-d'avance. Avec cette condition, viser le meneur ne coûte plus rien —
-treize à treize contre la visée cupide — et le comportement reste visible à
-la table.
+The move is table-optimal and individually costly: the robber placed on the leader brings nothing to whoever places it, it does the other ten a favour. It is the kingmaker problem, and it is not solved by ceasing to slow down whoever is winning — a game where no one slows them down is decided on the fifth cycle. It is solved by slowing them down **only when it is urgent**: when they are four points from the goal, or have taken a three-point lead. With this condition, targeting the leader no longer costs anything — thirteen to thirteen against the greedy aim — and the behaviour stays visible at the table.
 
-### Trois mécaniques sortent de l'ombre
+### Three mechanics come out of the shadows
 
-Quatre parties à six joueurs au niveau 4, événements comptés :
+Four six-player games at level 4, events counted:
 
-| Mécanique | Avant | Maintenant |
+| Mechanic | Before | Now |
 |---|---|---|
-| Choix de l'objectif secret | jamais fait | 24 sur 24 (tous les joueurs) |
-| Annonces hors tour (§8) | jamais jouées | 46 déposées, 46 abouties, 0 remboursée |
-| Port minier (§11) | zéro usage | 1 — contre 148 pour le port commercial |
-| Monopole | joué sur ce qui manque | 19, visés sur ce que la table détient |
-| Métropoles bâties | rares | 6 |
+| Choosing the secret objective | never done | 24 of 24 (all players) |
+| Announcements out of turn (§8) | never played | 46 placed, 46 completed, 0 refunded |
+| Mining port (§11) | zero use | 1 — against 148 for the commercial port |
+| Monopoly | played on what is missing | 19, aimed at what the table holds |
+| Metropolises built | rare | 6 |
 
-Le port minier reste donc **un port rare plutôt qu'un port mort** : un
-adversaire ne s'en sert que lorsqu'il vise une métropole et qu'il lui manque
-de l'or. L'exemption de marché du §11 n'est toujours pas validée par le
-chiffre.
+The mining port therefore stays **a rare port rather than a dead port**: an opponent only uses it when aiming for a metropolis and short of gold. The market exemption of §11 is still not validated by the figures.
 
-### Les annonces hors tour n'ajoutent pas de constructions, elles les avancent
+### Out-of-turn announcements do not add builds, they bring them forward
 
-Douze parties avec et sans, tout le reste égal : **91 constructions contre
-92**. Même total, plus tôt. La mécanique du §8 ne fait donc pas construire
-davantage une table, elle décale ce qu'elle aurait bâti de toute façon — ce
-qui est exactement ce qu'elle promettait, et ce qui n'avait jamais été
-vérifié faute d'un bot qui l'exerce.
+Twelve games with and without, everything else equal: **91 builds versus 92**. Same total, earlier. The mechanic of §8 therefore does not make a table build more, it shifts what it would have built anyway — which is exactly what it promised, and what had never been verified for lack of a bot that exercises it.
 
-Une mise en garde de méthode, apprise en chemin : deux variantes de bot ne
-jouent pas la même partie à graine égale. Elles consomment le hasard
-différemment, donc divergent dès le premier tirage. Une première mesure
-donnait aux annonces quatre-vingts cycles de retard ; la même mesure, après
-d'autres réglages sans rapport, leur donnait vingt-cinq cycles d'avance.
-Seules les grandeurs **cumulées sur beaucoup de parties** — constructions,
-victoires — résistent à cela ; la durée d'une partie, non.
+A methodological warning, learned along the way: two bot variants do not play the same game at equal seed. They consume randomness differently, so they diverge from the first draw. A first measurement gave the announcements eighty cycles of lag; the same measurement, after other unrelated tuning, gave them twenty-five cycles of lead. Only quantities **accumulated over many games** — builds, wins — resist this; the duration of a single game does not.
 
-### Le niveau et la durée d'une soirée
+### Level and the length of an evening
 
-48 parties par ligne, à 6 joueurs, tous les sièges au même niveau :
+48 games per line, at 6 players, all seats at the same level:
 
-| Niveau | Cycles | Conclues | Offres (acceptées) | Banque | Annonces | Défausses |
+| Level | Cycles | Concluded | Offers (accepted) | Bank | Announcements | Discards |
 |---|---|---|---|---|---|---|
-| 1 — Apprenti | 229 | 38/48 | 0 | 148 | 0 | 26 |
-| 2 — Colon | **192** | 36/48 | 324 (26 %) | 164 | 0 | 48 |
-| 3 — Aguerri | 206 | 34/48 | 362 (19 %) | 182 | 13 | 57 |
-| 4 — Stratège | 209 | 34/48 | 362 (17 %) | 215 | 14 | 56 |
+| 1 — Apprentice | 229 | 38/48 | 0 | 148 | 0 | 26 |
+| 2 — Settler | **192** | 36/48 | 324 (26 %) | 164 | 0 | 48 |
+| 3 — Seasoned | 206 | 34/48 | 362 (19 %) | 182 | 13 | 57 |
+| 4 — Strategist | 209 | 34/48 | 362 (17 %) | 215 | 14 | 56 |
 
-Une table forte joue un peu plus longtemps qu'une table moyenne, et conclut
-un peu moins souvent. La cause n'est pas le talent : c'est que tout le monde
-avance, que le plateau se remplit, et qu'un joueur ayant posé ses cinq
-colonies, ses quatre villes et son monument plafonne autour de treize points,
-titres compris. La partie cesse alors de progresser **faute de place**, et
-non faute de ressources — le même mur que le tour sur les échelles de
-plateau avait déjà rencontré.
+A strong table plays a little longer than an average table, and concludes a little less often. The cause is not skill: it is that everyone advances, the board fills up, and a player who has placed their five settlements, their four cities and their monument tops out around thirteen points, titles included. The game then stops progressing **for lack of space**, and not for lack of resources — the same wall the round on board scales had already hit.
 
-Pour l'hôte, la conséquence est pratique : à niveau élevé, prévoir plus de
-terres ou baisser le seuil de victoire. C'est dit sur son écran, sous les
-molettes.
+For the host, the consequence is practical: at a high level, plan for more land or lower the victory threshold. It is said on their screen, under the dials.
 
-### Le taux d'acceptation des échanges
+### The trade acceptance rate
 
-19 % des offres aboutissent, contre 3 % à la première version du pilote. Le
-correctif n'était pas de proposer davantage mais de **juger une offre en
-valeur continue** plutôt que par un seuil binaire. La première version
-n'acceptait que ce qui comblait exactement le coût visé : la table proposait
-sans arrêt et n'échangeait jamais. Une carte vaut ce qu'elle vaut — le trou
-du plan d'abord, la pénurie de terrain ensuite, presque rien quand on en a
-déjà cinq — et deux cartes contre une passent alors presque toujours.
+19 % of offers complete, against 3 % in the first version of the pilot. The fix was not to propose more but to **judge an offer on a continuous value** rather than by a binary threshold. The first version only accepted what exactly filled the targeted cost: the table proposed non-stop and never traded. A card is worth what it is worth — the gap in the plan first, the terrain shortage next, almost nothing when you already have five — and two cards for one then pass almost always.
 
-### Ce que ces mesures ne disent toujours pas
+### What these measurements still do not say
 
-- **Le plancher, pas le plafond.** Un stratège regarde un coup en avant,
-  jamais deux. Il ne bluffe pas, ne coalise pas, et ne renonce jamais à un
-  échange pour empêcher un autre de le faire.
-- **Les parties simulées ne connaissent pas le temps.** Le pilote décide
-  toujours avant l'expiration du chronomètre ; en soirée, la fenêtre de
-  commerce de trente secondes contraint tout autrement.
-- **Six caractères ne font pas six styles humains.** Ils font six jeux de
-  poids, ce qui suffit à les distinguer à la table — le marchand dépose 1382
-  offres là où le corsaire en dépose 395 — mais pas à imiter quelqu'un.
+- **The floor, not the ceiling.** A strategist looks one move ahead, never two. It does not bluff, does not form coalitions, and never forgoes a trade to stop another from making one.
+- **Simulated games do not know time.** The pilot always decides before timer expiry; on game night, the thirty-second trade window constrains everything differently.
+- **Six characters do not make six human styles.** They make six sets of weights, which is enough to tell them apart at the table — the merchant places 1382 offers where the corsair places 395 — but not to imitate someone.

@@ -1,672 +1,672 @@
 # Catan: Grandes Colonies
-## Concept de jeu pour 8 à 12 joueurs
+## Game concept for 8 to 12 players
 
-> Un "Catan XXL" inspiré de Catan classique, Seafarers, Cities & Knights, Traders & Barbarians, des règles de 5–6 joueurs et de plusieurs variantes communautaires.
+> A "Catan XXL" inspired by classic Catan, Seafarers, Cities & Knights, Traders & Barbarians, the 5–6 player rules and several community variants.
 >
-> Objectif : conserver le cœur **production → commerce → construction → développement**, tout en supprimant l'un des gros problèmes du Catan à nombreux joueurs : le temps d'attente.
+> Goal: keep the core **production → trade → building → development**, while removing one of the big problems of Catan with many players: waiting time.
 
 ---
 
 ## 1. Vision
 
-**Catan: Grandes Colonies** est un jeu de stratégie et de négociation pour **8 à 12 joueurs**.
+**Catan: Grandes Colonies** is a strategy and negotiation game for **8 to 12 players**.
 
-Les joueurs développent des colonies sur un immense archipel composé de plusieurs îles reliées par des routes et des voies maritimes.
+Players develop settlements on a huge archipelago made of several islands linked by roads and sea lanes.
 
-Le jeu ajoute trois dimensions :
+The game adds three dimensions:
 
-1. **Économie** — ressources, ports, marché et commerce entre joueurs.
-2. **Politique / diplomatie** — alliances, contrats, influence et conflits indirects.
-3. **Développement** — villes spécialisées, chevaliers, événements et exploration.
+1. **Economy** — resources, ports, market and trade between players.
+2. **Politics / diplomacy** — alliances, contracts, influence and indirect conflicts.
+3. **Development** — specialized cities, knights, events and exploration.
 
-Le jeu doit rester reconnaissable comme un Catan : les meilleures décisions viennent de la combinaison entre **probabilités, positionnement, négociation et opportunisme**.
+The game must stay recognizable as a Catan: the best decisions come from the combination of **probabilities, positioning, negotiation and opportunism**.
 
 ---
 
-# 2. Nombre de joueurs
+# 2. Number of players
 
-| Joueurs | Configuration | Durée cible |
+| Players | Configuration | Target duration |
 |---:|---|---:|
-| 8 | 2 grandes îles + archipel central | 90–120 min |
-| 9 | 2 grandes îles + archipel central | 100–130 min |
-| 10 | 2 grandes îles + archipel central | 110–140 min |
-| 11 | 3 îles majeures + archipel | 120–150 min |
-| 12 | 3 îles majeures + archipel | 120–160 min |
+| 8 | 2 large islands + central archipelago | 90–120 min |
+| 9 | 2 large islands + central archipelago | 100–130 min |
+| 10 | 2 large islands + central archipelago | 110–140 min |
+| 11 | 3 major islands + archipelago | 120–150 min |
+| 12 | 3 major islands + archipelago | 120–160 min |
 
-### Règle fondamentale
+### Fundamental rule
 
-Le jeu ne doit **jamais dépendre d'un tour individuel très long**.
+The game must **never depend on a very long individual turn**.
 
-Une partie à 12 doit donner quelque chose à faire à presque tout le monde pendant le tour des autres.
-
----
-
-# 3. Philosophie de conception
-
-### À conserver
-
-- production par lancer de dés ;
-- cinq ressources classiques ;
-- construction de routes, colonies et villes ;
-- commerce ;
-- développement ;
-- ports ;
-- voleur ;
-- majorité et objectifs secondaires.
-
-### À modifier
-
-- plateau beaucoup plus grand ;
-- système de tours groupés ;
-- construction pendant le tour d'un autre joueur ;
-- davantage de possibilités de commerce ;
-- limites de cartes adaptées au grand nombre de joueurs ;
-- plusieurs points de tension sur la carte.
-
-### À ajouter
-
-- exploration maritime ;
-- marché dynamique ;
-- chevaliers / défense ;
-- événements ;
-- objectifs secrets ;
-- influence politique ;
-- contrats commerciaux ;
-- territoires neutres ;
-- système anti-dominant.
+A 12-player game must give almost everyone something to do during the others' turn.
 
 ---
 
-# 4. Le plateau
+# 3. Design philosophy
 
-Le plateau est composé de **44 à 52 hexagones de terrain** selon le nombre de joueurs.
+### To keep
 
-Chaque partie comporte :
+- production by dice roll;
+- five classic resources;
+- building of roads, settlements and cities;
+- trade;
+- development;
+- ports;
+- robber;
+- majority and secondary objectives.
 
-- 3 à 4 déserts ;
-- 2 à 4 zones maritimes ;
-- 6 à 8 ports ;
-- plusieurs îles secondaires ;
-- une région centrale disputée ;
-- des zones d'exploration.
+### To modify
 
-### Structure recommandée à 12 joueurs
+- a much larger board;
+- a grouped-turns system;
+- building during another player's turn;
+- more trading opportunities;
+- card limits adapted to the large number of players;
+- several points of tension on the map.
+
+### To add
+
+- maritime exploration;
+- dynamic market;
+- knights / defense;
+- events;
+- secret objectives;
+- political influence;
+- trade contracts;
+- neutral territories;
+- an anti-dominant system.
+
+---
+
+# 4. The board
+
+The board is made of **44 to 52 terrain hexes** depending on the number of players.
+
+Each game includes:
+
+- 3 to 4 deserts;
+- 2 to 4 sea zones;
+- 6 to 8 ports;
+- several secondary islands;
+- a contested central region;
+- exploration zones.
+
+### Recommended structure at 12 players
 
 ```text
                     ~ ~ ~ ~ ~
              ┌───────────────────┐
-             │      ÎLE NORD     │
+             │     NORTH ISLAND  │
              │   🌲 🐑 ⛏️ 🌾 🧱   │
              └─────────┬─────────┘
                        │
-               ~ ~ ARCHIPEL ~ ~
+              ~ ~ ARCHIPELAGO ~ ~
               /        │        \
        ┌─────┘         │         └─────┐
        │               │               │
 ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│  ÎLE OUEST   │  │ ÎLE CENTRALE │  │  ÎLE EST     │
-│ ressources   │  │ riche / rare │  │ ressources   │
+│  WEST ISLAND │  │ CENTRAL ISLE │  │  EAST ISLAND │
+│  resources   │  │ rich / rare  │  │  resources   │
 └──────────────┘  └──────────────┘  └──────────────┘
 ```
 
-Le positionnement doit créer **plusieurs fronts économiques** plutôt qu'un seul cercle de colonies.
+The positioning must create **several economic fronts** rather than a single circle of settlements.
 
 ---
 
-# 5. Ressources
+# 5. Resources
 
-Les cinq ressources restent :
+The five resources stay:
 
 - 🌾 Grain
-- 🐑 Laine
-- 🌲 Bois
-- 🧱 Brique
-- ⛏️ Minerai
+- 🐑 Wool
+- 🌲 Wood
+- 🧱 Brick
+- ⛏️ Ore
 
-Deux nouvelles ressources optionnelles peuvent être ajoutées dans le mode avancé :
+Two new optional resources can be added in the advanced mode:
 
-- 🪙 Or
-- 🐟 Poisson
+- 🪙 Gold
+- 🐟 Fish
 
-### Or
+### Gold
 
-L'or est une ressource flexible.
+Gold is a flexible resource.
 
-**2 Or → 1 ressource de son choix**
+**2 Gold → 1 resource of your choice**
 
-L'or sert aussi pour :
+Gold also serves for:
 
-- certains contrats ;
-- les enchères ;
-- les événements ;
-- certaines technologies.
+- certain contracts;
+- auctions;
+- events;
+- certain technologies.
 
-### Poisson
+### Fish
 
-Le poisson est principalement obtenu depuis certaines zones maritimes.
+Fish is mainly obtained from certain sea zones.
 
-Utilisations :
+Uses:
 
-- échange ;
-- activation de certains bâtiments ;
-- missions de commerce.
+- trade;
+- activation of certain buildings;
+- trade missions.
 
-Le poisson ne remplace pas les cinq ressources classiques.
+Fish does not replace the five classic resources.
 
 ---
 
 # 6. Production
 
-Le système de dés reste inspiré de Catan.
+The dice system stays inspired by Catan.
 
-Deux dés sont lancés au début du cycle.
+Two dice are rolled at the start of the cycle.
 
-Chaque nombre produit les ressources correspondantes.
+Each number produces the corresponding resources.
 
-### Probabilités
+### Probabilities
 
-Les jetons utilisent toujours une fréquence similaire à Catan :
+The number tokens always use a frequency similar to Catan:
 
 ```text
-6 / 8  → très fréquent
-5 / 9  → fréquent
-4 / 10 → moyen
-3 / 11 → faible
-2 / 12 → très faible
+6 / 8  → very frequent
+5 / 9  → frequent
+4 / 10 → medium
+3 / 11 → low
+2 / 12 → very low
 ```
 
-### Règle spéciale 2 / 12
+### Special 2 / 12 rule
 
-Dans la version Grandes Colonies :
+In the Grandes Colonies version:
 
-**2 et 12 produisent 2 ressources au lieu d'une.**
+**2 and 12 produce 2 resources instead of one.**
 
-Cela permet de rendre les emplacements très rares réellement intéressants.
+This makes the very rare spots genuinely interesting.
 
 ---
 
-# 7. Le système de cycle
+# 7. The cycle system
 
-C'est la mécanique centrale pour permettre 8–12 joueurs.
+This is the central mechanic that makes 8–12 players possible.
 
-Au lieu de laisser les joueurs attendre leur tour complet, la partie est organisée en **cycles**.
+Instead of letting players wait for their full turn, the game is organized into **cycles**.
 
-Chaque cycle possède :
+Each cycle has:
 
 ### Phase A — Production
 
-Le joueur actif lance les dés.
+The active player rolls the dice.
 
-Tous les joueurs produisent.
+All players produce.
 
-Le 7 déclenche le voleur.
+A 7 triggers the robber.
 
-### Phase B — Tour actif
+### Phase B — Active turn
 
-Le joueur actif peut :
+The active player can:
 
-- commercer ;
-- construire ;
-- acheter une carte développement ;
-- déplacer certains éléments ;
-- utiliser une capacité.
+- trade;
+- build;
+- buy a development card;
+- move certain elements;
+- use an ability.
 
-### Phase C — Tour associé
+### Phase C — Associated turn
 
-Le joueur situé **3 positions à gauche** du joueur actif devient son partenaire.
+The player **3 seats to the left** of the active player becomes their partner.
 
-Il peut :
+They can:
 
-- commercer avec la banque ;
-- construire ;
-- acheter une carte développement ;
-- activer certaines capacités.
+- trade with the bank;
+- build;
+- buy a development card;
+- activate certain abilities.
 
-Il ne peut pas commercer avec les autres joueurs.
+They cannot trade with the other players.
 
-Cette mécanique reprend l'idée des **paired player turns** introduits officiellement pour les parties à 5–6 joueurs.
+This mechanic takes up the idea of the **paired player turns** introduced officially for 5–6 player games.
 
-### Phase D — Commerce libre
+### Phase D — Free trade
 
-Pendant une courte fenêtre de **30 secondes**, tous les joueurs peuvent :
+During a short window of **30 seconds**, all players can:
 
-- proposer des échanges ;
-- négocier ;
-- signer ou rompre certains contrats.
+- propose trades;
+- negotiate;
+- sign or break certain contracts.
 
-### Phase E — Cycle suivant
+### Phase E — Next cycle
 
-Le rôle actif passe au joueur suivant.
-
----
-
-# 8. Construction semi-simultanée
-
-Pour éviter les temps morts :
-
-> Un joueur peut annoncer une construction dès qu'il possède les ressources nécessaires.
-
-Cependant, les constructions concurrentes suivent une résolution simple :
-
-1. le joueur actif est prioritaire ;
-2. sinon, priorité au joueur avec le plus d'**Influence** ;
-3. en cas d'égalité, personne ne peut construire sur l'emplacement contesté pendant ce cycle.
-
-Cela reprend une idée de variantes communautaires utilisant des constructions simultanées.
+The active role passes to the next player.
 
 ---
 
-# 9. Commerce
+# 8. Semi-simultaneous building
 
-Le commerce devient plus important que dans Catan classique.
+To avoid dead time:
 
-### Commerce entre joueurs
+> A player can announce a build as soon as they have the necessary resources.
 
-Deux joueurs peuvent échanger :
+However, competing builds follow a simple resolution:
 
-- ressources ;
-- or ;
-- certains contrats ;
-- certains jetons commerciaux.
+1. the active player has priority;
+2. otherwise, priority to the player with the most **Influence**;
+3. in a tie, nobody can build on the contested spot during this cycle.
 
-Les échanges restent ouverts et négociables.
+This takes up an idea from community variants using simultaneous builds.
 
-### Commerce avec la banque
+---
 
-Valeur de base :
+# 9. Trade
+
+Trade becomes more important than in classic Catan.
+
+### Trade between players
+
+Two players can exchange:
+
+- resources;
+- gold;
+- certain contracts;
+- certain trade tokens.
+
+Trades stay open and negotiable.
+
+### Trade with the bank
+
+Base value:
 
 **4:1**
 
-Ports :
+Ports:
 
-- **3:1** pour une ressource ;
-- **2:1** pour une ressource spécifique.
+- **3:1** for one resource;
+- **2:1** for a specific resource.
 
 ---
 
-# 10. Marché dynamique
+# 10. Dynamic market
 
-Un marché commun permet de rendre l'économie plus vivante.
+A common market makes the economy more alive.
 
-Chaque ressource possède un indicateur de demande :
+Each resource has a demand indicator:
 
 ```text
 🌾 Grain      3
-🐑 Laine      4
-🌲 Bois       5
-🧱 Brique     4
-⛏️ Minerai   3
-🪙 Or         2
+🐑 Wool       4
+🌲 Wood       5
+🧱 Brick      4
+⛏️ Ore        3
+🪙 Gold       2
 ```
 
-Lorsque de nombreuses unités d'une ressource sont vendues au marché, son prix diminue.
+When many units of a resource are sold on the market, its price falls.
 
-Lorsqu'une ressource manque, son prix augmente.
+When a resource is scarce, its price rises.
 
-Le marché est volontairement **simple**, afin de ne pas transformer le jeu en simulation économique.
+The market is deliberately **simple**, so as not to turn the game into an economic simulation.
 
 ---
 
 # 11. Ports
 
-Les ports classiques sont conservés.
+The classic ports are kept.
 
-Mais quatre ports spéciaux sont introduits :
+But four special ports are introduced:
 
-### Port marchand
+### Trading port
 
-Permet une transaction bancaire à **2:1** pour n'importe quelle ressource.
+Allows a bank transaction at **2:1** for any resource.
 
-### Port minier
+### Mining port
 
-Permet de convertir :
+Allows conversion:
 
-**2 minerai → 1 or**
+**2 ore → 1 gold**
 
-### Port commercial
+### Commercial port
 
-Permet de transformer deux ressources différentes en une ressource choisie.
+Allows two different resources to be turned into one chosen resource.
 
-### Port royal
+### Royal port
 
-Donne un bonus d'Influence aux joueurs qui contrôlent sa région.
+Gives an Influence bonus to the players who control its region.
 
 ---
 
-# 12. Routes et réseaux
+# 12. Roads and networks
 
-La construction de routes fonctionne comme dans Catan.
+Road building works as in Catan.
 
-Mais dans Grandes Colonies, deux nouveautés apparaissent.
+But in Grandes Colonies, two novelties appear.
 
-### Comptoirs commerciaux
+### Trading posts
 
-Certaines intersections permettent de construire un comptoir.
+Certain intersections allow a trading post to be built.
 
-Un comptoir :
+A trading post:
 
-- augmente les capacités commerciales ;
-- donne 1 Influence ;
-- peut générer de l'or.
+- increases trade capacity;
+- gives 1 Influence;
+- can generate gold.
 
-### Routes maritimes
+### Sea lanes
 
-Une route maritime relie deux ports.
+A sea lane links two ports.
 
-Elle nécessite :
+It requires:
 
-- 1 bois ;
-- 1 laine.
+- 1 wood;
+- 1 wool.
 
-Les routes maritimes sont indispensables pour accéder aux îles secondaires.
+Sea lanes are indispensable for reaching the secondary islands.
 
 ---
 
 # 13. Exploration
 
-Les îles secondaires commencent face cachée.
+The secondary islands start face-down.
 
-Lorsqu'un joueur atteint une zone d'exploration, il révèle un hexagone.
+When a player reaches an exploration zone, they reveal a hex.
 
-Celui-ci peut contenir :
+It may contain:
 
-- une ressource rare ;
-- un village neutre ;
-- un port ;
-- de l'or ;
-- un événement ;
-- une zone dangereuse ;
-- une colonie autochtone ;
-- un territoire particulièrement rentable.
+- a rare resource;
+- a neutral village;
+- a port;
+- gold;
+- an event;
+- a dangerous zone;
+- an indigenous settlement;
+- a particularly profitable territory.
 
-L'exploration est directement inspirée de l'esprit de **Seafarers** et **Explorers & Pirates**.
-
----
-
-# 14. Villes spécialisées
-
-À partir du moment où un joueur possède une ville, il peut la spécialiser.
-
-### Ville agricole
-
-+1 grain lorsqu'elle produit.
-
-### Ville forestière
-
-+1 bois sur certaines productions.
-
-### Ville industrielle
-
-+1 brique ou minerai.
-
-### Ville commerciale
-
-Améliore le commerce avec les ports.
-
-### Ville militaire
-
-Produit de l'Influence et permet d'activer davantage de chevaliers.
-
-Une ville ne peut avoir qu'une spécialisation.
+Exploration is directly inspired by the spirit of **Seafarers** and **Explorers & Pirates**.
 
 ---
 
-# 15. Chevaliers
+# 14. Specialized cities
 
-Le système de chevaliers de **Cities & Knights** est repris sous une forme simplifiée.
+From the moment a player has a city, they can specialize it.
 
-Chaque joueur peut construire des chevaliers.
+### Agricultural city
 
-Un chevalier possède une force :
++1 grain when it produces.
+
+### Forest city
+
++1 wood on certain productions.
+
+### Industrial city
+
++1 brick or ore.
+
+### Commercial city
+
+Improves trade with the ports.
+
+### Military city
+
+Produces Influence and allows more knights to be activated.
+
+A city can only have one specialization.
+
+---
+
+# 15. Knights
+
+The knight system from **Cities & Knights** is taken up in a simplified form.
+
+Each player can build knights.
+
+A knight has a strength:
 
 ```text
-1 → Milice
-2 → Chevalier
-3 → Chevalier vétéran
+1 → Militia
+2 → Knight
+3 → Veteran knight
 ```
 
-Les chevaliers servent principalement à :
+Knights mainly serve to:
 
-- repousser les barbares ;
-- protéger certaines routes ;
-- gagner de l'Influence ;
-- contester certaines régions.
+- repel the barbarians;
+- protect certain roads;
+- gain Influence;
+- contest certain regions.
 
-Ils ne transforment pas le jeu en jeu de combat direct.
+They do not turn the game into a direct combat game.
 
 ---
 
-# 16. Les Barbares
+# 16. The Barbarians
 
-Toutes les X productions, une piste de menace avance.
+Every X productions, a threat track advances.
 
 ```text
 [1] [2] [3] [4] [5]
                    ☠
 ```
 
-Lorsque la piste atteint la fin :
+When the track reaches the end:
 
-> Les Barbares attaquent.
+> The Barbarians attack.
 
-La force totale des Barbares dépend :
+The Barbarians' total strength depends on:
 
-**nombre de villes + niveau de développement global**
+**number of cities + overall development level**
 
-Tous les joueurs comparent leur force militaire.
+All players compare their military strength.
 
-### Conséquence
+### Consequence
 
-Si les chevaliers combinés ne suffisent pas :
+If the combined knights are not enough:
 
-- le joueur ayant fourni le moins de défense perd une ville ;
-- le joueur ayant fourni le plus de défense gagne un jeton **Défenseur de Catan**.
+- the player who provided the least defense loses a city;
+- the player who provided the most defense gains a **Defender of Catan** token.
 
-Cela reprend la logique de Cities & Knights : la menace est **collective**, mais les récompenses sont individuelles.
+This takes up the logic of Cities & Knights: the threat is **collective**, but the rewards are individual.
 
 ---
 
 # 17. Influence
 
-Nouvelle statistique du jeu.
+A new game statistic.
 
-L'Influence représente :
+Influence represents:
 
-- pouvoir politique ;
-- puissance commerciale ;
-- réputation ;
-- influence militaire.
+- political power;
+- trade power;
+- reputation;
+- military influence.
 
-L'Influence peut être gagnée par :
+Influence can be gained through:
 
-- comptoirs ;
-- ports royaux ;
-- défense contre les barbares ;
-- objectifs ;
-- certaines cartes.
+- trading posts;
+- royal ports;
+- defense against the barbarians;
+- objectives;
+- certain cards.
 
-Elle intervient pour :
+It comes into play to:
 
-- résoudre certains conflits ;
-- départager les constructions simultanées ;
-- obtenir certaines cartes politiques.
-
----
-
-# 18. Cartes Développement
-
-Le paquet reprend la philosophie du Catan classique.
-
-Catégories :
-
-### Chevalier
-
-Déplace le voleur.
-
-### Route commerciale
-
-Construis gratuitement une route.
-
-### Invention
-
-Choisis deux ressources.
-
-### Monopole
-
-Choisis une ressource.
-
-Tous les joueurs te donnent cette ressource.
-
-### Construction libre
-
-Construis une combinaison spéciale.
-
-### Cartes politiques
-
-Nouvelles cartes pouvant :
-
-- déplacer un marché ;
-- modifier temporairement un port ;
-- protéger une ressource ;
-- forcer une négociation ;
-- réduire l'Influence d'un joueur.
+- resolve certain conflicts;
+- decide between simultaneous builds;
+- obtain certain political cards.
 
 ---
 
-# 19. Contrats
+# 18. Development cards
 
-Deux joueurs peuvent signer un contrat.
+The deck takes up the philosophy of classic Catan.
 
-Exemples :
+Categories:
 
-### Contrat commercial
+### Knight
 
-> "Je te donne 1 minerai par cycle pendant 3 cycles contre 2 bois maintenant."
+Moves the robber.
+
+### Trade route
+
+Build a road for free.
+
+### Year of plenty
+
+Choose two resources.
+
+### Monopoly
+
+Choose a resource.
+
+All players give you that resource.
+
+### Free build
+
+Build a special combination.
+
+### Political cards
+
+New cards that can:
+
+- move a market;
+- temporarily modify a port;
+- protect a resource;
+- force a negotiation;
+- reduce a player's Influence.
+
+---
+
+# 19. Contracts
+
+Two players can sign a contract.
+
+Examples:
+
+### Trade contract
+
+> "I give you 1 ore per cycle for 3 cycles in exchange for 2 wood now."
 
 ### Alliance
 
-> "Nous ne construisons pas dans cette région pendant 2 cycles."
+> "We do not build in this region for 2 cycles."
 
 ### Protection
 
-> "Je t'aide lors de la prochaine invasion en échange de 2 or."
+> "I help you during the next invasion in exchange for 2 gold."
 
-Les contrats sont **non obligatoires moralement**.
+Contracts are **not morally binding**.
 
-Mais rompre un contrat fait perdre :
+But breaking a contract loses:
 
 **2 Influence**
 
-C'est suffisamment pénalisant pour créer de la diplomatie sans rendre les contrats juridiquement contraignants.
+That is penalizing enough to create diplomacy without making the contracts legally binding.
 
 ---
 
-# 20. Diplomatie
+# 20. Diplomacy
 
-Il n'existe pas de système d'élimination.
+There is no elimination system.
 
-Un joueur ne peut pas être retiré de la partie.
+A player cannot be removed from the game.
 
-Même un joueur en retard conserve :
+Even a player who is behind keeps:
 
-- sa colonie ;
-- ses villes ;
-- ses ressources ;
-- ses possibilités commerciales.
+- their settlement;
+- their cities;
+- their resources;
+- their trading possibilities.
 
-Cela empêche les parties à 12 de devenir frustrantes.
-
----
-
-# 21. Objectifs secrets
-
-Chaque joueur reçoit 2 objectifs secrets au début de la partie.
-
-Il en conserve 1.
-
-Exemples :
-
-### Grand commerçant
-
-Posséder 5 ports ou comptoirs.
-
-### Explorateur
-
-Découvrir 5 territoires.
-
-### Seigneur militaire
-
-Participer à 3 défenses réussies.
-
-### Magnat
-
-Accumuler 12 or.
-
-### Architecte
-
-Posséder 8 bâtiments.
-
-### Diplomate
-
-Terminer 3 contrats.
-
-Les objectifs donnent :
-
-**+2 points de victoire**
+This stops 12-player games from becoming frustrating.
 
 ---
 
-# 22. Conditions de victoire
+# 21. Secret objectives
 
-Le premier joueur à atteindre :
+Each player receives 2 secret objectives at the start of the game.
 
-## 15 points de victoire
+They keep 1.
 
-gagne.
+Examples:
 
-### Sources de points
+### Great trader
 
-| Action | PV |
+Own 5 ports or trading posts.
+
+### Explorer
+
+Discover 5 territories.
+
+### Warlord
+
+Take part in 3 successful defenses.
+
+### Magnate
+
+Accumulate 12 gold.
+
+### Architect
+
+Own 8 buildings.
+
+### Diplomat
+
+Complete 3 contracts.
+
+The objectives give:
+
+**+2 victory points**
+
+---
+
+# 22. Victory conditions
+
+The first player to reach:
+
+## 15 victory points
+
+wins.
+
+### Sources of points
+
+| Action | VP |
 |---|---:|
-| Colonie | 1 |
-| Ville | 2 |
-| Métropole | 3 |
-| Objectif secret | 2 |
-| Plus long réseau commercial | 2 |
-| Plus grande puissance militaire | 2 |
-| Défenseur de Catan | 1 |
-| Exploration majeure | 1 |
+| Settlement | 1 |
+| City | 2 |
+| Metropolis | 3 |
+| Secret objective | 2 |
+| Longest trade network | 2 |
+| Largest army | 2 |
+| Defender of Catan | 1 |
+| Major exploration | 1 |
 | Monument | 2 |
 
-Le seuil plus élevé que le Catan classique est nécessaire pour une carte beaucoup plus grande.
+The threshold higher than classic Catan is necessary for a much larger map.
 
 ---
 
-# 23. Bonus de progression
+# 23. Progression bonuses
 
-Deux objectifs publics évoluent durant la partie :
+Two public objectives evolve during the game:
 
-### Plus long réseau
+### Longest network
 
-**2 PV**
+**2 VP**
 
-### Plus grande puissance militaire
+### Largest army
 
-**2 PV**
+**2 VP**
 
-Ces bonus peuvent changer de propriétaire.
+These bonuses can change owner.
 
-Cela crée davantage de course entre les joueurs.
+This creates more of a race between players.
 
 ---
 
-# 24. Gestion du nombre de cartes
+# 24. Managing the number of cards
 
-Avec 8–12 joueurs, les règles classiques deviennent dangereuses si les joueurs accumulent trop de ressources.
+With 8–12 players, the classic rules become dangerous if players accumulate too many resources.
 
-Nouvelle limite :
+New limit:
 
-| Joueurs | Limite sans protection |
+| Players | Limit without protection |
 |---:|---:|
 | 8 | 9 |
 | 9 | 10 |
@@ -674,403 +674,403 @@ Nouvelle limite :
 | 11 | 12 |
 | 12 | 13 |
 
-La limite de **13 cartes à 7–8 joueurs** est déjà une idée historiquement utilisée dans certaines variantes / configurations étendues de Catan.
+The limit of **13 cards at 7–8 players** is already an idea historically used in certain extended Catan variants / configurations.
 
-Pour 11–12 joueurs, la valeur de 13 devient la limite maximale recommandée.
-
----
-
-# 25. Le voleur
-
-Le voleur conserve son fonctionnement de base.
-
-Mais dans Grandes Colonies :
-
-- il peut être placé sur une zone terrestre ;
-- il bloque la production ;
-- il permet de voler une carte ;
-- il peut parfois être déplacé par certaines cartes.
-
-### Double voleur
-
-À 11–12 joueurs, deux voleurs peuvent être utilisés.
-
-Ils doivent être placés sur deux régions différentes.
-
-Cela évite qu'un seul hexagone à forte production puisse bloquer toute une partie de la carte.
+For 11–12 players, the value of 13 becomes the recommended maximum limit.
 
 ---
 
-# 26. Dés et événements
+# 25. The robber
 
-Une troisième valeur peut intervenir dans certaines variantes :
+The robber keeps its basic operation.
+
+But in Grandes Colonies:
+
+- it can be placed on a land zone;
+- it blocks production;
+- it lets you steal a card;
+- it can sometimes be moved by certain cards.
+
+### Double robber
+
+At 11–12 players, two robbers can be used.
+
+They must be placed on two different regions.
+
+This stops a single high-production hex from blocking a whole part of the map.
+
+---
+
+# 26. Dice and events
+
+A third value can come into play in certain variants:
 
 ```text
-🎲 Dé Production 1
-🎲 Dé Production 2
-🎲 Dé Événement
+🎲 Production die 1
+🎲 Production die 2
+🎲 Event die
 ```
 
-Les événements peuvent être :
+Events can be:
 
-- arrivée des barbares ;
-- bonus commercial ;
-- pénurie ;
-- découverte ;
-- tempête ;
-- marché favorable ;
-- famine ;
-- festival ;
+- arrival of the barbarians;
+- trade bonus;
+- shortage;
+- discovery;
+- storm;
+- favourable market;
+- famine;
+- festival;
 - migration.
 
-Les événements doivent rester rares.
+Events must stay rare.
 
-L'objectif n'est pas de transformer le jeu en jeu de cartes chaotique.
-
----
-
-# 27. Variante : événements au lieu des dés
-
-Pour les groupes qui veulent réduire l'aléatoire, remplacer certaines occurrences par un paquet d'événements.
-
-C'est directement dans l'esprit de **Traders & Barbarians**, qui propose notamment une variante avec des cartes événements.
+The goal is not to turn the game into a chaotic card game.
 
 ---
 
-# 28. Variante : jeu ultra-rapide
+# 27. Variant: events instead of dice
 
-Pour une soirée où 12 joueurs veulent éviter une partie de 3 heures :
+For groups that want to reduce randomness, replace certain occurrences with an event deck.
 
-### Règles
-
-- victoire à 12 PV ;
-- tours de 60 secondes ;
-- production toutes les 45 secondes ;
-- marché ouvert en permanence ;
-- construction simultanée.
-
-Cette variante transforme le jeu en **marché permanent**.
-
-Elle est fortement inspirée de variantes communautaires cherchant à supprimer presque entièrement les temps morts.
+This is directly in the spirit of **Traders & Barbarians**, which notably offers a variant with event cards.
 
 ---
 
-# 29. Variante : marché chaotique
+# 28. Variant: ultra-fast game
 
-Dans cette variante, tous les échanges entre joueurs sont autorisés pendant une fenêtre de **60 secondes**.
+For an evening where 12 players want to avoid a 3-hour game:
 
-Chaque cycle :
+### Rules
+
+- victory at 12 VP;
+- 60-second turns;
+- production every 45 seconds;
+- market open permanently;
+- simultaneous building.
+
+This variant turns the game into a **permanent market**.
+
+It is strongly inspired by community variants seeking to remove dead time almost entirely.
+
+---
+
+# 29. Variant: chaotic market
+
+In this variant, all trades between players are allowed during a window of **60 seconds**.
+
+Each cycle:
 
 ```text
 Production
     ↓
-60 secondes de commerce
+60 seconds of trade
     ↓
-Construction
+Building
     ↓
-Événement
+Event
     ↓
-Cycle suivant
+Next cycle
 ```
 
-Objectif :
+Goal:
 
-> créer une ambiance de marché totalement chaotique.
+> create a totally chaotic market atmosphere.
 
 ---
 
-# 30. Variante : équipes
+# 30. Variant: teams
 
-À 8 ou 12 joueurs, deux modes peuvent être proposés.
+At 8 or 12 players, two modes can be offered.
 
-### 2 équipes de 4–6
+### 2 teams of 4–6
 
-Les joueurs conservent leurs ressources individuellement.
+Players keep their resources individually.
 
-Mais :
+But:
 
-- les PV de l'équipe sont additionnés ;
-- les partenaires peuvent échanger librement ;
-- une victoire individuelle est également possible.
+- the team's VP are added together;
+- partners can trade freely;
+- an individual victory is also possible.
 
-### 3 équipes
+### 3 teams
 
-À 9 ou 12 joueurs :
+At 9 or 12 players:
 
 ```text
-Équipe A
-Équipe B
-Équipe C
+Team A
+Team B
+Team C
 ```
 
-Chaque équipe possède :
+Each team has:
 
-- une couleur ;
-- un objectif commun ;
-- un bonus de coopération.
+- a colour;
+- a common objective;
+- a cooperation bonus.
 
 ---
 
-# 31. Mode recommandé à 12 joueurs
+# 31. Recommended mode at 12 players
 
-Pour une première partie :
+For a first game:
 
 ### Configuration
 
-- 12 joueurs
-- 3 grandes îles
-- 1 archipel central
-- 5 ressources classiques
-- or
+- 12 players
+- 3 large islands
+- 1 central archipelago
+- 5 classic resources
+- gold
 - ports
 - exploration
-- chevaliers
-- barbares
-- objectifs secrets
-- contrats
+- knights
+- barbarians
+- secret objectives
+- contracts
 
-### À ne PAS utiliser pour la première partie
+### NOT to use for the first game
 
-- événements complexes ;
-- villes spécialisées avancées ;
-- diplomatie avancée ;
-- équipes ;
-- marché totalement dynamique.
+- complex events;
+- advanced specialized cities;
+- advanced diplomacy;
+- teams;
+- fully dynamic market.
 
 ---
 
-# 32. Ordre d'apprentissage
+# 32. Learning order
 
-### Partie 1
+### Game 1
 
-Catan XXL de base :
+Base Catan XXL:
 
-- ressources
-- construction
-- commerce
+- resources
+- building
+- trade
 - ports
 - exploration
 
-### Partie 2
+### Game 2
 
-Ajouter :
+Add:
 
-- chevaliers
-- barbares
-- objectifs secrets
+- knights
+- barbarians
+- secret objectives
 
-### Partie 3
+### Game 3
 
-Ajouter :
+Add:
 
 - influence
-- contrats
-- marché dynamique
-- villes spécialisées
+- contracts
+- dynamic market
+- specialized cities
 
-Cela permet de garder une courbe d'apprentissage raisonnable.
+This keeps a reasonable learning curve.
 
 ---
 
-# 33. Principes d'équilibrage
+# 33. Balancing principles
 
-À 8–12 joueurs, le principal risque est qu'un joueur prenne rapidement trop d'avance.
+At 8–12 players, the main risk is that a player quickly takes too big a lead.
 
-Pour limiter ce phénomène :
+To limit this phenomenon:
 
-### Pas de ressources supplémentaires gratuites pour le leader
+### No free extra resources for the leader
 
-Le joueur en tête ne reçoit aucun malus artificiel.
+The player in the lead receives no artificial penalty.
 
-### Mais davantage d'alternatives pour les autres
+### But more alternatives for the others
 
-- commerce ;
-- contrats ;
-- exploration ;
-- objectifs ;
-- défense ;
-- ports ;
-- marchés secondaires.
+- trade;
+- contracts;
+- exploration;
+- objectives;
+- defense;
+- ports;
+- secondary markets.
 
-Le joueur en tête doit donc continuer à jouer activement.
+The player in the lead must therefore keep playing actively.
 
 ---
 
 # 34. Anti-snowball
 
-Un joueur possédant beaucoup de villes augmente la menace des Barbares.
+A player with many cities increases the Barbarians' threat.
 
-Donc :
+So:
 
-> plus Catan devient riche, plus il devient difficile à défendre.
+> the richer Catan becomes, the harder it becomes to defend.
 
-Cela crée un mécanisme naturel de rattrapage.
+This creates a natural catch-up mechanism.
 
 ---
 
 # 35. Anti-downtime
 
-Les joueurs peuvent préparer leurs actions pendant les tours des autres.
+Players can prepare their actions during the others' turns.
 
-Le principe est :
+The principle is:
 
-> **"Réfléchis pendant le tour des autres, exécute pendant le tien."**
+> **"Think during the others' turn, execute during yours."**
 
-Pour les parties compétitives :
+For competitive games:
 
-- 90 secondes de tour actif ;
-- 30 secondes de commerce ;
-- constructions simultanées lorsque possible.
-
----
-
-# 36. Inspirations communautaires
-
-Le design reprend plusieurs idées observées dans les variantes et extensions existantes :
-
-- les **paired player turns** des extensions récentes 5–6 joueurs ;
-- les phases de construction / commerce entre les tours ;
-- la limite de main relevée pour les grandes parties ;
-- les cartes événement de Traders & Barbarians ;
-- l'exploration et les mers de Seafarers ;
-- la défense contre les Barbares et les chevaliers de Cities & Knights ;
-- les missions, villages et exploration d'Explorers & Pirates ;
-- les variantes communautaires de Catan 8 joueurs ;
-- les variantes à tours simultanés développées pour réduire le temps d'attente.
-
-L'objectif est de combiner les idées utiles sans simplement empiler toutes les extensions.
+- 90 seconds of active turn;
+- 30 seconds of trade;
+- simultaneous builds where possible.
 
 ---
 
-# 37. Philosophie générale
+# 36. Community inspirations
 
-Le jeu doit répondre à cette question :
+The design takes up several ideas seen in existing variants and expansions:
 
-> **"Comment faire fonctionner Catan avec 12 personnes sans que 6 personnes regardent jouer les 2 autres ?"**
+- the **paired player turns** of the recent 5–6 player expansions;
+- the building / trade phases between turns;
+- the raised hand limit for large games;
+- the event cards of Traders & Barbarians;
+- the exploration and seas of Seafarers;
+- the defense against the Barbarians and the knights of Cities & Knights;
+- the missions, villages and exploration of Explorers & Pirates;
+- the community variants of 8-player Catan;
+- the simultaneous-turn variants developed to reduce waiting time.
 
-La réponse est :
-
-### Plus de géographie
-
-Une carte énorme.
-
-### Plus de commerce
-
-Beaucoup plus de négociation.
-
-### Plus de décisions
-
-Exploration, contrats, ports, objectifs, influence.
-
-### Moins d'attente
-
-Tours associés et actions semi-simultanées.
-
-### Plus d'interaction
-
-Barbares, compétition territoriale, marchés et diplomatie.
+The goal is to combine the useful ideas without simply stacking every expansion.
 
 ---
 
-# 38. Prototype minimal
+# 37. General philosophy
 
-Pour produire le premier prototype papier, il suffit de fabriquer :
+The game must answer this question:
 
-### Plateau
+> **"How do you make Catan work with 12 people without 6 people watching the other 2 play?"**
 
-- 48 hexagones
-- 3 déserts
+The answer is:
+
+### More geography
+
+A huge map.
+
+### More trade
+
+Much more negotiation.
+
+### More decisions
+
+Exploration, contracts, ports, objectives, influence.
+
+### Less waiting
+
+Associated turns and semi-simultaneous actions.
+
+### More interaction
+
+Barbarians, territorial competition, markets and diplomacy.
+
+---
+
+# 38. Minimal prototype
+
+To produce the first paper prototype, you only need to make:
+
+### Board
+
+- 48 hexes
+- 3 deserts
 - 8 ports
-- 12 zones maritimes
+- 12 sea zones
 
-### Ressources
+### Resources
 
-- 5 ressources classiques
-- 40 jetons or
+- 5 classic resources
+- 40 gold tokens
 
-### Joueurs
+### Players
 
-12 couleurs avec :
+12 colours with:
 
-- 5 colonies
-- 4 villes
-- 15 routes
-- 3 chevaliers
-- 2 comptoirs
+- 5 settlements
+- 4 cities
+- 15 roads
+- 3 knights
+- 2 trading posts
 
-### Cartes
+### Cards
 
-- 60 développement
-- 24 objectifs
-- 20 contrats
-- 30 événements
+- 60 development
+- 24 objectives
+- 20 contracts
+- 30 events
 
-### Autres
+### Other
 
-- 2 dés
-- 2 voleurs
-- piste des barbares
-- marqueurs d'Influence
-- jetons exploration
+- 2 dice
+- 2 robbers
+- barbarian track
+- Influence markers
+- exploration tokens
 
 ---
 
-# 39. Première version à tester
+# 39. First version to test
 
-Pour le **premier playtest**, utiliser uniquement :
+For the **first playtest**, use only:
 
 ```text
-✅ Plateau XXL
-✅ 8–12 joueurs
-✅ 5 ressources
-✅ Or
+✅ XXL board
+✅ 8–12 players
+✅ 5 resources
+✅ Gold
 ✅ Ports
 ✅ Exploration
 ✅ Paired turns
-✅ Construction semi-simultanée
-✅ Limite de main 13
-✅ 15 PV
+✅ Semi-simultaneous building
+✅ Hand limit 13
+✅ 15 VP
 ✅ Longest Road
 ✅ Largest Army
-✅ Objectifs secrets simples
+✅ Simple secret objectives
 ```
 
-Et retirer temporairement :
+And temporarily remove:
 
 ```text
-❌ Marché dynamique
-❌ Contrats complexes
-❌ Villes spécialisées
-❌ Événements avancés
-❌ Diplomatie avancée
+❌ Dynamic market
+❌ Complex contracts
+❌ Specialized cities
+❌ Advanced events
+❌ Advanced diplomacy
 ```
 
 ---
 
-# 40. Critères de réussite du prototype
+# 40. Prototype success criteria
 
-Après une partie, chaque joueur doit pouvoir répondre "oui" à au moins 4 des 5 questions :
+After a game, each player must be able to answer "yes" to at least 4 of the 5 questions:
 
-- Ai-je eu quelque chose à faire pendant les tours des autres ?
-- Ai-je négocié plusieurs fois ?
-- Ai-je eu plusieurs stratégies possibles ?
-- Ai-je pu revenir dans la partie après avoir pris du retard ?
-- Ai-je envie de rejouer avec une autre stratégie ?
+- Did I have something to do during the others' turns?
+- Did I negotiate several times?
+- Did I have several possible strategies?
+- Could I get back into the game after falling behind?
+- Do I want to play again with a different strategy?
 
-Le système est considéré comme réussi si une partie à **12 joueurs reste active, interactive et lisible**, sans devenir une simple partie de Catan où chacun attend son tour.
+The system is considered a success if a **12-player game stays active, interactive and legible**, without becoming a simple game of Catan where everyone waits for their turn.
 
 ---
 
-## Sources et inspirations
+## Sources and inspirations
 
-- CATAN — règles et extensions officielles 5–6 joueurs : https://www.catan.com/explore-catan/catan-basegame-expansions/play-catan-5-6-players
-- CATAN — Seafarers : https://www.catan.com/seafarers
-- CATAN — Cities & Knights : https://www.catan.com/cities-knights
-- CATAN — Traders & Barbarians : https://www.catan.com/traders-barbarians
-- CATAN — Explorers & Pirates : https://www.catan.com/explorers-pirates
-- CATAN — règle des paired players pour 5–6 joueurs
-- Variantes communautaires de Catan 8 joueurs et parties à tours simultanés (Reddit / BoardGameGeek)
+- CATAN — official rules and 5–6 player expansions: https://www.catan.com/explore-catan/catan-basegame-expansions/play-catan-5-6-players
+- CATAN — Seafarers: https://www.catan.com/seafarers
+- CATAN — Cities & Knights: https://www.catan.com/cities-knights
+- CATAN — Traders & Barbarians: https://www.catan.com/traders-barbarians
+- CATAN — Explorers & Pirates: https://www.catan.com/explorers-pirates
+- CATAN — paired players rule for 5–6 players
+- Community variants of 8-player Catan and simultaneous-turn games (Reddit / BoardGameGeek)
 
-### Notes de conception
+### Design notes
 
-Certaines mécaniques de ce document sont des **adaptations originales** inspirées de plusieurs systèmes existants. Ce document ne prétend pas être une règle officielle de CATAN et doit être considéré comme un **prototype de jeu de société fan-made**.
+Some mechanics in this document are **original adaptations** inspired by several existing systems. This document does not claim to be an official CATAN rule and should be considered a **fan-made board game prototype**.
